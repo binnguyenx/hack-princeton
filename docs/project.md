@@ -24,7 +24,7 @@ Draft product intent (not yet an accepted feature folder): `hackprinceton_intent
 
 | Feature | Status | What it does |
 |-|-|-|
-| — | — | No feature folders yet. Create via the `intent-spec-plan` skill. |
+| [3D bone editor](../features/3d-bone-editor/intent.md) | proposed | Local projects with multiple samples, editable candidates, and recoverable revision history. Intent accepted; spec draft. |
 
 Status values: proposed, in progress, shipped, retired.
 
