@@ -64,18 +64,19 @@ Agents **must** use this system for any UI, front-end, layout, styling, or visua
 | `DESIGN.md` | **Source of truth** for colors, typography, layout, elevation, shapes, components, Do’s/Don’ts |
 | `.impeccable/design.json` | Shadows, focus rings, motion, icon stroke (sidecar tokens) |
 | `docs/design-conventions.md` | R14: management vs canvas, nav vs edit, shortcuts, selection/error states; points at `DESIGN.md` |
-| `.impeccable/reference/ui-styling-atlassian-b2b.jpg` | Management craft reference (density/feel) |
+| `.impeccable/reference/ui-styling-soft-monochrome.jpg` | Visual craft reference (soft monochrome + blue accent) |
+| `.impeccable/reference/ui-styling-atlassian-b2b.jpg` | Management **layout/grid** density reference only |
 | `.impeccable/reference/ui-styling-medit-soft.jpg` | Anti-reference — do not follow |
 
 Rules:
 
 - Before writing or changing UI code (`app/src/ui/`, CSS, component chrome, viewport framing), read `DESIGN.md` and apply its tokens.
-- Dual-register Operate UI: Atlassian-like B2B on management surfaces; Figma/Blender-clean chrome on the 3D canvas. Soft Medit / pill / large-radius wellness chrome is rejected.
-- At most four main colors with hierarchy: Base → Ink → Accent → Signal. Do not add brand hues or revive soft-active lavender.
+- Dual-register Operate UI: Atlassian-like **structure** on management (tables/toolbars); soft monochrome floating chrome app-wide; canvas stays viewport-first. Soft Medit wellness marketing chrome is rejected.
+- Three main colors: Base → Ink → Accent. Signal is rare danger only. Do not add brand hues or lavender fills.
 - Management may use tables/toolbars; still ban marketing/wellness dashboard kits. Canvas stays viewport-first with compact editor chrome.
 - Management surfaces are **Radix Themes-first** (`@radix-ui/themes`) with Radix primitives only where Themes lacks a required behavior primitive.
 - Interaction conventions live in `docs/design-conventions.md` (R14). Visual tokens stay in `DESIGN.md`.
-- For broader design craft workflows, use the `impeccable` skill; it must still honor `DESIGN.md` / `PRODUCT.md`.
+- For broader design craft workflows, use the `impeccable` skill; motion micro-interactions follow the `motion-design` skill. Both must honor `DESIGN.md` / `PRODUCT.md`.
 
 ## Build / test / lint
 

@@ -106,6 +106,11 @@ export const CANVAS_HINTS = {
     label: 'Cancel transform',
     description: 'Discard the in-progress candidate transform draft without writing a revision.',
   },
+  linkedViews: {
+    label: 'Linked views',
+    description:
+      'Status only — not a button. The three planes share one RAS crosshair, so moving a slice or clicking anatomy updates all three together. Independent (unlinked) planes are not available yet.',
+  },
   collapseDock: {
     label: 'Collapse slice dock',
     description:

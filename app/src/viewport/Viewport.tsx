@@ -40,11 +40,13 @@ type Props = {
 
 type Runtime = {
   renderer: THREE.WebGLRenderer
+  scene: THREE.Scene
   perspective: THREE.PerspectiveCamera
   orthographic: THREE.OrthographicCamera
   camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
   controls: OrbitControls
   content: THREE.Group
+  grid: THREE.GridHelper | null
   mount: HTMLDivElement
   objectId?: string
   ambient: THREE.AmbientLight
@@ -54,18 +56,55 @@ type Runtime = {
   head: THREE.DirectionalLight
 }
 
-const BACKGROUND_COLOR = 0x111318
-const DEFAULT_DISTANCE = 3
+/** Soft monochrome studio ground — matches app Base, not a black void. */
+const BACKGROUND_COLOR = 0xe8eaee
+const GRID_CENTER_COLOR = 0x8b94a1
+const GRID_LINE_COLOR = 0xb8c0ca
+/** Lower = closer camera = larger default subject. Was 3 (subject looked tiny). */
+const DEFAULT_DISTANCE = 1.95
 const MIN_NEAR = 0.01
-const FRAMING_MARGIN = 1.3
-// Keep wraparound lights, but stay well below overexposure at slider mid.
-const BASE_AMBIENT = 0.28
-const BASE_HEMI = 0.75
-const BASE_KEY = 1.15
-const BASE_FILL = 0.4
-const BASE_HEAD = 0.3
+const FRAMING_MARGIN = 1.0
+// Soft key/fill for light studio; form comes from material contrast + key.
+const BASE_AMBIENT = 0.32
+const BASE_HEMI = 0.7
+const BASE_KEY = 1.25
+const BASE_FILL = 0.45
+const BASE_HEAD = 0.28
 /** Mid-slider default: readable form with visible recesses. */
 export const DEFAULT_LIGHTING_INTENSITY = 1
+
+function disposeGrid(grid: THREE.GridHelper | null) {
+  if (!grid) return
+  grid.parent?.remove(grid)
+  grid.geometry.dispose()
+  const materials = Array.isArray(grid.material) ? grid.material : [grid.material]
+  for (const material of materials) material.dispose()
+}
+
+function syncGroundGrid(runtime: Runtime) {
+  const box = new THREE.Box3().setFromObject(runtime.content)
+  disposeGrid(runtime.grid)
+  runtime.grid = null
+  if (box.isEmpty()) return
+
+  const size = box.getSize(new THREE.Vector3())
+  const center = box.getCenter(new THREE.Vector3())
+  const maxDimension = Math.max(size.x, size.y, size.z, 1)
+  const extent = maxDimension * 4
+  const grid = new THREE.GridHelper(extent, 40, GRID_CENTER_COLOR, GRID_LINE_COLOR)
+  // Scene is Z-up; GridHelper defaults to XZ (Y-up floor) — rotate onto XY.
+  grid.rotation.x = Math.PI / 2
+  grid.position.set(center.x, center.y, box.min.z - maxDimension * 0.02)
+  grid.renderOrder = -1
+  const materials = Array.isArray(grid.material) ? grid.material : [grid.material]
+  for (const material of materials) {
+    material.transparent = true
+    material.opacity = 0.85
+    material.depthWrite = false
+  }
+  runtime.scene.add(grid)
+  runtime.grid = grid
+}
 
 function applyLighting(runtime: Runtime, intensity: number) {
   const scale = Math.max(0.25, Math.min(intensity, 3))
@@ -121,7 +160,11 @@ function publish(runtime: Runtime, actionId: string) {
 
 function frameContent(runtime: Runtime, resetOrientation: boolean) {
   const box = new THREE.Box3().setFromObject(runtime.content)
-  if (box.isEmpty()) return
+  if (box.isEmpty()) {
+    disposeGrid(runtime.grid)
+    runtime.grid = null
+    return
+  }
   const center = box.getCenter(new THREE.Vector3())
   const size = box.getSize(new THREE.Vector3())
   const maxDimension = Math.max(size.x, size.y, size.z, 1)
@@ -148,6 +191,7 @@ function frameContent(runtime: Runtime, resetOrientation: boolean) {
     runtime.mount.clientHeight,
     maxDimension * FRAMING_MARGIN,
   )
+  syncGroundGrid(runtime)
   runtime.controls.update()
   publish(runtime, resetOrientation ? 'view.reset' : 'view.center')
 }
@@ -219,11 +263,12 @@ export function Viewport({
     renderer.setClearColor(BACKGROUND_COLOR)
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.2
+    renderer.toneMappingExposure = 1.05
     mount.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    const perspective = new THREE.PerspectiveCamera(45, 1, MIN_NEAR, 8000)
+    scene.background = new THREE.Color(BACKGROUND_COLOR)
+    const perspective = new THREE.PerspectiveCamera(38, 1, MIN_NEAR, 8000)
     perspective.position.set(0, DEFAULT_DISTANCE, 0)
     perspective.up.set(0, 0, 1)
     const orthographic = new THREE.OrthographicCamera(
@@ -243,10 +288,10 @@ export function Viewport({
     controls.dampingFactor = 0.08
 
     const ambient = new THREE.AmbientLight(0xffffff, BASE_AMBIENT)
-    const hemi = new THREE.HemisphereLight(0xf5f7fb, 0x4a5568, BASE_HEMI)
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x9aa1ab, BASE_HEMI)
     const key = new THREE.DirectionalLight(0xffffff, BASE_KEY)
     key.position.set(4, 6, 8)
-    const fill = new THREE.DirectionalLight(0xd7e3ff, BASE_FILL)
+    const fill = new THREE.DirectionalLight(0xe8ecf2, BASE_FILL)
     fill.position.set(-5, 2, -3)
     const head = new THREE.DirectionalLight(0xffffff, BASE_HEAD)
     head.position.set(0.35, 0.25, 1)
@@ -263,11 +308,13 @@ export function Viewport({
 
     const runtime: Runtime = {
       renderer,
+      scene,
       perspective,
       orthographic,
       camera,
       controls,
       content,
+      grid: null,
       mount,
       objectId,
       ambient,
@@ -398,6 +445,7 @@ export function Viewport({
       canvas.removeEventListener('pointermove', onPointerMove, true)
       canvas.removeEventListener('pointerup', endRoll, true)
       canvas.removeEventListener('pointercancel', endRoll, true)
+      disposeGrid(runtime.grid)
       renderer.dispose()
       renderer.forceContextLoss()
       mount.removeChild(canvas)
@@ -411,6 +459,8 @@ export function Viewport({
     runtime.objectId = objectId
     runtime.content.clear()
     if (!mesh) {
+      disposeGrid(runtime.grid)
+      runtime.grid = null
       publish(runtime, 'content.clear')
       return
     }

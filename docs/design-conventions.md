@@ -4,7 +4,8 @@
 
 **Visual system of record:** [`DESIGN.md`](../DESIGN.md) (tokens + Do’s/Don’ts).  
 **Sidecar:** [`.impeccable/design.json`](../.impeccable/design.json) (shadows, focus, motion).  
-**Craft reference (management):** [`.impeccable/reference/ui-styling-atlassian-b2b.jpg`](../.impeccable/reference/ui-styling-atlassian-b2b.jpg).  
+**Visual craft reference:** [`.impeccable/reference/ui-styling-soft-monochrome.jpg`](../.impeccable/reference/ui-styling-soft-monochrome.jpg).  
+**Layout density reference (structure only):** [`.impeccable/reference/ui-styling-atlassian-b2b.jpg`](../.impeccable/reference/ui-styling-atlassian-b2b.jpg).  
 **Anti-reference (do not follow):** [`.impeccable/reference/ui-styling-medit-soft.jpg`](../.impeccable/reference/ui-styling-medit-soft.jpg).
 
 This file satisfies feature **R14** for interaction and control mapping. Do not fork a second palette here—change `DESIGN.md` instead.
@@ -16,14 +17,14 @@ This file satisfies feature **R14** for interaction and control mapping. Do not 
 - Do not introduce hand-rolled visual primitives when a Radix Themes component can provide equivalent structure.
 - Keep custom CSS focused on app-level layout and canvas-specific surfaces, not one-off management widgets.
 
-Dual register (from the 2026-11-14 intent amendment):
+Dual register:
 
-| Register | Surfaces | Craft bar |
-|-|-|-|
-| **Management** | Project/case lists, create/open, import, tables, filters, dropdowns | Atlassian-like B2B |
-| **Canvas** | In-case 3D workspace | Figma / Blender / VS Code–like editor chrome |
+| Register | Surfaces | Structure | Visual skin |
+|-|-|-|-|
+| **Management** | Project/case lists, create/open, import, tables, filters, dropdowns | Atlassian-like grid / business components | Soft monochrome floating islands + accent for strong actions |
+| **Canvas** | In-case 3D workspace | Viewport-first editor chrome | Same soft monochrome skin; compact strips |
 
-Soft pill tool rails are **forbidden** as the default editor chrome.
+Soft pill tool rails as the default editor chrome remain **forbidden**. Wellness/Medit marketing chrome remains forbidden.
 
 Behavior details: `features/3d-bone-editor/spec.md` (R14, R26–R34). Patterns below are the interaction bar.
 
