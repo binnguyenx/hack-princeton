@@ -9,6 +9,7 @@ from skullfix_ai.config import ApplicationSettings
 from .errors import parser_response, strict_json
 from .body import BodyReadError, read_json_bytes
 from .routes.application import create_application_router
+from .routes.chat import create_chat_router
 from .routes.placement import create_placement_router
 from .routes.measurements import create_measurement_router
 from .routes.voxel_operations import create_voxel_router
@@ -54,6 +55,7 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
         return JSONResponse({'error': str(error.detail)}, status_code=error.status_code, headers=error.headers)
 
     app.include_router(create_application_router())
+    app.include_router(create_chat_router())
     app.include_router(create_placement_router())
     app.include_router(create_package_router())
     app.include_router(create_landmark_router())
