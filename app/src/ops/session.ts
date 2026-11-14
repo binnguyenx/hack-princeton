@@ -53,6 +53,17 @@ export function readState(ctx: OpsContext): OpResult<EditorState | null> {
 
 export function navigateCamera(ctx: OpsContext, camera: CameraState): OpResult {
   if (!ctx.store.getState()) return fail('No project open')
+  const values = [...camera.position, ...camera.target]
+  if (!values.every(Number.isFinite)) {
+    return fail('Camera state must contain finite coordinates')
+  }
+  const distanceSquared = camera.position.reduce((sum, value, index) => {
+    const delta = value - camera.target[index]
+    return sum + delta * delta
+  }, 0)
+  if (distanceSquared < 1e-12) {
+    return fail('Camera must remain separated from its target')
+  }
   ctx.store.update((st) => ({
     ...st,
     view: {
@@ -206,6 +217,7 @@ export function restoreRevision(
     (r) => r.id === args.revisionId && r.candidateId === args.candidateId,
   )
   if (!rev) return fail('Revision not found for candidate')
+  if (cand.currentRevisionId === rev.id) return ok()
   ctx.store.update((st) => ({
     ...st,
     dirty: true,

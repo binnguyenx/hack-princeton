@@ -20,7 +20,17 @@ for (const d of entries) {
   const meta = JSON.parse(readFileSync(metaPath, 'utf8'))
   const primary = meta.primaryVolume || 'defective_skull.nrrd'
   cpSync(metaPath, path.join(dest, 'metadata.json'))
-  cpSync(path.join(src, primary), path.join(dest, primary))
+  const fileKeys = Object.keys(meta.files || {})
+  if (fileKeys.length > 0) {
+    for (const rel of fileKeys) {
+      const from = path.join(src, rel)
+      if (existsSync(from)) {
+        cpSync(from, path.join(dest, rel))
+      }
+    }
+  } else {
+    cpSync(path.join(src, primary), path.join(dest, primary))
+  }
   catalog.push({
     id: meta.sampleId || d.name,
     label: d.name,

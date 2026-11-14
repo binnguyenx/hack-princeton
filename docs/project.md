@@ -32,7 +32,11 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 |-|-|-|
 | [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Accepted backend/state boundaries, structural schemas, authoritative SQLite application storage, and local artifact handling. The synchronous operation service and reconstruction mock are implemented; The live app already has Express CRUD APIs; Python has a read-only app workspace adapter. AI API/graphs/model integrations and live AI mutations remain unimplemented. The retry lifecycle is proposed pending review; real measurement, browser geometry, editing, inspection, and comparison contracts remain unresolved. |
 | [measure-candidate](../features/measure-candidate/intent.md) | proposed | Earlier draft of the measurement milestone. Folded into `ai-workspace-assistant`. Do not implement separately. |
-| [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
+| [3D bone editor (umbrella)](../features/3d-bone-editor/README.md) | retired | Former mega-feature; split into category folders below. Root intent/spec/plan are retired — do not implement against them. |
+| [Software app model](../features/3d-bone-editor/software-app-model/intent.md) | shipped | Domain + persistent local CRUD for project / case / sample / candidate / revision. |
+| [Business UI](../features/3d-bone-editor/business-ui/intent.md) | shipped | Atlassian-like management surfaces over the app model. |
+| [Canvas workspace](../features/3d-bone-editor/canvas-workspace/intent.md) | shipped | Unified canvas tools + viewport behavior, GLB-first rendering, restore/apply integrity, and clean-state UI contracts. |
+| [Canvas workspace Slicer relaunch](../features/3d-bone-editor/canvas-workspace-improve/intent.md) | shipped | Cross-reference Workbench: Slicer mouse nav, synchronized Axial/Sagittal/Coronal dock, Window/Level + Place modes, RAS truth, WebGL rebuild recovery. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
@@ -42,8 +46,9 @@ Status values: proposed, foundation accepted, in progress, shipped, retired.
 1. Keep `hackprinceton_intent.md` as draft product input. Do not treat it as an accepted feature spec.
 2. The AI foundation acceptance is recorded in `features/ai-workspace-assistant/intent.md` and `spec.md`. They remain separate files and overall draft documents because the retry clarification and operation-specific contracts are still open. This index only reflects the recorded scope; it does not accept new requirements.
 3. Do not start a second implementation from `features/measure-candidate/`. That draft is folded into the assistant spec.
-4. The current `plan.md` is the completed operation-service/mock record; completed fixture, schema, and storage plans are archived under the feature's `plans/` directory. Write a separate plan before graph, API, model, or real-adapter coding. Review the proposed retry requirements before including them.
-5. Inside the AI feature, after shared schemas and storage, the synchronous operation service and reconstruction mock are available for the next graph/API slice. The reconstruction mock and real measurement then remain independent. The mock does not wait on mechanical tools or a measurement contract, and it does not complete the first real integration milestone. See `docs/ai/workflow.md`.
+4. Inside the 3D editor: **software-app-model** → **business-ui** → **canvas-workspace** → **business-ui-polish** → **canvas-workspace-improve** (Cross-reference Workbench). Do not reopen the retired umbrella plan under `features/3d-bone-editor/plan.md`.
+5. The current AI `plan.md` is the completed operation-service/mock record; completed fixture, schema, and storage plans are archived under the feature's `plans/` directory. Write a separate plan before graph, API, model, or real-adapter coding. Review the proposed retry requirements before including them.
+6. Inside the AI feature, after shared schemas and storage, the synchronous operation service and reconstruction mock are available for the next graph/API slice. See `docs/ai/workflow.md`.
 
 
 ## Design system

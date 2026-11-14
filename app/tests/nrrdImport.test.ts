@@ -37,4 +37,27 @@ describe('R2 nrrd import', () => {
     const buf = new TextEncoder().encode('NRRD0005\nencoding: raw\n\n')
     expect(() => parseNrrdBuffer(buf)).toThrow(/sizes/i)
   })
+
+  it('preserves origin, direction vectors, and patient basis', () => {
+    const header = [
+      'NRRD0005',
+      'type: uchar',
+      'dimension: 3',
+      'space: left-posterior-superior',
+      'sizes: 2 3 4',
+      'space directions: (0,2,0) (-3,0,0) (0,0,4)',
+      'space origin: (100,50,-20)',
+      'encoding: raw',
+      '',
+      '',
+    ].join('\n')
+    const parsed = parseNrrdBuffer(new TextEncoder().encode(header))
+    expect(parsed.spatial.patientBasis).toBe('LPS')
+    expect(parsed.spatial.spaceOrigin).toEqual([100, 50, -20])
+    expect(parsed.spatial.spaceDirections).toEqual([
+      [0, 2, 0],
+      [-3, 0, 0],
+      [0, 0, 4],
+    ])
+  })
 })

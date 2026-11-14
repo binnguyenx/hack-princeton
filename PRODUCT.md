@@ -38,10 +38,11 @@ Human-directed iteration is central: generate → inspect → constrain or edit 
 Confirmed (initial editor phase per accepted/planned feature docs):
 
 - Import and spatially verify NRRD samples; create candidates; rigid transform with revisions; camera/visibility/inspection plane as view-only; portable local save/open.
+- Slicer-standard canvas inspection: validated patient coordinates, recoverable 3D navigation, synchronized Axial/Sagittal/Coronal views, crosshair, window/level, projection/ruler/display controls, and one-shot or persistent placement records.
 - Shared operation interface for UI and programmatic callers.
 - At least two licensed sample files committed under `data/samples/`.
 
-Deferred (not this phase): voxel sculpt, annotate, measure, compare, in-app generation/chat, model training, cloud collaboration, raw CT preparation, clinical approval, manufacture.
+Deferred (not this phase): voxel sculpt, advanced saved annotations and quantitative comparison, in-app generation/chat, model training, cloud collaboration, raw CT preparation, clinical approval, manufacture.
 
 Undecided product facts carried forward: exact defect locations beyond cranial vault demo scope; whether guided generation lands in MVP vs stretch.
 

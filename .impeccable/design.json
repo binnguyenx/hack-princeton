@@ -1,23 +1,26 @@
 {
+  "schemaVersion": 2,
   "version": 1,
   "designSystem": "hack-princeton",
   "shadows": {
-    "panel": "0 10px 30px rgba(26, 27, 31, 0.06)",
-    "panel-active": "0 8px 24px rgba(26, 27, 31, 0.08)",
-    "tool-active": "0 4px 14px rgba(201, 203, 232, 0.55)"
+    "panel": "none",
+    "menu": "0 4px 12px rgba(23, 43, 77, 0.12)",
+    "modal": "0 8px 24px rgba(23, 43, 77, 0.16)",
+    "tool-active": "none"
   },
   "focus": {
-    "ring": "0 0 0 3px rgba(201, 203, 232, 0.9)",
-    "ring-signal": "0 0 0 3px rgba(255, 159, 100, 0.55)"
+    "ring": "0 0 0 2px rgba(0, 82, 204, 0.45)",
+    "ring-signal": "0 0 0 2px rgba(222, 53, 11, 0.45)"
   },
   "motion": {
-    "fast": "120ms ease-out",
-    "normal": "180ms ease-out"
+    "fast": "100ms ease-out",
+    "normal": "160ms ease-out"
   },
   "icons": {
-    "strokeWidth": 1.5,
-    "sizeSm": "16px",
-    "sizeMd": "20px"
+    "strokeWidth": 1.75,
+    "sizeSm": "14px",
+    "sizeMd": "16px"
   },
-  "reference": ".impeccable/reference/ui-styling-medit-soft.jpg"
+  "reference": ".impeccable/reference/ui-styling-atlassian-b2b.jpg",
+  "antiReference": ".impeccable/reference/ui-styling-medit-soft.jpg"
 }

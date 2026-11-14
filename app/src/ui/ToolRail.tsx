@@ -3,8 +3,6 @@ import {
   Rotate3d,
   MousePointer,
   Move3d,
-  Undo2,
-  Save,
   Check,
   X,
 } from 'lucide-react'
@@ -13,18 +11,16 @@ export type ToolId =
   | 'select'
   | 'navigate'
   | 'transform'
-  | 'restore'
-  | 'save'
 
 type Props = {
   active: ToolId
   onSelect: (id: ToolId) => void
-  onAction: (id: ToolId) => void
   onApplyTransform: () => void
   onCancelTransform?: () => void
   message?: string | null
   signal?: boolean
   isCandidateActive?: boolean
+  isActionPending?: boolean
 }
 
 type ToolConfig = {
@@ -33,7 +29,6 @@ type ToolConfig = {
   shortcut: string
   description: string
   icon: typeof Rotate3d
-  isAction?: boolean
   requiresCandidate?: boolean
 }
 
@@ -60,34 +55,17 @@ const TOOLS: ToolConfig[] = [
     icon: Move3d,
     requiresCandidate: true,
   },
-  {
-    id: 'restore',
-    label: 'Restore Revision',
-    shortcut: '⌘Z',
-    description: 'Roll back candidate implant to its previous recorded pose.',
-    icon: Undo2,
-    isAction: true,
-    requiresCandidate: true,
-  },
-  {
-    id: 'save',
-    label: 'Save Project',
-    shortcut: '⌘S',
-    description: 'Persist all cases, candidate poses, and revisions.',
-    icon: Save,
-    isAction: true,
-  },
 ]
 
 export function ToolRail({
   active,
   onSelect,
-  onAction,
   onApplyTransform,
   onCancelTransform,
   message,
   signal,
   isCandidateActive,
+  isActionPending,
 }: Props) {
   const isTransforming = active === 'transform'
 
@@ -106,13 +84,9 @@ export function ToolRail({
                   <button
                     type="button"
                     className={`studio-tool-btn ${isActive ? 'is-active' : ''}`}
-                    disabled={isDisabled}
+                    disabled={isDisabled || !!isActionPending}
                     onClick={() => {
-                      if (tool.isAction) {
-                        onAction(tool.id)
-                      } else {
-                        onSelect(tool.id)
-                      }
+                      onSelect(tool.id)
                     }}
                     aria-label={tool.label}
                   >
@@ -159,6 +133,7 @@ export function ToolRail({
                 className="btn btn--primary btn--xs"
                 onClick={onApplyTransform}
                 title="Commit Transform to Revision"
+                disabled={!isCandidateActive || !!isActionPending}
               >
                 <Check size={12} />
                 <span>Apply</span>
