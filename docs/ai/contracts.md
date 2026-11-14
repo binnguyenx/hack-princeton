@@ -2,7 +2,7 @@
 
 ## Live app authority (current)
 
-The UI's Express backend and data/storage/app-model.sqlite are authoritative for live projects, cases, samples, candidates and revisions. The Python SQLite/operation-service/mock implementation below is an isolated demo, not a second app writer. AppWorkspaceAdapter and HttpAppManifestReader read the actual ProjectManifest contract; schemas/workspace.py preserves its hierarchy, camelCase spatial metadata, raw volume hashes and flat pose. Live AI mutations remain disabled. See [app-integration.md](app-integration.md) for implemented routes, mismatches, fixes and LangGraph readiness.
+The FastAPI application and ApplicationRepository own live projects, cases, samples, candidates and revisions at data/storage/app-model.sqlite. Express was removed after the approved cutover/observation; the old runtime remains only in the external recovery archive. The Python SQLite/operation-service/mock implementation below is an isolated demo, not a second app writer. AppWorkspaceAdapter and HttpAppManifestReader read the actual ProjectManifest contract; schemas/workspace.py preserves its hierarchy, camelCase spatial metadata, raw volume hashes and flat pose. Live AI mutations remain disabled. See [app-integration.md](app-integration.md) for implemented routes, mismatches, fixes and LangGraph readiness.
 
 
 Status: foundation accepted; shared schemas and local application storage implemented; retry clarification proposed; operation-specific contracts unresolved. These AI/backend interfaces are not teammate-approved geometry or browser contracts, and they do not duplicate the requirements in `features/ai-workspace-assistant/spec.md`.
@@ -302,4 +302,12 @@ Source and candidate commits enforce artifact lifecycle eligibility. Version 2 a
 
 Mutation commit precedes completed-outcome persistence. A lost acknowledgement, uncertain commit, or failed outcome write reports reconciliation-required and does not replay the adapter. Known failed artifacts remain inspectable. A file whose record write failed is identified in the failed run by its public reference and artifact_record_missing detail. Storage outage can prevent even that record; explicit local reconciliation remains necessary. No automatic recovery or exactly-once external execution is claimed.
 
-Stable service outcomes include cross-case-reference, reference-mismatch, stale-revision, operation-contract-missing, operation-unsupported, adapter-failed, adapter-output-invalid, artifact-failed, and persistence-failed. Malformed structural input raises Pydantic ValidationError before execution. FastAPI/SSE, HTTP retrieval, graph, checkpoints, model integration, and real operations remain unimplemented.
+Stable service outcomes include cross-case-reference, reference-mismatch, stale-revision, operation-contract-missing, operation-unsupported, adapter-failed, adapter-output-invalid, artifact-failed, and persistence-failed. Malformed structural input raises Pydantic ValidationError before execution. Application FastAPI transport and the read-only/fake-model graph are implemented separately; sandbox artifact HTTP retrieval, SSE, checkpoints, Bedrock and real operations remain unimplemented.
+
+## Nine-task queue integration status
+
+ApplicationRepository is the Python implementation of the real app model, separate from sandbox SQLiteApplicationStorage. FastAPI13 routes, built frontend, opt-in dev proxy and actual Chrome smoke are verified. RepositoryManifestReader feeds genuine LangGraph with fake-model proposals and typed tools; explanations use actual observations. Sandbox reconstruction requires an explicit binding and never writes live candidates. Live cutover/removal are gated independently and do not block graph tests. See setup.md, work-summary.md and features/express-to-fastapi/task-board.md for commands/evidence.
+
+## Completed live migration
+
+Read features/express-to-fastapi/cutover-completion.md for exact approved discovery, new empty baseline, backup/restore, full1800second monitoring, retained-data/restart and removal evidence. Active app requires no Express/Multer. Shared FastAPI contracts, actual browser checks, frozen Node data and Python HTTPfault/backup/repository/graph tests retain equivalent coverage. External backup/rollback runtime is retained7days. Full draft acceptance and pending hardening/recovery/provider/geometry requirements are not inferred.

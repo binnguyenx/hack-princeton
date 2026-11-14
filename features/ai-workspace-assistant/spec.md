@@ -144,7 +144,7 @@ The owner authorized R50–R57 and S35–S42 for the storage fixes, synchronous 
 
 ## Design
 
-The target AI subproject is `backend/ai`. It proposes a local FastAPI service. LangGraph proposes a registered tool for AI requests; direct mechanical requests name an operation and typed parameters. Both become the same validated operation command. LangChain's Bedrock chat integration calls a configurable Claude Sonnet model. SQLite application storage owns authoritative state. A separate SQLite file stores LangGraph checkpoints. Geometry files stay local and are addressed through artifact records, not raw paths in frontend contracts or blobs in checkpoints.
+The target AI subproject is `backend/ai`. It proposes a local FastAPI service. LangGraph proposes a registered tool for AI requests; direct mechanical requests name an operation and typed parameters. Both become the same validated operation command. LangChain's Bedrock chat integration calls a configurable Claude Sonnet model. SQLite application storage owns authoritative state only inside the isolated AI sandbox; the live UI repository remains separate. A separate SQLite file stores LangGraph checkpoints. Geometry files stay local and are addressed through artifact records, not raw paths in frontend contracts or blobs in checkpoints.
 
 A run moves through accepted, executing, ready-to-commit, and one terminal state. Commit rechecks revision freshness and atomically inserts the child revision and advances the current pointer. External geometry execution and filesystem writes are not part of that SQLite transaction; failed commits leave non-authoritative artifacts for local reconciliation. SSE carries progress and exactly one terminal result after the stream starts.
 
@@ -210,3 +210,9 @@ The first real integration milestone is S1, after an agreed measurement contract
 - Cited evidence retrieval.
 - Clinical certification, manufacture, and outcome prediction.
 - A universal fit score or pass threshold.
+
+## Queue implementation evidence (not whole-document acceptance)
+
+The owner authorized the nine-task queue. Current-baseline Python application repository and FastAPI transport, disposable cross-runtime/S13/browser verification and genuine fake-model LangGraph are implemented. Live cutover and active-app Express removal are complete after approved1800second observation. D1–D5 hardening and proposed recovery are not inferred accepted. Live authority is FastAPI/ApplicationRepository on the recorded application root. See features/express-to-fastapi/task-board.md and docs/ai/work-summary.md.
+
+Implemented locations: backend/ai/src/skullfix_ai/application/, backend/ai/src/skullfix_ai/api/, backend/ai/src/skullfix_ai/agent/, backend/ai/src/skullfix_ai/tools/, backend/ai/tests/integration/application/, backend/ai/tests/integration/api/, backend/ai/tests/integration/agent/, app/tests/backendContract/ and app/e2e/migration.e2e.ts. No geometry/model/live-mutation capability is implied.

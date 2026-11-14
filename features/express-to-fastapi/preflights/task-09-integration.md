@@ -1,0 +1,3 @@
+# Preflight: T09 integration and handoff
+
+Date: 2026-11-14. Coordinator owns shared Node lifecycle/cross-runtime/browser tests, frontend opt-in dev proxy (legacy default preserved until cutover), Python dependency config/runner and final documentation. Requirements: migration R1–R34 within queue authorization and AI read-only/fake-model scope. Verify new tests red/green, real13 route inventories, baseline suite on both HTTP backends, copied SQLite bidirectional reads/writes, actual browser workflow on dev and built app, sequential S13, Python legacy/new suites, build/type/lint/docs/whitespace. Live cutover/Express removal remain blocked independently; graph acceptance need not wait for observation window. Do not claim full migration done while these gates remain.
