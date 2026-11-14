@@ -1,23 +1,37 @@
 import { editorStore } from '../state/store'
 import {
+  closeDocument,
   createCandidate,
+  createCase,
+  createProject,
+  listProjects,
   navigateCamera,
+  openDocument,
   readState,
   restoreRevision,
   selectObject,
+  setActiveDocument,
   setInspectionPlane,
   setVisibility,
   transformCandidate,
   type OpsContext,
 } from '../ops/session'
+import { importPreparedSample } from '../ops/importPrepared'
 
 const browserOps = {
   readState,
+  listProjects,
   navigateCamera,
   setVisibility,
   setInspectionPlane,
   selectObject,
+  createProject,
+  createCase,
+  importPreparedSample,
   createCandidate,
+  openDocument,
+  closeDocument,
+  setActiveDocument,
   transformCandidate,
   restoreRevision,
 }

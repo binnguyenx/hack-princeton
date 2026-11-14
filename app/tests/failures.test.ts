@@ -6,7 +6,7 @@ import {
 } from '../src/ops'
 import type { Mat4 } from '../src/domain/types'
 import { openDemo, openSeed, sample0 } from './helpers'
-import { importSample } from '../src/ops'
+import { importSample } from '../src/ops/persistence'
 import { mkdtemp, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'

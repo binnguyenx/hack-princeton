@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createCandidate,
-  importSample,
-  openProject,
-  readState,
-} from '../src/ops'
+import { createCandidate, readState } from '../src/ops'
+import { importSample, openProject } from '../src/ops/persistence'
 import { demoProject, freshCtx, openDemo, sample0, sample1 } from './helpers'
 
 describe('R1 ownership', () => {
