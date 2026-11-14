@@ -49,3 +49,7 @@ Biomedical engineers and surgeons use the same request. This touches the AI pane
 2026-11-14 — Folded into `features/ai-workspace-assistant/` as the first real measurement milestone of the AI workstream. This file stays as the earlier draft. Do not implement a second measurement behavior from it, and do not add a spec here. Status remains draft.
 
 2026-11-14 — Backend application storage assigns persistent case, candidate, revision, and artifact ids. The shared contract remains proposed and operation-specific measurement details remain unresolved. Status remains draft.
+
+2026-11-14 — Proposed first method is foreground-volume (`candidate.foreground-volume.label-voxel.v1`), recorded for owner review in `features/ai-workspace-assistant/plans/t1c-measurement-contract.md`. That plan is not accepted/agreed and is not a competing spec. Status remains draft.
+
+2026-11-14 — Owner accepted the T1C foreground-volume **contract** only. Canonical requirements are `features/ai-workspace-assistant` R70–R79 / S51–S58 and `docs/ai/contracts.md`. The plan file is now a decision record. Implementation and runtime enablement are not authorized. This file remains draft and must not define a second measurement behavior.

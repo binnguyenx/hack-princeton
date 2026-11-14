@@ -6,7 +6,9 @@ Author: Minh Triet Nguyen · Date: 2026-11-14 · Status: draft
 
 The owner has accepted the foundation scope for planning and later implementation: backend authority and identifier ownership; one mechanical/AI operation service; immutable revisions and atomic freshness checks; revision-scoped measurements and spatial metadata; distinct request, run, conversation, and geometry identities; the common result envelope and single terminal SSE behavior; and a replaceable reconstruction mock.
 
-This acceptance does not include real measurement methods, physical units, real artifact formats, browser execution details, editing, inspection, comparison, contour-guided regeneration, or teammate approval of those interfaces. The retry lifecycle added after this acceptance is a proposed clarification pending review. The file remains `draft` while that proposal and operation-specific questions are open.
+This acceptance does not include real artifact formats, browser execution details, editing, inspection, comparison, contour-guided regeneration, or teammate approval of those interfaces. The retry lifecycle added after this acceptance is a proposed clarification pending review.
+
+Separately, the owner accepted the T1C foreground-volume measurement **contract** (method, units, inputs, limitations, idempotency, integrity, and live/sandbox boundary as recorded in `docs/ai/contracts.md` and R70–R79 / S51–S58), then separately authorized T2 live mechanical implementation of that contract. That authorization does **not** bind sandbox `OperationService` measurement, enable AI/chat mutation or LangGraph `measure.candidate`, or accept unrelated draft requirements. The file remains `draft` while other proposals and operation-specific questions are open.
 
 ## Problem
 
@@ -58,7 +60,7 @@ This work owns the AI request path, the common operation service, progress and t
 
 ## Open questions
 
-1. Which measurement operation is first, and which teammate document defines its method, units, inputs, and limitation?
+1. ~~Which measurement operation is first, and which teammate document defines its method, units, inputs, and limitation?~~ **Resolved:** first method is `candidate.foreground-volume.label-voxel.v1` (`measure_kind: foreground-volume`), defined in `docs/ai/contracts.md` and R70–R79. Live mechanical T2 binding is authorized and implemented; sandbox/LangGraph measurement remains unbound.
 2. Which single local edit is first, and which region constraints can that operation actually honor?
 3. What artifact format, units, coordinate frame, and transforms does each real geometry operation require?
 4. Is the authoritative workspace adapter in-process or HTTP?
@@ -77,3 +79,11 @@ This work owns the AI request path, the common operation service, progress and t
 2026-11-14 — The owner authorized authoritative SQLite application storage and local artifact handling within the accepted foundation. This includes immutable revision commits, revision-scoped review history, run records, case-scoped request conflict primitives, and explicit non-authoritative artifact reconciliation. It does not authorize operation orchestration, model calls, API transport, geometry execution, or the proposed AI retry/recovery lifecycle.
 
 2026-11-14 — Align integration with the shipped UI/backend: app/server/storageSqlite.ts and /api own live project/case/sample/candidate/revision state. Python mock storage remains an isolated demo. Read live context through an adapter; do not duplicate app state or advertise synthetic artifacts as NRRD reconstruction. This alignment is explicitly requested by the owner.
+
+2026-11-14 — Owner authorized the nine-task queue through fake-model LangGraph: authoritative repository context, typed/capability-gated tools, deterministic explanations and isolated sandbox mock execution. This is scoped implementation authorization, not acceptance of pending recovery, providers, geometry contracts or live AI writes.
+
+2026-11-14 — The owner authorized a stateless read-only chat transport: typed browser client → the existing FastAPI application → fake-model LangGraph → authoritative metadata response. The chat widget is deferred because its UI is not ready. No provider, sandbox generation binding or live mutation is exposed. This scoped authorization does not accept the whole draft.
+
+2026-11-14 — The owner accepted the seven T1C decision-sheet items for the foreground-volume measurement **contract** only. Canonical wording is in `docs/ai/contracts.md` and R70–R79 / S51–S58. The plan file `plans/t1c-measurement-contract.md` is the decision record, not a competing spec. This does not authorize T2 implementation, bind sandbox `measure.candidate`, or change read-only AI/chat. Overall status remains draft.
+
+2026-11-14 — After T1C fold-in, the owner separately authorized T2 live mechanical implementation within that measurement scope: `ForegroundVolumeService` over ApplicationRepository, measurement POST/GET routes, additive live persistence, and accepted NRRD/idempotency/error semantics. Does not bind LangGraph `measure.candidate`, change Chat UI, enable AI mutations, call AWS/Bedrock, or implement unrelated geometry. Overall status remains draft.
