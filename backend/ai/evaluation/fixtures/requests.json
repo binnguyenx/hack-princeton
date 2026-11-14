@@ -1,0 +1,176 @@
+{
+  "fixture_version": "skullfix-demo-v1",
+  "requests": [
+    {
+      "sample_id": "request-mock-generate-ai",
+      "path": "ai",
+      "payload": {
+        "request_id": "request-demo-mock-ai-001",
+        "conversation_id": "conversation-demo-001",
+        "case_id": "case-demo-primary",
+        "message": "Generate the available demo candidate.",
+        "selection": {
+          "selection_id": "selection-source-primary",
+          "kind": "source-anatomy",
+          "geometry_revision_id": "anatomy-revision-primary-v1",
+          "coordinate_frame": "fixture-primary-local"
+        }
+      },
+      "expected_validated_command": {
+        "request_id": "request-demo-mock-ai-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "input_revisions": {
+          "source_anatomy_revision_id": "anatomy-revision-primary-v1"
+        },
+        "references": {
+          "selection": {
+            "selection_id": "selection-source-primary",
+            "kind": "source-anatomy",
+            "geometry_revision_id": "anatomy-revision-primary-v1",
+            "coordinate_frame": "fixture-primary-local"
+          }
+        },
+        "parameters": {
+          "fixture_variant": "deterministic-default"
+        }
+      }
+    },
+    {
+      "sample_id": "request-mock-generate-mechanical",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-mock-mechanical-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "source_anatomy_revision_id": "anatomy-revision-primary-v1",
+        "selection": {
+          "selection_id": "selection-source-primary",
+          "kind": "source-anatomy",
+          "geometry_revision_id": "anatomy-revision-primary-v1",
+          "coordinate_frame": "fixture-primary-local"
+        },
+        "parameters": {
+          "fixture_variant": "deterministic-default"
+        }
+      },
+      "expected_validated_command": {
+        "request_id": "request-demo-mock-mechanical-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "input_revisions": {
+          "source_anatomy_revision_id": "anatomy-revision-primary-v1"
+        },
+        "references": {
+          "selection": {
+            "selection_id": "selection-source-primary",
+            "kind": "source-anatomy",
+            "geometry_revision_id": "anatomy-revision-primary-v1",
+            "coordinate_frame": "fixture-primary-local"
+          }
+        },
+        "parameters": {
+          "fixture_variant": "deterministic-default"
+        }
+      }
+    },
+    {
+      "sample_id": "request-cross-case-selection",
+      "path": "ai",
+      "payload": {
+        "request_id": "request-demo-cross-case-001",
+        "conversation_id": "conversation-demo-001",
+        "case_id": "case-demo-primary",
+        "message": "Generate a demo candidate from this selection.",
+        "selection": {
+          "selection_id": "selection-source-secondary",
+          "kind": "source-anatomy",
+          "geometry_revision_id": "anatomy-revision-secondary-v1",
+          "coordinate_frame": "fixture-secondary-local"
+        }
+      }
+    },
+    {
+      "sample_id": "request-stale-measurement",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-stale-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "measure.candidate",
+        "candidate_id": "candidate-demo-primary",
+        "expected_revision_id": "candidate-revision-primary-r1",
+        "parameters": {}
+      }
+    },
+    {
+      "sample_id": "request-duplicate-original",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-duplicate-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "source_anatomy_revision_id": "anatomy-revision-primary-v1",
+        "parameters": {
+          "fixture_variant": "deterministic-default"
+        }
+      }
+    },
+    {
+      "sample_id": "request-duplicate-identical-retry",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-duplicate-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "source_anatomy_revision_id": "anatomy-revision-primary-v1",
+        "parameters": {
+          "fixture_variant": "deterministic-default"
+        }
+      }
+    },
+    {
+      "sample_id": "request-duplicate-conflict",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-duplicate-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "source_anatomy_revision_id": "anatomy-revision-primary-v1",
+        "parameters": {
+          "fixture_variant": "different-payload"
+        }
+      }
+    },
+    {
+      "sample_id": "request-unsupported-contour",
+      "path": "ai",
+      "payload": {
+        "request_id": "request-demo-contour-001",
+        "conversation_id": "conversation-demo-001",
+        "case_id": "case-demo-primary",
+        "message": "Regenerate this candidate to follow a reference contour.",
+        "candidate_id": "candidate-demo-primary",
+        "expected_revision_id": "candidate-revision-primary-r2",
+        "selection": {
+          "selection_id": "selection-region-primary-current",
+          "kind": "persisted-region",
+          "reference_id": "region-primary-current",
+          "geometry_revision_id": "candidate-revision-primary-r2",
+          "coordinate_frame": "fixture-primary-local"
+        }
+      }
+    },
+    {
+      "sample_id": "request-unavailable-real-measurement",
+      "path": "mechanical",
+      "payload": {
+        "request_id": "request-demo-measurement-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "measure.candidate",
+        "candidate_id": "candidate-demo-primary",
+        "expected_revision_id": "candidate-revision-primary-r2",
+        "parameters": {}
+      }
+    }
+  ]
+}

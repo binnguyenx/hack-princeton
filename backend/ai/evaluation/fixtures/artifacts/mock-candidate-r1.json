@@ -1,0 +1,9 @@
+{
+  "asset_kind": "synthetic-reconstruction-mock",
+  "label": "Candidate fixture revision 1",
+  "patient_data": false,
+  "anatomically_valid": false,
+  "geometric_quality_claim": false,
+  "vertices": [[0, 0, 0], [0.8, 0, 0], [0, 0.8, 0], [0, 0, 0.8]],
+  "faces": [[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]]
+}

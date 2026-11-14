@@ -4,11 +4,11 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   createCandidate,
-  openProject,
+  openDocument,
   readState,
-  saveProject,
   transformCandidate,
 } from '../src/ops'
+import { openProject, saveProject } from '../src/ops/persistence'
 import type { Mat4 } from '../src/domain/types'
 import { EditorStore } from '../src/state/store'
 import { demoProject, freshCtx, openDemo } from './helpers'
@@ -47,6 +47,31 @@ describe('R11 R12 project package', () => {
       before.value.samples.find((s) => s.id === 'sample-000')!.sourceAnatomy
         .volumeHash,
     )
+    await rm(tmp, { recursive: true, force: true })
+  })
+
+  it('round-trips open document tabs and active tab', async () => {
+    const ctx = await openDemo()
+    const c = await createCandidate(ctx, 'sample-000')
+    expect(c.ok).toBe(true)
+    if (!c.ok) return
+    expect(openDocument(ctx, { kind: 'sample', id: 'sample-000' }).ok).toBe(
+      true,
+    )
+    expect(
+      openDocument(ctx, { kind: 'candidate', id: c.value.candidateId }).ok,
+    ).toBe(true)
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'proj-tabs-'))
+    expect((await saveProject(ctx, tmp)).ok).toBe(true)
+    const ctx2 = freshCtx()
+    expect((await openProject(ctx2, tmp)).ok).toBe(true)
+    const after = readState(ctx2)
+    if (!after.ok || !after.value) throw new Error('no state')
+    expect(after.value.openDocuments).toEqual([
+      { kind: 'sample', id: 'sample-000' },
+      { kind: 'candidate', id: c.value.candidateId },
+    ])
+    expect(after.value.activeDocumentId).toBe(c.value.candidateId)
     await rm(tmp, { recursive: true, force: true })
   })
 

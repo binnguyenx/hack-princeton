@@ -1,0 +1,23 @@
+[
+  {
+    "id": "skullbreak-000-parietotemporal",
+    "label": "skullbreak-000-parietotemporal",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/skullbreak-000-parietotemporal",
+    "license": "CC BY-NC-SA 4.0"
+  },
+  {
+    "id": "skullbreak-001-frontoorbital",
+    "label": "skullbreak-001-frontoorbital",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/skullbreak-001-frontoorbital",
+    "license": "CC BY-NC-SA 4.0"
+  },
+  {
+    "id": "skullbreak-002-bilateral",
+    "label": "skullbreak-002-bilateral",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/skullbreak-002-bilateral",
+    "license": "CC BY-NC-SA 4.0"
+  }
+]

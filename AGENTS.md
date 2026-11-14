@@ -11,6 +11,8 @@ This repo is agent-agnostic. Cursor, Claude Code, Codex, Copilot, and similar to
 5. After Build, run **Close** before ending the run (see **Close (required)** below). A major run is not finished when the code compiles; it is finished when Close reports.
 6. Skip intent-spec-plan only for tiny work: typos, copy tweaks, bugfixes that restore already-documented behavior, throwaway spikes. Say so explicitly when you skip it.
 
+AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec stay separate. Foundation schemas, application storage, the synchronous operation service, and reconstruction mock are implemented; future graph/API/model work requires its own plan and preflight. Newly proposed requirements require review before implementation. Other features keep a human gate between each document.
+
 ## Project skills
 
 Canonical skills live in `.agents/skills/` (Agent Skills format). Tool-specific skill dirs are symlinks to the same folders so discovery works natively:
@@ -77,11 +79,52 @@ Rules:
 
 ## Build / test / lint
 
+Run every deterministic backend suite from the repo root:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py
+```
+
+A healthy run reports `Ran 64 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
+
+From the repo root, run storage and artifact tests:
+
+```
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/storage/test_local_artifacts.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/integration/storage/test_sqlite_storage.py
+```
+
+Healthy runs print `Ran 4 tests` / `Ran 14 tests` and `OK`. They verify local storage invariants, not operation orchestration or retry recovery.
+
+Run the shared-schema unit tests:
+
+```
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/schemas/test_shared_schemas.py
+```
+
+A healthy schema run prints `Ran 12 tests` and `OK`. It verifies structural contracts, not application execution.
+
+Run the missing-contract unit test:
+
+```
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/operations/test_missing_contract.py
+```
+
+A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No lint command. `backend/ai/tests/live/` must not be described as passing.
+
 ```bash
 cd app && npm install && npm test && npm run build
 ```
 
 Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `cd app && npm run dev` (opens one editor; demo case loads automatically). Sample inspection: `data/README.md`.
+
+Validate the synthetic demo fixtures:
+
+```
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/integration/workflows/test_demo_fixtures.py
+```
+
+A healthy run prints `Ran 11 tests` and `OK`. This validates shared-schema conformance plus fixture integrity; application acceptance scenarios remain planned.
 
 ## Conventions agents get wrong
 
@@ -91,3 +134,7 @@ Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `
 - Do not end a major run after Build without Close (tests + diff vs intent/spec/plan + doc updates + Close report).
 - Do not freestyle UI colors, fonts, or layout when `DESIGN.md` exists — extend the system or ask before changing tokens.
 - Do not commit or push unless the user asks.
+
+## AI app integration
+
+Live authority is app/server/storageSqlite.ts and its /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports three existing warnings.

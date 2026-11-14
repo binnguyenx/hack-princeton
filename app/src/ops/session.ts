@@ -3,15 +3,19 @@ import { newId } from '../domain/id'
 import {
   IDENTITY_POSE,
   type CameraState,
+  type DocumentKind,
   type EditorState,
   type InspectionPlane,
   type Mat4,
   type OpResult,
+  type ProjectSummary,
 } from '../domain/types'
 import { EditorStore, emptyViewState } from '../state/store'
+import type { ProjectRegistry } from './projectRegistry'
 
 export type OpsContext = {
   store: EditorStore
+  registry?: ProjectRegistry
   saveWriter?: (
     dir: string,
     state: EditorState,
@@ -212,16 +216,141 @@ export function restoreRevision(
   return ok()
 }
 
-export function seedEmptyProject(ctx: OpsContext): void {
-  ctx.store.setState({
+export function createProject(
+  ctx: OpsContext,
+  args: { name: string },
+): OpResult<{ projectId: string }> {
+  const name = args.name.trim()
+  if (!name) return fail('Project name is required')
+  const projectId = newId('proj')
+  const state: EditorState = {
     user: { id: 'local-dev', displayName: 'Local Dev' },
-    project: { id: 'proj-new', ownerUserId: 'local-dev', name: 'Untitled' },
-    cases: [{ id: 'case-1', projectId: 'proj-new', name: 'Primary' }],
+    project: { id: projectId, ownerUserId: 'local-dev', name },
+    cases: [],
     samples: [],
     candidates: [],
     revisions: [],
     view: emptyViewState(),
     volumes: new Map(),
     dirty: false,
+    openDocuments: [],
+    activeDocumentId: null,
+  }
+  ctx.store.setState(state)
+  ctx.registry?.remember({
+    id: projectId,
+    name,
+    updatedAt: new Date().toISOString(),
+    caseCount: 0,
+  })
+  return okVal({ projectId })
+}
+
+export function listProjects(ctx: OpsContext): OpResult<ProjectSummary[]> {
+  return okVal(ctx.registry?.list() ?? [])
+}
+
+export function createCase(
+  ctx: OpsContext,
+  args: { name: string },
+): OpResult<{ caseId: string }> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const name = args.name.trim()
+  if (!name) return fail('Case name is required')
+  const caseId = newId('case')
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    cases: [
+      ...st.cases,
+      { id: caseId, projectId: st.project.id, name },
+    ],
+  }))
+  const next = ctx.store.getState()
+  if (next) {
+    ctx.registry?.updateCaseCount(next.project.id, next.cases.length)
+  }
+  return okVal({ caseId })
+}
+
+export function openDocument(
+  ctx: OpsContext,
+  args: { kind: DocumentKind; id: string },
+): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  if (args.kind === 'sample') {
+    if (!s.samples.some((x) => x.id === args.id)) {
+      return fail(`Unknown sample: ${args.id}`)
+    }
+  } else if (!s.candidates.some((c) => c.objectId === args.id)) {
+    return fail(`Unknown candidate: ${args.id}`)
+  }
+  const already = s.openDocuments.some(
+    (d) => d.kind === args.kind && d.id === args.id,
+  )
+  ctx.store.update((st) => ({
+    ...st,
+    openDocuments: already
+      ? st.openDocuments
+      : [...st.openDocuments, { kind: args.kind, id: args.id }],
+    activeDocumentId: args.id,
+  }))
+  return ok()
+}
+
+export function closeDocument(
+  ctx: OpsContext,
+  args: { kind: DocumentKind; id: string },
+): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const open = s.openDocuments.some(
+    (d) => d.kind === args.kind && d.id === args.id,
+  )
+  if (!open) return fail('Document tab is not open')
+  ctx.store.update((st) => {
+    const openDocuments = st.openDocuments.filter(
+      (d) => !(d.kind === args.kind && d.id === args.id),
+    )
+    let activeDocumentId = st.activeDocumentId
+    if (activeDocumentId === args.id) {
+      activeDocumentId = openDocuments[openDocuments.length - 1]?.id ?? null
+    }
+    return { ...st, openDocuments, activeDocumentId }
+  })
+  return ok()
+}
+
+export function setActiveDocument(
+  ctx: OpsContext,
+  args: { kind: DocumentKind; id: string },
+): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const open = s.openDocuments.some(
+    (d) => d.kind === args.kind && d.id === args.id,
+  )
+  if (!open) return fail('Document tab is not open')
+  ctx.store.update((st) => ({ ...st, activeDocumentId: args.id }))
+  return ok()
+}
+
+/** Test helper: seeded project with a default case (legacy fixtures). */
+export function seedEmptyProject(ctx: OpsContext): void {
+  const projectId = 'proj-new'
+  ctx.store.setState({
+    user: { id: 'local-dev', displayName: 'Local Dev' },
+    project: { id: projectId, ownerUserId: 'local-dev', name: 'Untitled' },
+    cases: [{ id: 'case-1', projectId, name: 'Primary' }],
+    samples: [],
+    candidates: [],
+    revisions: [],
+    view: emptyViewState(),
+    volumes: new Map(),
+    dirty: false,
+    openDocuments: [],
+    activeDocumentId: null,
   })
 }

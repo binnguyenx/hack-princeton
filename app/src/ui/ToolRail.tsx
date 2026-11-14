@@ -1,131 +1,178 @@
-type ToolId =
+import * as Tooltip from '@radix-ui/react-tooltip'
+import {
+  Rotate3d,
+  MousePointer,
+  Move3d,
+  Undo2,
+  Save,
+  Check,
+  X,
+} from 'lucide-react'
+
+export type ToolId =
   | 'select'
   | 'navigate'
-  | 'visibility'
-  | 'inspection'
-  | 'createCandidate'
   | 'transform'
   | 'restore'
   | 'save'
-  | 'open'
 
 type Props = {
   active: ToolId
   onSelect: (id: ToolId) => void
   onAction: (id: ToolId) => void
   onApplyTransform: () => void
+  onCancelTransform?: () => void
   message?: string | null
   signal?: boolean
+  isCandidateActive?: boolean
 }
 
-const VIEW: { id: ToolId; label: string; hint: string }[] = [
-  { id: 'navigate', label: 'Orbit', hint: 'Inspect' },
-  { id: 'select', label: 'Select', hint: 'V' },
-  { id: 'visibility', label: 'Visibility', hint: 'Show / hide' },
-  { id: 'inspection', label: 'Clip plane', hint: 'Inspect' },
-]
-
-const EDIT: { id: ToolId; label: string; hint: string }[] = [
-  { id: 'createCandidate', label: 'New candidate', hint: 'Copy source' },
-  { id: 'transform', label: 'Transform', hint: 'T · Apply' },
-  { id: 'restore', label: 'Restore', hint: '⌘Z' },
-]
-
-const FILE: { id: ToolId; label: string; hint: string }[] = [
-  { id: 'save', label: 'Save', hint: '⌘S' },
-  { id: 'open', label: 'Open', hint: 'Project' },
-]
-
-function Section({
-  title,
-  items,
-  active,
-  onSelect,
-  onAction,
-  onApplyTransform,
-}: {
-  title: string
-  items: { id: ToolId; label: string; hint: string }[]
-  active: ToolId
-  onSelect: (id: ToolId) => void
-  onAction: (id: ToolId) => void
-  onApplyTransform: () => void
-}) {
-  return (
-    <div className="rail-section">
-      <p className="rail-label">{title}</p>
-      {items.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          className={active === t.id ? 'tool active' : 'tool'}
-          onClick={() => {
-            if (t.id === 'transform') {
-              onSelect(t.id)
-              onApplyTransform()
-              return
-            }
-            if (
-              t.id === 'save' ||
-              t.id === 'open' ||
-              t.id === 'createCandidate' ||
-              t.id === 'restore'
-            ) {
-              onAction(t.id)
-            } else {
-              onSelect(t.id)
-            }
-          }}
-        >
-          <span className="tool-label">{t.label}</span>
-          <span className="tool-hint">{t.hint}</span>
-        </button>
-      ))}
-    </div>
-  )
+type ToolConfig = {
+  id: ToolId
+  label: string
+  shortcut: string
+  description: string
+  icon: typeof Rotate3d
+  isAction?: boolean
+  requiresCandidate?: boolean
 }
+
+const TOOLS: ToolConfig[] = [
+  {
+    id: 'navigate',
+    label: 'Orbit / Navigate',
+    shortcut: 'Space + Drag',
+    description: 'Rotate, pan, and inspect the 3D cranial anatomy.',
+    icon: Rotate3d,
+  },
+  {
+    id: 'select',
+    label: 'Select Object',
+    shortcut: 'V',
+    description: 'Select and highlight an anatomical volume or candidate.',
+    icon: MousePointer,
+  },
+  {
+    id: 'transform',
+    label: 'Transform Implant',
+    shortcut: 'T',
+    description: 'Position and align the active candidate repair plate over the cranial defect.',
+    icon: Move3d,
+    requiresCandidate: true,
+  },
+  {
+    id: 'restore',
+    label: 'Restore Revision',
+    shortcut: '⌘Z',
+    description: 'Roll back candidate implant to its previous recorded pose.',
+    icon: Undo2,
+    isAction: true,
+    requiresCandidate: true,
+  },
+  {
+    id: 'save',
+    label: 'Save Project',
+    shortcut: '⌘S',
+    description: 'Persist all cases, candidate poses, and revisions.',
+    icon: Save,
+    isAction: true,
+  },
+]
 
 export function ToolRail({
   active,
   onSelect,
   onAction,
   onApplyTransform,
+  onCancelTransform,
   message,
   signal,
+  isCandidateActive,
 }: Props) {
+  const isTransforming = active === 'transform'
+
   return (
-    <aside className="tool-rail" aria-label="Editor tools">
-      <Section
-        title="View"
-        items={VIEW}
-        active={active}
-        onSelect={onSelect}
-        onAction={onAction}
-        onApplyTransform={onApplyTransform}
-      />
-      <Section
-        title="Edit"
-        items={EDIT}
-        active={active}
-        onSelect={onSelect}
-        onAction={onAction}
-        onApplyTransform={onApplyTransform}
-      />
-      <Section
-        title="File"
-        items={FILE}
-        active={active}
-        onSelect={onSelect}
-        onAction={onAction}
-        onApplyTransform={onApplyTransform}
-      />
-      {message ? (
-        <p className={signal ? 'msg signal' : 'msg'} role="status">
-          {message}
-        </p>
-      ) : null}
-    </aside>
+    <Tooltip.Provider delayDuration={200}>
+      <aside className="studio-tool-rail" aria-label="3D Studio Tools">
+        <div className="studio-tool-group">
+          {TOOLS.map((tool) => {
+            const Icon = tool.icon
+            const isActive = active === tool.id
+            const isDisabled = tool.requiresCandidate && !isCandidateActive
+
+            return (
+              <Tooltip.Root key={tool.id}>
+                <Tooltip.Trigger asChild>
+                  <button
+                    type="button"
+                    className={`studio-tool-btn ${isActive ? 'is-active' : ''}`}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      if (tool.isAction) {
+                        onAction(tool.id)
+                      } else {
+                        onSelect(tool.id)
+                      }
+                    }}
+                    aria-label={tool.label}
+                  >
+                    <Icon size={18} />
+                    <span className="studio-tool-shortcut">{tool.id.slice(0, 5)}</span>
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content className="tooltip-content" side="right" sideOffset={8}>
+                    <div className="tooltip-title">
+                      <strong>{tool.label}</strong>
+                      <span className="tooltip-kbd">{tool.shortcut}</span>
+                    </div>
+                    <p className="tooltip-desc">{tool.description}</p>
+                    {isDisabled ? (
+                      <p className="tooltip-hint">Requires an active candidate tab</p>
+                    ) : null}
+                    <Tooltip.Arrow className="tooltip-arrow" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            )
+          })}
+        </div>
+
+        {isTransforming ? (
+          <div className="studio-armed-bar">
+            <div className="studio-armed-label">
+              <strong>Transform Mode Armed</strong>
+              <span>Adjust candidate plate position</span>
+            </div>
+            <div className="studio-armed-actions">
+              <button
+                type="button"
+                className="btn btn--secondary btn--xs"
+                onClick={onCancelTransform}
+                title="Cancel Transform (Esc)"
+              >
+                <X size={12} />
+                <span>Cancel</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary btn--xs"
+                onClick={onApplyTransform}
+                title="Commit Transform to Revision"
+              >
+                <Check size={12} />
+                <span>Apply</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {message ? (
+          <div className={`studio-toast ${signal ? 'studio-toast--signal' : ''}`}>
+            <span>{message}</span>
+          </div>
+        ) : null}
+      </aside>
+    </Tooltip.Provider>
   )
 }
-
-export type { ToolId }
