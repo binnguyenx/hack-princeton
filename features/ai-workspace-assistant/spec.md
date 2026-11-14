@@ -10,11 +10,13 @@ That acceptance does not make any real measurement, artifact format, browser pro
 
 The owner separately authorized R40, R41, S25, S26, and their shared-schema implementation. The owner also authorized R42–R49 and S27–S34 for the SQLite application-storage and local-artifact slice. These authorizations do not accept R35–R39 or any unresolved real operation.
 
+The owner separately accepted R70–R79 and S51–S58 for the T1C **foreground-volume** measurement contract, then authorized T2 live mechanical implementation of that contract. That does not bind sandbox measurement, enable AI/chat writes or LangGraph `measure.candidate`, or accept edit/inspect/compare/reconstruction contracts. The overall spec remains `draft`.
+
 ## UI/backend authority correction
 
 The owner directs that the shipped UI/backend contract takes precedence for app integration. Existing R1–R57 schema, storage, artifact and synchronous-operation implementations describe the isolated Python demo unless explicitly connected through the app workspace adapter. They do not supersede the app database or provide mutation guarantees to its existing HTTP endpoints. The following app-facing requirements are authorized; existing requirement IDs remain stable for historical test traceability.
 
-- R58. The live app's Express API and data/storage/app-model.sqlite own Project → Case → Sample → Candidate → Revision. Python must not create a competing current-revision authority or initialize that database with its sandbox schema.
+- R58. The live app's FastAPI API and data/storage/app-model.sqlite own Project → Case → Sample → Candidate → Revision. Python must not create a competing current-revision authority or initialize that database with its sandbox schema.
 - R59. App-facing context preserves camelCase ProjectManifest fields at the boundary, sourceAnatomy.spatial, raw volumeHash/volumeId, sample ownership and flat row-major 16-element pose. Source object identity is not an invented source revision id; revision order is not an inferred parent id.
 - R60. The workspace adapter loads a fresh authoritative project manifest, resolves sample/source/candidate object selection, verifies ownership and current-revision references, and rejects mismatches with stable errors. Restoring an earlier revision must be reflected by currentRevisionId, not by selecting the maximum revision order.
 - R61. AI mutation against the app is disabled while its mutation endpoints lack accepted atomic expected-revision/idempotency and generated-NRRD publication contracts. A preflight GET followed by the existing POST is not a substitute. Existing UI mutations remain unchanged.
@@ -90,6 +92,30 @@ The owner authorized R50–R57 and S35–S42 for the storage fixes, synchronous 
 - R56. Canonical operation requests acquire one atomic run claim. Equivalent completed retries return the persisted outcome; competing active owners do not execute another adapter; conflicting input returns request-id-conflict. This does not implement the proposed pre-model retry/recovery lifecycle.
 - R57. After a committed mutation, failed result bookkeeping must report reconciliation-required and must not replay execution or claim the mutation did not occur. Known failed or stale execution artifacts remain non-authoritative and inspectable; missing storage prevents a terminal guarantee and requires explicit reconciliation.
 
+## Read-only chat transport scope (authorized 2026-11-14)
+
+- R64. POST `/api/ai/chat` accepts a strict object with request_id, conversation_id, project_id, case_id, object_id, optional expected_revision_id and message. IDs are nonblank strings up to256 characters; message is nonblank up to4000 characters. Extra tool, provider, path or mutation fields are rejected. Existing13 route contracts remain unchanged.
+- R65. Each call builds the existing LangGraph with FakeToolModel and only workspace.describe_selection registered. The message is recorded only in transient invocation state; it does not select an operation. No provider, sandbox binding, filesystem-selected root or mutation callable is exposed.
+- R66. Context comes from an application-repository read-only SQLite snapshot, without schema initialization, INSERT, storage-directory creation, conversation persistence or artifact writes. Restored current pointers, ownership, spatial metadata, raw hashes and poses are preserved.
+- R67. Valid requests return JSON with echoed request/conversation ids, mode fake-read-only, explicit limitations and the actual GraphOutcome. Domain failures (stale, cross-case, missing selection, unavailable context) remain typed graph outcomes; invalid payloads are422, wrong content type415, unexpected server errors500 with a generic error. Existing malformed JSON/parser-size errors keep compatibility behavior.
+- R68. A typed TypeScript client posts same-origin /api/ai/chat, accepts AbortSignal, exposes domain outcomes and rejects HTTP/network/invalid-response errors. It has no hidden writes or automatic retries. A chat widget, history persistence, SSE, Bedrock, generated geometry and AI live writes are out of scope.
+- R69. Disposable HTTP and actual browser checks prove the client/backend path through Vite dev proxy and built FastAPI, including stale revisions and unchanged manifest/volume bytes. Browser verification does not claim an interactive chat widget exists.
+
+## Accepted foreground-volume measurement contract (T1C) and live mechanical binding (T2)
+
+The owner accepted the following for `measure.candidate` method `candidate.foreground-volume.label-voxel.v1` only, then authorized T2 live mechanical implementation. Details live in `docs/ai/contracts.md`. Sandbox OperationService and LangGraph tool binding remain unbound.
+
+- R70. The first agreed real measurement is foreground-volume: `operation_id` `measure.candidate`, `method_id` `candidate.foreground-volume.label-voxel.v1`, `measure_kind` `foreground-volume`, unit `mm3`. It sums occupied labelmap voxels (`value > 0`) in NRRD physical space. It is not cavity, implant, cranial-cavity, or missing-bone volume.
+- R71. Required direct inputs are `request_id`, `project_id`, `case_id`, `candidate_id`, `expected_revision_id`, and `parameters.measure_kind = "foreground-volume"`. The authoritative volume is the live revision's bytes and raw lowercase hex `volumeHash`. The owning sample must be `spatiallyVerified` with millimetre units. Supported NRRD v1 inputs are `dimension: 3`, `type: unsigned char` or `uchar`, and `encoding: raw` or `gzip`/`gz`, with decoded payload length exactly `∏sizes`.
+- R72. When `space directions` are present, v1 accepts only finite nonzero mutually orthogonal vectors with a one-to-one cardinal-axis mapping and non-singular basis; voxel volume is `abs(det(B))`. Cardinal/orthogonal checks are a v1 scope restriction. Present-but-incomplete, malformed, or invalid directions must be rejected. Spacings-only `s0*s1*s2` is allowed only when `space directions` are entirely absent and verified mm spacings match application metadata. Patient orientation must not be inferred from spacings alone.
+- R73. The metric is intrinsic foreground volume of the stored NRRD grid and is independent of candidate placement pose. Rigid placement that preserves volume identity/hash must not change the intrinsic value. Results must not be presented as post-display-transform volume without a separate contract.
+- R74. Unique `(case_id, request_id)` reservations persist an opaque canonical identity covering path kind, project/case/candidate ids, expected revision, operation id, measure kind, and method id. A short `BEGIN IMMEDIATE` transaction claims or checks the reservation and commits before decode/count. SQLite write serialization is not a request-key lock. Matching completed requests return the original stored result before freshness checks, including when a later revision is current. Conflicting identities return `request-id-conflict`. Matching in-progress requests use bounded wait (≤2000 ms, ≤50 ms poll) then nonterminal `request-in-progress` (HTTP 409); waiters must not steal ownership, execute, or fail the owner. Incomplete crash reservations require explicit reconciliation (`reconciliation-required`); automatic takeover is out of scope. Completing a reservation and persisting a successful measurement occur atomically with a current-revision check.
+- R75. Hash mismatch between live `volumeHash` and SHA-256 of read bytes is `artifact-integrity-failure` with domain status `failed` and HTTP 500, with no numeric output and no successful measurement row. Public errors must not expose filesystem paths. Unsupported datatype, dimension, encoding, grid, spacing, payload length, or metadata mismatch remains `operation-unsupported` (HTTP 422), distinct from integrity failure. A matching completed retry returns the historical result without claiming current integrity was reverified.
+- R76. Live persistence uses ApplicationRepository authority (`candidate_measurement_results` / revision-scoped rows plus request reservations). Measurement must not create a geometry revision. Sandbox `SQLiteApplicationStorage` review rows must not be presented as live candidate measurements. Mechanical route/service: `POST /api/candidates/{id}/measurements` via `ForegroundVolumeService`; retrieval by revision. Sandbox `OperationService` must not auto-enable this method or point sandbox storage at live `app-model.sqlite`.
+- R77. Advertising or executing foreground-volume requires all of: (1) this agreed contract, (2) the live service/adapter implemented and bound, (3) runtime capability checks passing. Contract acceptance alone does not make the tool available. Until those gates pass, the operation must not be advertised as available and must not store a calculated foreground-volume as a live success. AI/chat remains read-only metadata and must not gain a measurement mutation tool from this acceptance.
+- R78. Operation-specific `output` carries `kind`, `method_id`, `measure_kind`, `value`, `unit`, `measured_revision_id`, raw-hex `volume_hash`, `foreground_voxel_count`, and `voxel_volume_mm3`. Envelope fields carry request/run identity, case/candidate references, status, provenance from actual execution (`real-operation` when live service runs), limitations, and errors. Provenance must not come from a model assertion.
+- R79. Stated limitations must disclose labelmap foreground occupancy, v1 orthogonal/spacings-only restrictions, independence from placement pose, and the absence of clinical pass/fail or fit-score claims.
+
 ## Success criteria
 
 - S1. Given a case with candidate C at revision R, and a filled measurement contract, when the user asks for that measurement of C, then the stored review result cites R and the operation's value and unit.
@@ -142,9 +168,22 @@ The owner authorized R50–R57 and S35–S42 for the storage fixes, synchronous 
 - S46. Given the sandbox initializer is pointed at app metadata, it refuses without changing user_version, tables or data.
 - S47. Given a requested app mutation, the read-only workspace adapter rejects it without a POST or local candidate write.
 
+- S48. Given a restored candidate, a chat call returns that revision and metadata through all five graph steps while stored data remains unchanged.
+- S49. Invalid fields, stale/cross-case selection or a request asking for writes cannot expose a mutation capability or initialize storage.
+- S50. A same-origin browser call receives fake-read-only responses in development and built serving, with unchanged source bytes and revision pointer.
+
+- S51. Given a verified mm candidate revision with 12 foreground voxels and 1×1×1 mm spacing (or 2×3×4 mm spacing), when foreground-volume runs under an available live binding, then the stored result is 12 mm³ (or 288 mm³) with method id `candidate.foreground-volume.label-voxel.v1` and cites that revision.
+- S52. Given equivalent raw and gzip encodings of the same grid, or an all-background volume, when the operation completes, then raw/gzip values match and all-background yields a valid completed zero.
+- S53. Given truncated payload, extra decoded bytes, unsupported datatype/dimension/encoding, invalid/nonpositive spacing, present-but-invalid or incomplete `space directions`, duplicate cardinal axes, singular basis, or header/manifest mismatch, when the request is processed, then the outcome is `operation-unsupported` (or grid-orientation detail) with no successful measurement row.
+- S54. Given a volume whose bytes do not match the live revision `volumeHash`, when measurement is attempted, then the outcome is `artifact-integrity-failure` / `failed` / HTTP 500 with no numeric success row.
+- S55. Given a matching completed foreground-volume result for R1, when the same `request_id` and canonical identity are retried after R2 is current, then the original R1 result is returned without freshness rejection and without creating another success row. Conflicting identity reuse returns `request-id-conflict`.
+- S56. Given a matching in-progress reservation, when a waiter retries, then after bounded wait it receives nonterminal `request-in-progress` if still incomplete, does not execute, and does not fail the owner. An incomplete crash reservation yields `reconciliation-required` without automatic takeover.
+- S57. Given current revision changes between claim and completion transaction, when persistence is attempted, then the run is `stale` and no successful measurement row is stored. Rigid placement that preserves volume/hash leaves intrinsic foreground-volume unchanged across the placement revision.
+- S58. Given a foreground-volume result stored on R1, when an authorized non-`edit.local` transition makes R2 current (test fixture or rigid placement), then the R1 result remains historical on R1 only and is not treated as a current measurement of R2 even if numeric values would match.
+
 ## Design
 
-The target AI subproject is `backend/ai`. It proposes a local FastAPI service. LangGraph proposes a registered tool for AI requests; direct mechanical requests name an operation and typed parameters. Both become the same validated operation command. LangChain's Bedrock chat integration calls a configurable Claude Sonnet model. SQLite application storage owns authoritative state. A separate SQLite file stores LangGraph checkpoints. Geometry files stay local and are addressed through artifact records, not raw paths in frontend contracts or blobs in checkpoints.
+The target AI subproject is `backend/ai`. It proposes a local FastAPI service. LangGraph proposes a registered tool for AI requests; direct mechanical requests name an operation and typed parameters. Both become the same validated operation command. LangChain's Bedrock chat integration calls a configurable Claude Sonnet model. SQLite application storage owns authoritative state only inside the isolated AI sandbox; the live UI repository remains separate. A separate SQLite file stores LangGraph checkpoints. Geometry files stay local and are addressed through artifact records, not raw paths in frontend contracts or blobs in checkpoints.
 
 A run moves through accepted, executing, ready-to-commit, and one terminal state. Commit rechecks revision freshness and atomically inserts the child revision and advances the current pointer. External geometry execution and filesystem writes are not part of that SQLite transaction; failed commits leave non-authoritative artifacts for local reconciliation. SSE carries progress and exactly one terminal result after the stream starts.
 
@@ -152,7 +191,7 @@ Original anatomy, intended repair, proposed design, and review results stay sepa
 
 Tools are thin modules under `tools/`. Shared checks and the call into an adapter live under `operations/`. Bedrock, workspace, and geometry each have an integration module. The reconstruction mock is one geometry adapter. The agent, API, and storage do not import that mock's private types.
 
-The first real integration milestone is S1, after an agreed measurement contract. A mock may be used for S9 and S10 before that. S9 does not satisfy S1. This spec is still draft. Accepting it later would not, by itself, approve a plan or start coding. The workflow for that step is `docs/ai/workflow.md`.
+The first real integration milestone is S1 / S51–S58 after the agreed foreground-volume contract (R70–R79). Runtime availability still requires a separate implemented live binding (R77). A mock may be used for S9 and S10 before that. S9 does not satisfy S1. This spec is still draft overall. Contract acceptance does not, by itself, approve implementation. The workflow for that step is `docs/ai/workflow.md`.
 
 ## Where it lives
 
@@ -160,13 +199,14 @@ The first real integration milestone is S1, after an agreed measurement contract
 - Live workspace adapter: `backend/ai/src/skullfix_ai/integrations/workspace/`
 - App manifest schemas: `backend/ai/src/skullfix_ai/schemas/workspace.py`
 - Cross-language HTTP proof: `app/tests/aiWorkspaceContract.test.ts`
+- Live foreground-volume measurement: `backend/ai/src/skullfix_ai/application/foreground_volume.py`, additive tables/methods on `backend/ai/src/skullfix_ai/application/sqlite.py`, routes `backend/ai/src/skullfix_ai/api/routes/measurements.py` (`POST /api/candidates/{id}/measurements`, `GET …/revisions/{revision_id}/measurements`). Proof: `backend/ai/tests/integration/api/test_measurements.py`. Scoped plan: `features/ai-workspace-assistant/plans/t2-foreground-volume.md`.
 
 - Backend: `backend/ai/src/skullfix_ai/`
 - AI docs: `docs/ai/`
 - Feature docs: `features/ai-workspace-assistant/`
 - Tests: `backend/ai/tests/unit/`, `backend/ai/tests/integration/`, `backend/ai/tests/live/`. Ownership of the subpaths is in `.agents/assignments/ai/README.md`. Agents 01–03 own their component tests. Agent 04 owns cross-component workflows, live checks, and evaluation. The main agent owns shared fixtures and root test configuration.
 - Evaluation: `backend/ai/evaluation/`
-- Frontend: owned outside this spec. No frontend path is claimed here.
+- Frontend: the read-only chat client seam app/src/api/chat.ts is scoped here; the chat widget remains deferred and canvas/manual construction is owned by its canvas feature spec.
 
 ## Decisions
 
@@ -184,18 +224,19 @@ The first real integration milestone is S1, after an agreed measurement contract
 
 ## Flagged concerns
 
-- The product draft in `hackprinceton_intent.md` leaves the first measurement, the first edit, and prepared-versus-raw-CT input open. This spec assumes prepared cases. It does not define a real measurement. An agreed contract still has to do that.
-- Resolved: AI/backend work uses `docs/ai/workflow.md`, also referenced from `AGENTS.md`. Intent and spec may be updated in one round. Both remain draft. This document does not accept them. After acceptance, a separate plan approval is not required unless the owner asks. Other features keep a gate between each document.
-- No geometry or frontend implementation exists in this repo yet. The shared envelope is an AI/backend proposal, not a teammate-approved browser or geometry interface. Operation methods, units, artifact formats, and browser execution details remain unresolved.
-- A test double can appear in tests for S1's shape. It must not be described as a successful live measurement. A reconstruction mock can exercise S9. It must not be described as S1 or as real reconstruction.
-- One small code slice currently returns `unavailable`, `operation-contract-missing`, and `value=None` for an operation without an agreed contract. Its unit test does not prove persistence, SSE, idempotency, or the rest of this target design.
-- R35–R39 and S21–S24 are proposed retry behavior, not part of the previously accepted foundation scope and not implemented.
+- The product draft in `hackprinceton_intent.md` leaves the first edit and prepared-versus-raw-CT input open. This spec assumes prepared cases. The first measurement **contract** is resolved as foreground-volume (R70–R79); the live mechanical binding is implemented under separate T2 authorization.
+- Resolved: AI/backend work uses `docs/ai/workflow.md`, also referenced from `AGENTS.md`. Intent and spec may be updated in one round. Both remain draft overall. Scoped acceptances do not accept the whole documents. After a scoped contract acceptance, implementation still needs separate authorization. Other features keep a gate between each document.
+- Live mechanical foreground-volume calculation is implemented in `ForegroundVolumeService`. Edit, inspect, compare, and real reconstruction contracts remain unresolved. LangGraph/`measure.candidate` tool binding and AI mutation remain out of this slice.
+- A reconstruction mock can exercise S9. It must not be described as S1 or as real reconstruction.
+- Sandbox `OperationService` still returns `unavailable` / `operation-contract-missing` for unbound real operations. Live HTTP measurement must not present sandbox review rows as candidate measurements.
+- R35–R39 and S21–S24 are proposed retry behavior, not part of the previously accepted foundation scope and not implemented. T1C mechanical idempotency (R74) does not adopt that pre-model recovery framework.
 - Resolved: R40, R41, S25, and S26 make `retrieval_url` and full revision-bound selection references canonical. The owner authorized their schema implementation.
 - Resolved: R42–R49 and S27–S34 define the authorized local storage slice without adopting the proposed R35–R39 retry lifecycle.
+- Resolved: R70–R79 and S51–S58 define the accepted foreground-volume contract; T2 implements the live mechanical binding (R76–R77 gates for that path). Sandbox/AI tool enablement remains separate.
 
 ## Open questions
 
-1. Which measurement operation is first, and where is its method, unit, inputs, and limitation written?
+1. ~~Which measurement operation is first, and where is its method, unit, inputs, and limitation written?~~ **Resolved:** `docs/ai/contracts.md` + R70–R79 / S51–S58; live mechanical runtime bound via T2 (`ForegroundVolumeService` + measurement routes). LangGraph/AI tool bind remains open.
 2. Which local edit is first, and which preserved-region constraints can it honor?
 3. Which artifact format, units, coordinate frame, and transforms are required for each real geometry operation?
 4. Does the authoritative workspace adapter run in-process or over HTTP?
@@ -210,3 +251,11 @@ The first real integration milestone is S1, after an agreed measurement contract
 - Cited evidence retrieval.
 - Clinical certification, manufacture, and outcome prediction.
 - A universal fit score or pass threshold.
+
+## Queue implementation evidence (not whole-document acceptance)
+
+The owner authorized the nine-task queue. Current-baseline Python application repository and FastAPI transport, disposable cross-runtime/S13/browser verification and genuine fake-model LangGraph are implemented. Live cutover and active-app Express removal are complete after approved1800second observation. D1–D5 hardening and proposed recovery are not inferred accepted. Live authority is FastAPI/ApplicationRepository on the recorded application root. See features/express-to-fastapi/task-board.md and docs/ai/work-summary.md.
+
+Implemented locations: backend/ai/src/skullfix_ai/application/, backend/ai/src/skullfix_ai/api/, backend/ai/src/skullfix_ai/agent/, backend/ai/src/skullfix_ai/tools/, backend/ai/tests/integration/application/, backend/ai/tests/integration/api/, backend/ai/tests/integration/agent/, app/tests/backendContract/ and app/e2e/migration.e2e.ts. No geometry/model/live-mutation capability is implied.
+
+Read-only chat implementation locations: `backend/ai/src/skullfix_ai/api/routes/chat.py`, `app/src/api/chat.ts`, `backend/ai/tests/integration/api/test_chat.py`, `app/tests/chatClient.test.ts`, `app/e2e/chat.e2e.ts`. Chat widget remains deferred.
