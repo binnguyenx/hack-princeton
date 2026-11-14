@@ -58,7 +58,7 @@ Return the graph entry function and the Bedrock client interface. Note any schem
 
 ## Operation-service handoff
 
-The synchronous service and reconstruction mock are published. See docs/ai/setup.md for supported imports, canonical/direct request entry points, schema-v2 cleanup coordination, 59 offline tests, and reconciliation limits. Graph/model/API integration remains a separate future task.
+The synchronous service and reconstruction mock are published. See docs/ai/setup.md for supported imports, canonical/direct request entry points, schema-v2 cleanup coordination, 117 deterministic backend tests, and reconciliation limits. Read-only fake-model graph and application FastAPI are implemented under their scoped plans; provider/live-mutation/checkpoint/SSE work remains deferred.
 
 ## UI canonical integration correction
 

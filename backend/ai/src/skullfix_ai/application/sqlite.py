@@ -10,6 +10,7 @@ import hashlib
 import json
 from pathlib import Path
 import sqlite3
+import time
 from uuid import uuid4
 
 IDENTITY_POSE = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
@@ -73,6 +74,32 @@ DDL = """
       volume_hash TEXT NOT NULL,
       FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
       FOREIGN KEY (volume_id) REFERENCES volume_assets(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS measurement_request_reservations (
+      case_id TEXT NOT NULL,
+      request_id TEXT NOT NULL,
+      canonical_identity TEXT NOT NULL,
+      state TEXT NOT NULL,
+      run_id TEXT NOT NULL,
+      result_id TEXT,
+      result_json TEXT,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (case_id, request_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS candidate_measurement_results (
+      id TEXT PRIMARY KEY,
+      case_id TEXT NOT NULL,
+      candidate_id TEXT NOT NULL,
+      revision_id TEXT NOT NULL,
+      request_id TEXT NOT NULL,
+      run_id TEXT NOT NULL,
+      method_id TEXT NOT NULL,
+      measure_kind TEXT NOT NULL,
+      result_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE
     );
   """
 
@@ -162,29 +189,204 @@ class ApplicationRepository:
 
     def get_project_manifest(self, project_id):
         with self._db() as db:
-            project = self._project(db, project_id)
-            cases = [{"id": r["id"], "projectId": r["project_id"], "name": r["name"]}
-                     for r in db.execute("SELECT * FROM cases WHERE project_id=? ORDER BY id", (project_id,))]
-            samples = []
-            for r in db.execute("SELECT s.* FROM samples s JOIN cases c ON c.id=s.case_id WHERE c.project_id=? ORDER BY s.id", (project_id,)):
-                sample = {"id": r["id"], "caseId": r["case_id"], "license": r["license"], "spatiallyVerified": r["spatially_verified"] == 1,
-                          "sourceAnatomy": {"objectId": r["source_object_id"], "sampleId": r["id"], "volumeId": r["volume_id"], "spatial": json.loads(r["spatial_json"]), "volumeHash": r["volume_hash"]}}
-                if r["display_name"] is not None:
-                    sample["displayName"] = r["display_name"]
-                samples.append(sample)
-            candidates = []
-            for r in db.execute("SELECT c.* FROM candidates c JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id WHERE k.project_id=? ORDER BY c.id", (project_id,)):
-                candidate = {"objectId": r["id"], "sampleId": r["sample_id"], "currentRevisionId": r["current_revision_id"]}
-                if r["display_name"] is not None:
-                    candidate["displayName"] = r["display_name"]
-                candidates.append(candidate)
-            revisions = [{"id": r["id"], "candidateId": r["candidate_id"], "order": r["ord"], "volumeId": r["volume_id"], "pose": json.loads(r["pose_json"]), "volumeHash": r["volume_hash"]}
-                         for r in db.execute("SELECT r.* FROM candidate_revisions r JOIN candidates c ON c.id=r.candidate_id JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id WHERE k.project_id=? ORDER BY r.candidate_id,r.ord", (project_id,))]
-            return {"formatVersion": 1, "user": {"id": "local-dev", "displayName": "Local Dev"},
-                    "project": {"id": project["id"], "ownerUserId": project["owner_user_id"], "name": project["name"]},
-                    "cases": cases, "samples": samples, "candidates": candidates, "revisions": revisions,
-                    "viewState": {"selectionObjectId": None, "camera": {"position": [0,0,500], "target": [0,0,0]}, "visibility": {}, "inspectionPlane": {"enabled": False,"axis": "z","offset": 0}},
-                    "openDocuments": [], "activeDocumentId": None}
+            return self._project_manifest(db, project_id)
+
+    def read_project_manifest(self, project_id):
+        """Read one consistent snapshot without bootstrapping or writing application data."""
+        database = self.root / "app-model.sqlite"
+        db = sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, isolation_level=None)
+        db.row_factory = sqlite3.Row
+        try:
+            db.execute("PRAGMA query_only=ON")
+            db.execute("BEGIN")
+            return self._project_manifest(db, project_id)
+        finally:
+            db.close()
+
+    def _project_manifest(self, db, project_id):
+        project = self._project(db, project_id)
+        cases = [{"id": r["id"], "projectId": r["project_id"], "name": r["name"]}
+                 for r in db.execute("SELECT * FROM cases WHERE project_id=? ORDER BY id", (project_id,))]
+        samples = []
+        for r in db.execute("SELECT s.* FROM samples s JOIN cases c ON c.id=s.case_id WHERE c.project_id=? ORDER BY s.id", (project_id,)):
+            sample = {"id": r["id"], "caseId": r["case_id"], "license": r["license"], "spatiallyVerified": r["spatially_verified"] == 1,
+                      "sourceAnatomy": {"objectId": r["source_object_id"], "sampleId": r["id"], "volumeId": r["volume_id"], "spatial": json.loads(r["spatial_json"]), "volumeHash": r["volume_hash"]}}
+            if r["display_name"] is not None:
+                sample["displayName"] = r["display_name"]
+            samples.append(sample)
+        candidates = []
+        for r in db.execute("SELECT c.* FROM candidates c JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id WHERE k.project_id=? ORDER BY c.id", (project_id,)):
+            candidate = {"objectId": r["id"], "sampleId": r["sample_id"], "currentRevisionId": r["current_revision_id"]}
+            if r["display_name"] is not None:
+                candidate["displayName"] = r["display_name"]
+            candidates.append(candidate)
+        revisions = [{"id": r["id"], "candidateId": r["candidate_id"], "order": r["ord"], "volumeId": r["volume_id"], "pose": json.loads(r["pose_json"]), "volumeHash": r["volume_hash"]}
+                     for r in db.execute("SELECT r.* FROM candidate_revisions r JOIN candidates c ON c.id=r.candidate_id JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id WHERE k.project_id=? ORDER BY r.candidate_id,r.ord", (project_id,))]
+        result = {"formatVersion": 1, "user": {"id": "local-dev", "displayName": "Local Dev"},
+                "project": {"id": project["id"], "ownerUserId": project["owner_user_id"], "name": project["name"]},
+                "cases": cases, "samples": samples, "candidates": candidates, "revisions": revisions,
+                "viewState": {"selectionObjectId": None, "camera": {"position": [0,0,500], "target": [0,0,0]}, "visibility": {}, "inspectionPlane": {"enabled": False,"axis": "z","offset": 0}},
+                "openDocuments": [], "activeDocumentId": None}
+        from .voxel_operations import provenance_records
+        provenance = provenance_records(db)
+        for revision in revisions:
+            if revision['id'] in provenance:
+                revision['provenance'] = provenance[revision['id']]
+        from .landmarks import records
+        points = records(db, [sample['id'] for sample in samples])
+        if points:
+            result['landmarks'] = points
+        return result
+
+    def read_package_snapshot(self, project_id):
+        """One read-only metadata snapshot; missing/corrupt blobs abort the export."""
+        from .packages import PackageError, MAX_EXPANDED
+        database = self.root / 'app-model.sqlite'
+        if not database.is_file():
+            raise PackageError('project-not-found', 'Project not found.', 404)
+        db = sqlite3.connect(database.as_uri() + '?mode=ro', uri=True, isolation_level=None)
+        db.row_factory = sqlite3.Row
+        try:
+            db.execute('BEGIN')
+            try:
+                manifest = self._project_manifest(db, project_id)
+            except ValueError as error:
+                raise PackageError('project-not-found', 'Project not found.', 404) from error
+            identities = {s['sourceAnatomy']['volumeId'] for s in manifest['samples']} | {r['volumeId'] for r in manifest['revisions']}
+            volumes = {}
+            size = 0
+            for identity in identities:
+                asset = db.execute('SELECT * FROM volume_assets WHERE id=?', (identity,)).fetchone()
+                try:
+                    path = self._volume_path(identity)
+                    size += path.stat().st_size
+                    if size > MAX_EXPANDED:
+                        raise PackageError('package-too-large', 'Project volumes exceed package limits.', 413)
+                    with path.open('rb') as source:
+                        data = source.read(MAX_EXPANDED - sum(map(len, volumes.values())) + 1)
+                    if sum(map(len, volumes.values())) + len(data) > MAX_EXPANDED:
+                        raise PackageError('package-too-large', 'Project volumes exceed package limits.', 413)
+                except (OSError, ValueError) as error:
+                    if isinstance(error, PackageError):
+                        raise
+                    raise PackageError('package-source-unavailable', 'Project volume is unavailable.', 409) from error
+                if asset is None or len(data) != asset['byte_size'] or hashlib.sha256(data).hexdigest() != asset['sha256']:
+                    raise PackageError('package-source-unavailable', 'Project volume integrity check failed.', 409)
+                volumes[identity] = data
+            return manifest, volumes
+        finally:
+            db.close()
+
+    def import_package_copy(self, manifest, volumes):
+        """Publish a validated new copy; never overwrite original ids or files."""
+        import os
+        import shutil
+        import tempfile
+        from copy import deepcopy
+        project_id = str(uuid4())
+        maps = {key: {item[field]: str(uuid4()) for item in manifest[key]} for key, field in
+                (('cases', 'id'), ('samples', 'id'), ('candidates', 'objectId'), ('revisions', 'id'))}
+        source_ids = {s['sourceAnatomy']['objectId']: str(uuid4()) for s in manifest['samples']}
+        volume_ids = {identity: str(uuid4()) for identity in volumes}
+        objects = {**source_ids, **maps['candidates']}
+        documents = {**maps['samples'], **maps['candidates']}
+        presentation = deepcopy({key: manifest[key] for key in ('viewState', 'openDocuments', 'activeDocumentId')})
+        presentation['viewState']['selectionObjectId'] = objects.get(presentation['viewState']['selectionObjectId'])
+        presentation['viewState']['visibility'] = {objects[key]: value for key, value in presentation['viewState']['visibility'].items()}
+        for doc in presentation['openDocuments']:
+            doc['id'] = documents[doc['id']]
+        presentation['activeDocumentId'] = documents.get(presentation['activeDocumentId'])
+        published, committed = [], False
+        with self._db() as db:
+            stage = Path(tempfile.mkdtemp(prefix='.package-import-', dir=self.root))
+            try:
+                for identity, data in volumes.items():
+                    (stage / (volume_ids[identity] + '.nrrd')).write_bytes(data)
+                self._fault('package_after_stage')
+                with self._transaction(db):
+                    db.execute('INSERT INTO projects VALUES(?,?,?,?,?)',
+                               (project_id, 'local-dev', manifest['project']['name'] + ' (imported)', _now(), len(manifest['cases'])))
+                    for case in manifest['cases']:
+                        db.execute('INSERT INTO cases VALUES(?,?,?)', (maps['cases'][case['id']], project_id, case['name']))
+                    for identity, data in volumes.items():
+                        vid = volume_ids[identity]
+                        db.execute('INSERT INTO volume_assets VALUES(?,?,?,?)',
+                                   (vid, 'volumes/' + vid + '.nrrd', hashlib.sha256(data).hexdigest(), len(data)))
+                    for sample in manifest['samples']:
+                        source = sample['sourceAnatomy']
+                        db.execute('INSERT INTO samples VALUES(?,?,?,?,?,?,?,?,?)',
+                            (maps['samples'][sample['id']], maps['cases'][sample['caseId']], sample.get('displayName'),
+                             sample['license'], int(sample['spatiallyVerified']), source_ids[source['objectId']],
+                             volume_ids[source['volumeId']], _json(source['spatial']), source['volumeHash']))
+                    for candidate in manifest['candidates']:
+                        db.execute('INSERT INTO candidates VALUES(?,?,?,?)',
+                            (maps['candidates'][candidate['objectId']], maps['samples'][candidate['sampleId']],
+                             candidate.get('displayName'), maps['revisions'][candidate['currentRevisionId']]))
+                    for revision in manifest['revisions']:
+                        db.execute('INSERT INTO candidate_revisions VALUES(?,?,?,?,?,?)',
+                            (maps['revisions'][revision['id']], maps['candidates'][revision['candidateId']], revision['order'],
+                             volume_ids[revision['volumeId']], _json(revision['pose']), revision['volumeHash']))
+                    provenance_revisions = [r for r in manifest['revisions'] if r.get('provenance')]
+                    if provenance_revisions:
+                        from .voxel_operations import PROVENANCE_DDL
+                        db.execute(PROVENANCE_DDL)
+                        for revision in provenance_revisions:
+                            provenance = deepcopy(revision['provenance'])
+                            provenance['inputRevisionId'] = maps['revisions'][provenance['inputRevisionId']]
+                            db.execute('INSERT INTO revision_operations VALUES(?,?)', (maps['revisions'][revision['id']], _json(provenance)))
+                    points = manifest.get('landmarks', [])
+                    if points:
+                        from .landmarks import LANDMARK_DDL
+                        db.execute(LANDMARK_DDL)
+                        for point in points:
+                            db.execute('INSERT INTO source_landmarks VALUES(?,?,?,?,?,?)',
+                                (str(uuid4()), maps['samples'][point['sampleId']], point['label'], _json(point['ijk']),
+                                 _json(point['ras']), point['volumeHash']))
+                    for identity in volumes:
+                        target = self._volume_path(volume_ids[identity])
+                        # Link a complete staged blob exclusively; an existing path is never overwritten.
+                        os.link(stage / (volume_ids[identity] + '.nrrd'), target)
+                        published.append(target)
+                        self._fault('package_after_publish')
+                committed = True
+            finally:
+                if not committed:
+                    for target in published:
+                        try:
+                            target.unlink(missing_ok=True)
+                        except OSError:
+                            pass  # Non-authoritative file; never claim a committed partial project.
+                shutil.rmtree(stage, ignore_errors=True)
+        return {'projectId': project_id, 'presentation': presentation}
+
+    def read_revision_volume(self, candidate_id, revision_id):
+        """Read immutable revision content with candidate membership and hash checks."""
+        from .packages import PackageError, MAX_EXPANDED
+        database = self.root / 'app-model.sqlite'
+        if not database.is_file():
+            raise PackageError('revision-not-found', 'Candidate revision not found.', 404)
+        db = sqlite3.connect(database.as_uri() + '?mode=ro', uri=True)
+        db.row_factory = sqlite3.Row
+        try:
+            row = db.execute('SELECT a.*,r.volume_hash AS revision_hash FROM candidate_revisions r JOIN candidates c ON c.id=r.candidate_id '
+                             'JOIN volume_assets a ON a.id=r.volume_id WHERE c.id=? AND r.id=?', (candidate_id, revision_id)).fetchone()
+            if row is None:
+                raise PackageError('revision-not-found', 'Candidate revision not found.', 404)
+            try:
+                path = self._volume_path(row['id'])
+                if path.stat().st_size > MAX_EXPANDED:
+                    raise PackageError('package-too-large', 'Revision volume exceeds supported limits.', 413)
+                with path.open('rb') as source:
+                    data = source.read(MAX_EXPANDED + 1)
+                if len(data) > MAX_EXPANDED:
+                    raise PackageError('package-too-large', 'Revision volume exceeds supported limits.', 413)
+            except OSError as error:
+                raise PackageError('revision-volume-unavailable', 'Revision volume is unavailable.', 409) from error
+            if len(data) != row['byte_size'] or hashlib.sha256(data).hexdigest() != row['sha256'] or row['revision_hash'] != row['sha256']:
+                raise PackageError('revision-volume-unavailable', 'Revision volume integrity failed.', 409)
+            return data
+        finally:
+            db.close()
 
     def add_case(self, project_id, name):
         trimmed = name.strip()
@@ -266,6 +468,36 @@ class ApplicationRepository:
                 db.execute("UPDATE candidates SET current_revision_id=? WHERE id=?", (rid, candidate_id))
             return rid
 
+    def commit_placement(self, candidate_id, project_id, case_id, expected_revision_id, pose):
+        """Atomic manual commit; source volume and all prior revisions remain unchanged."""
+        from .placement import PlacementError, is_rigid_pose
+        if not is_rigid_pose(pose):
+            raise PlacementError('invalid-pose', 'A finite rigid matrix is required.', 422)
+        with self._db() as db:
+            with self._transaction(db):
+                current = db.execute("SELECT c.current_revision_id,s.case_id,s.spatially_verified,s.spatial_json,k.project_id "
+                                     "FROM candidates c JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id "
+                                     "WHERE c.id=?", (candidate_id,)).fetchone()
+                if current is None:
+                    raise PlacementError('candidate-not-found', 'Candidate not found.', 404)
+                if current['case_id'] != case_id or current['project_id'] != project_id:
+                    raise PlacementError('cross-case-reference', 'Candidate does not belong to the requested project/case.')
+                if current['current_revision_id'] != expected_revision_id:
+                    raise PlacementError('stale-revision', 'Candidate revision changed; reload before placement.')
+                metadata = json.loads(current['spatial_json'])
+                if not current['spatially_verified'] or not isinstance(metadata, dict) or metadata.get('units') != 'mm':
+                    raise PlacementError('placement-unavailable', 'Placement requires verified millimetre spatial metadata.', 422)
+                previous = db.execute("SELECT * FROM candidate_revisions WHERE id=? AND candidate_id=?", (expected_revision_id, candidate_id)).fetchone()
+                if previous is None or not is_rigid_pose(json.loads(previous['pose_json'])):
+                    raise PlacementError('placement-unavailable', 'Current revision has no valid rigid pose.', 422)
+                if all(abs(a - b) <= 1e-9 for a, b in zip(json.loads(previous['pose_json']), pose)):
+                    raise PlacementError('unchanged-pose', 'Placement does not change the candidate.', 422)
+                order = db.execute("SELECT COALESCE(MAX(ord),-1)+1 FROM candidate_revisions WHERE candidate_id=?", (candidate_id,)).fetchone()[0]
+                rid = str(uuid4())
+                db.execute("INSERT INTO candidate_revisions VALUES(?,?,?,?,?,?)", (rid, candidate_id, order, previous['volume_id'], _json(list(pose)), previous['volume_hash']))
+                db.execute("UPDATE candidates SET current_revision_id=? WHERE id=?", (rid, candidate_id))
+            return rid
+
     def restore_revision(self, candidate_id, revision_id):
         with self._db() as db:
             if db.execute("SELECT id FROM candidate_revisions WHERE id=? AND candidate_id=?", (revision_id, candidate_id)).fetchone() is None:
@@ -334,3 +566,227 @@ class ApplicationRepository:
         with self._db() as db:
             row = db.execute("SELECT k.project_id FROM candidates c JOIN samples s ON s.id=c.sample_id JOIN cases k ON k.id=s.case_id WHERE c.id=?", (candidate_id,)).fetchone()
             return None if row is None else row[0]
+
+    def claim_measurement_reservation(self, *, case_id, request_id, canonical_identity):
+        """Short BEGIN IMMEDIATE claim/check for live measurement idempotency."""
+        with self._db() as db:
+            with self._transaction(db):
+                row = db.execute(
+                    "SELECT * FROM measurement_request_reservations WHERE case_id=? AND request_id=?",
+                    (case_id, request_id),
+                ).fetchone()
+                if row is None:
+                    run_id = str(uuid4())
+                    db.execute(
+                        "INSERT INTO measurement_request_reservations "
+                        "(case_id, request_id, canonical_identity, state, run_id, result_id, result_json, created_at) "
+                        "VALUES (?,?,?,?,?,?,?,?)",
+                        (case_id, request_id, canonical_identity, "in_progress", run_id, None, None, _now()),
+                    )
+                    return {"action": "execute", "run_id": run_id}
+                if row["canonical_identity"] != canonical_identity:
+                    return {"action": "conflict"}
+                if row["state"] == "completed" and row["result_json"]:
+                    return {"action": "replay", "result": json.loads(row["result_json"])}
+                if row["state"] == "incomplete":
+                    return {"action": "reconciliation"}
+                return {"action": "in_progress", "run_id": row["run_id"]}
+
+    def wait_for_measurement_result(self, case_id, request_id, *, timeout_ms=2000, poll_ms=50):
+        deadline = time.monotonic() + (timeout_ms / 1000.0)
+        while True:
+            with self._db() as db:
+                row = db.execute(
+                    "SELECT state, result_json FROM measurement_request_reservations WHERE case_id=? AND request_id=?",
+                    (case_id, request_id),
+                ).fetchone()
+            if row is not None and row["state"] == "completed" and row["result_json"]:
+                return json.loads(row["result_json"])
+            if time.monotonic() >= deadline:
+                return None
+            time.sleep(max(poll_ms, 1) / 1000.0)
+
+    def load_measurement_volume(self, *, project_id, case_id, candidate_id, expected_revision_id):
+        """Load revision bytes and verified spatial context for measurement (no package integrity mapping)."""
+        from .foreground_volume import MeasurementError, MeasurementOutcome
+
+        with self._db() as db:
+            row = db.execute(
+                "SELECT c.current_revision_id, c.sample_id, s.case_id, s.spatially_verified, s.spatial_json, "
+                "s.volume_hash AS sample_hash, k.project_id, r.volume_id, r.volume_hash, a.sha256, a.byte_size "
+                "FROM candidates c "
+                "JOIN samples s ON s.id=c.sample_id "
+                "JOIN cases k ON k.id=s.case_id "
+                "JOIN candidate_revisions r ON r.id=? AND r.candidate_id=c.id "
+                "JOIN volume_assets a ON a.id=r.volume_id "
+                "WHERE c.id=?",
+                (expected_revision_id, candidate_id),
+            ).fetchone()
+            if row is None:
+                raise MeasurementError("candidate-not-found", "Candidate revision not found.", 404)
+            if row["project_id"] != project_id or row["case_id"] != case_id:
+                raise MeasurementError("cross-case-reference", "Candidate does not belong to the requested project/case.")
+            if row["current_revision_id"] != expected_revision_id:
+                raise MeasurementOutcome(
+                    409,
+                    {
+                        "run_id": None,
+                        "request_id": None,
+                        "case_id": case_id,
+                        "operation_id": "measure.candidate",
+                        "status": "stale",
+                        "input_revisions": {"expected_revision_id": expected_revision_id},
+                        "output_candidate_id": None,
+                        "output_revision_id": None,
+                        "artifacts": [],
+                        "output": None,
+                        "source": None,
+                        "limitations": [],
+                        "error": {
+                            "code": "stale-revision",
+                            "message": "Candidate revision changed; reload before measurement.",
+                            "details": {},
+                        },
+                    },
+                )
+            spatial = json.loads(row["spatial_json"])
+            if not row["spatially_verified"] or not isinstance(spatial, dict) or spatial.get("units") != "mm":
+                raise MeasurementOutcome(
+                    422,
+                    {
+                        "run_id": None,
+                        "request_id": None,
+                        "case_id": case_id,
+                        "operation_id": "measure.candidate",
+                        "status": "unsupported",
+                        "input_revisions": {"expected_revision_id": expected_revision_id},
+                        "output_candidate_id": None,
+                        "output_revision_id": None,
+                        "artifacts": [],
+                        "output": None,
+                        "source": None,
+                        "limitations": [],
+                        "error": {
+                            "code": "operation-unsupported",
+                            "message": "Foreground-volume requires verified millimetre spatial metadata.",
+                            "details": {"reason": "spatial"},
+                        },
+                    },
+                )
+            path = self._volume_path(row["volume_id"])
+            try:
+                data = path.read_bytes()
+            except OSError as error:
+                raise MeasurementError("volume-unavailable", "Revision volume is unavailable.", 500) from error
+            return {
+                "bytes": data,
+                "volume_hash": row["volume_hash"],
+                "asset_hash": row["sha256"],
+                "spatial": spatial,
+                "current_revision_id": row["current_revision_id"],
+            }
+
+    def complete_measurement_reservation(
+        self,
+        *,
+        case_id,
+        request_id,
+        candidate_id,
+        expected_revision_id,
+        result_id,
+        run_id,
+        result,
+        persist_success_row=True,
+    ):
+        hook = self.faults.get("measurement_before_complete")
+        if callable(hook):
+            hook()
+        with self._db() as db:
+            with self._transaction(db):
+                current = db.execute(
+                    "SELECT current_revision_id FROM candidates WHERE id=?",
+                    (candidate_id,),
+                ).fetchone()
+                if current is None or current["current_revision_id"] != expected_revision_id:
+                    stale = {
+                        "run_id": run_id,
+                        "request_id": request_id,
+                        "case_id": case_id,
+                        "operation_id": "measure.candidate",
+                        "status": "stale",
+                        "input_revisions": {"expected_revision_id": expected_revision_id},
+                        "output_candidate_id": None,
+                        "output_revision_id": None,
+                        "artifacts": [],
+                        "output": None,
+                        "source": "real-operation",
+                        "limitations": [],
+                        "error": {
+                            "code": "stale-revision",
+                            "message": "Candidate revision changed before measurement persistence.",
+                            "details": {},
+                        },
+                    }
+                    db.execute(
+                        "UPDATE measurement_request_reservations "
+                        "SET state='completed', result_id=NULL, result_json=? "
+                        "WHERE case_id=? AND request_id=?",
+                        (_json(stale), case_id, request_id),
+                    )
+                    return {"action": "stale", "result": stale}
+                payload = _json(result)
+                if persist_success_row:
+                    db.execute(
+                        "INSERT INTO candidate_measurement_results "
+                        "(id, case_id, candidate_id, revision_id, request_id, run_id, method_id, measure_kind, result_json, created_at) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (
+                            result_id,
+                            case_id,
+                            candidate_id,
+                            expected_revision_id,
+                            request_id,
+                            run_id,
+                            "candidate.foreground-volume.label-voxel.v1",
+                            "foreground-volume",
+                            payload,
+                            _now(),
+                        ),
+                    )
+                db.execute(
+                    "UPDATE measurement_request_reservations "
+                    "SET state='completed', result_id=?, result_json=? "
+                    "WHERE case_id=? AND request_id=?",
+                    (result_id if persist_success_row else None, payload, case_id, request_id),
+                )
+                return {"action": "completed", "result": result}
+
+    def mark_measurement_reservation_incomplete(self, case_id, request_id):
+        with self._db() as db:
+            with self._transaction(db):
+                db.execute(
+                    "UPDATE measurement_request_reservations "
+                    "SET state='incomplete', result_id=NULL, result_json=NULL "
+                    "WHERE case_id=? AND request_id=?",
+                    (case_id, request_id),
+                )
+
+    def finish_measurement_reservation(self, *, case_id, request_id, result):
+        """Persist a terminal non-success envelope without a measurement success row."""
+        with self._db() as db:
+            with self._transaction(db):
+                db.execute(
+                    "UPDATE measurement_request_reservations "
+                    "SET state='completed', result_id=NULL, result_json=? "
+                    "WHERE case_id=? AND request_id=?",
+                    (_json(result), case_id, request_id),
+                )
+
+    def list_measurement_results(self, candidate_id, revision_id):
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT result_json FROM candidate_measurement_results "
+                "WHERE candidate_id=? AND revision_id=? ORDER BY created_at, id",
+                (candidate_id, revision_id),
+            ).fetchall()
+            return [json.loads(row["result_json"]) for row in rows]

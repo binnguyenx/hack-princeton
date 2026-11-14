@@ -24,7 +24,8 @@ def inspect(root):
         if connection.execute('PRAGMA foreign_key_check').fetchall():
             raise ValueError('Database foreign keys failed')
         records = {}
-        for table in TABLES:
+        optional = tuple(table for table in ('source_landmarks', 'revision_operations') if connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone())
+        for table in TABLES + optional:
             records[table] = sorted([dict(row) for row in connection.execute(f'SELECT * FROM {table}')],
                                     key=lambda row: json.dumps(row, sort_keys=True))
     files = {}
@@ -51,6 +52,22 @@ def inspect(root):
         volume = volume_rows.get(row['volume_id'])
         if not volume or files.get(volume['rel_path']) != row['volume_hash']:
             raise ValueError('Missing volume or hash mismatch')
+    for operation in records.get('revision_operations', []):
+        provenance = json.loads(operation['provenance_json'])
+        current = revisions.get(operation['revision_id'])
+        previous = revisions.get(provenance.get('inputRevisionId'))
+        if not current or not previous or current['candidate_id'] != previous['candidate_id'] or previous['ord'] >= current['ord']:
+            raise ValueError('Invalid revision operation provenance')
+    sources = {row['id']: row for row in records['samples']}
+    for point in records.get('source_landmarks', []):
+        source = sources.get(point['sample_id'])
+        if not source or point['volume_hash'] != source['volume_hash']:
+            raise ValueError('Invalid source landmark ownership/hash')
+        for coordinate in ('ijk_json', 'ras_json'):
+            import math
+            value = json.loads(point[coordinate])
+            if not isinstance(value, list) or len(value) != 3 or any(type(n) not in (int, float) or not math.isfinite(n) for n in value):
+                raise ValueError('Invalid source landmark coordinates')
     return {'tables': records, 'volume_files': files, 'integrity_check': 'ok', 'foreign_key_check': []}
 
 

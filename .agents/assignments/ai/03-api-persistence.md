@@ -13,7 +13,7 @@ Expose direct mechanical and AI requests over HTTP and SSE. Store authoritative 
 ## Owns
 
 - `backend/ai/src/skullfix_ai/api/`
-- `backend/ai/src/skullfix_ai/storage/`
+- `backend/ai/src/skullfix_ai/storage/` (sandbox) and `backend/ai/src/skullfix_ai/application/` (live application repository)
 - `backend/ai/tests/unit/api/`
 - `backend/ai/tests/unit/storage/`
 - `backend/ai/tests/integration/api/`
@@ -64,8 +64,10 @@ Document the route path and the event schema you implemented. Do not add a front
 
 ## Operation-service handoff
 
-The synchronous service and reconstruction mock are published. See docs/ai/setup.md for supported imports, canonical/direct request entry points, schema-v2 cleanup coordination, 59 offline tests, and reconciliation limits. Graph/model/API integration remains a separate future task.
+The synchronous service and reconstruction mock are published. See docs/ai/setup.md for supported imports, canonical/direct request entry points, schema-v2 cleanup coordination, 117 deterministic backend tests, and reconciliation limits. Read-only fake-model graph and application FastAPI are implemented under their scoped plans; provider/live-mutation/checkpoint/SSE work remains deferred.
 
 ## UI canonical integration correction
 
 The live app hierarchy/routes in app/src/domain/types.ts and app/src/api/client.ts take precedence over standalone Python demo storage. Use AppWorkspaceAdapter/HttpAppManifestReader and schemas/workspace.py for context; do not seed or write a second copy of live UI candidates. Candidate creation is not reconstruction, restore moves a pointer, and pose is a flat row-major array. App AI mutation is blocked until backend CAS/idempotency and generated-NRRD publication are agreed. See docs/ai/app-integration.md.
+
+Application repository ownership: the API/persistence owner maintains application/ and tests/integration/application/, distinct from sandbox storage/. Context/graph callers read through the application interface; no second live candidate store.
