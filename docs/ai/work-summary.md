@@ -1,64 +1,64 @@
-# Tóm tắt công việc AI/backend
+# AI/backend work summary
 
-File này nằm trên branch `feat/ai-missing-contract-result`. Nó mô tả workstream AI đã chuẩn bị, không phải những gì đang có trên `main`. Chưa merge pull request nào. Intent và spec vẫn là draft.
+This file lives on `feat/ai-missing-contract-result`. It describes the AI workstream prepared so far, not what is on `main`. No pull request has been merged. The intent and spec remain draft.
 
-## Mục tiêu và phạm vi
+## Goal and scope
 
-AI/backend của SkullFix nhận một selection và một yêu cầu, gọi operation đã đăng ký, rồi giải thích kết quả của tool. Phạm vi này không định nghĩa frontend 3D và không gán người sở hữu thuật toán geometry thật.
+The SkullFix AI/backend takes a selection and a request, calls a registered operation, and explains the tool result. This scope does not define the 3D frontend and does not assign an owner for a real geometry algorithm.
 
-Milestone tích hợp thật vẫn là: chọn candidate, yêu cầu một phép đo, chạy operation thật, hiện kết quả trên frontend. Milestone đó chưa làm.
+The real integration milestone is still: select a candidate, request one measurement, run the real operation, and show the result in the frontend. That milestone is not done.
 
-## Cấu trúc đã tạo
+## Structure created
 
-- `backend/ai/src/skullfix_ai/`: scaffold `api`, `schemas`, `agent`, `tools`, `operations`, `integrations/bedrock`, `integrations/workspace`, `integrations/geometry`, `storage`.
-- `backend/ai/tests/unit/`, `tests/integration/`, `tests/live/`, và `backend/ai/evaluation/`.
-- `docs/ai/`: architecture, workflow, contracts, setup.
-- `features/ai-workspace-assistant/intent.md` và `spec.md`, tách riêng.
-- `features/ai-workspace-assistant/preflight.md` là template. Record theo task nằm ở `preflights/`.
-- `.agents/assignments/ai/`: bốn brief và bảng ownership.
-- `features/measure-candidate/` giữ bản draft cũ, đã gộp vào assistant. Không triển khai riêng.
-- `docs/project.md` và `AGENTS.md` chỉ thêm ngoại lệ workflow của AI và index feature.
+- `backend/ai/src/skullfix_ai/`: scaffold for `api`, `schemas`, `agent`, `tools`, `operations`, `integrations/bedrock`, `integrations/workspace`, `integrations/geometry`, and `storage`.
+- `backend/ai/tests/unit/`, `tests/integration/`, `tests/live/`, and `backend/ai/evaluation/`.
+- `docs/ai/`: architecture, workflow, contracts, and setup.
+- `features/ai-workspace-assistant/intent.md` and `spec.md`, kept as separate files.
+- `features/ai-workspace-assistant/preflight.md` is the template. Per-task records live under `preflights/`.
+- `.agents/assignments/ai/`: four briefs and the ownership table.
+- `features/measure-candidate/` keeps the earlier draft, folded into the assistant. Do not implement it separately.
+- `docs/project.md` and `AGENTS.md` add only the AI workflow exception and the feature index.
 
-## Quyết định đã chốt
+## Decisions already made
 
-- Reconstruction có thể dùng mock trước, gắn nhãn `mock` hoặc `test-double`, qua adapter geometry. Mock không chờ mechanical tool hay measurement contract, và không hoàn thành milestone đo thật. Inspect, edit, compare không được mở rộng thành mock nếu chưa có contract.
-- Schema kết quả dùng chung. Agent, API và storage không phụ thuộc field chỉ có trên mock. Đổi implementation bằng cách đổi adapter khi schema còn tương thích. Package `schemas/` hiện vẫn là scaffold.
-- Intent và spec là hai file Markdown riêng. Có thể sửa cùng một vòng tài liệu, nhưng không gộp thành một file.
-- Preflight là checklist trước khi code, một record cho một task, một người sửa. Checklist không tự cho phép triển khai và không phải cổng duyệt thêm.
-- Sau khi người dùng chấp nhận cả intent và spec, viết plan rồi triển khai. Không cần duyệt plan riêng trừ khi người dùng yêu cầu. Chưa có acceptance, nên chưa có `plan.md`.
+- Reconstruction may use a mock first, labeled `mock` or `test-double`, behind the geometry adapter. The mock does not wait for mechanical tools or a measurement contract, and it does not complete the real measurement milestone. Inspection, editing, and comparison are not expanded into the mock without their own contracts.
+- The result schema is shared. The agent, API, and storage do not depend on fields that exist only on the mock. Swap an implementation by changing the adapter when the schema stays compatible. The `schemas/` package is still a scaffold.
+- Intent and spec stay two separate Markdown files. They may be edited in one documentation round, but they are not merged into one file.
+- Preflight is a checklist before coding: one record per task, one editor at a time. The checklist does not itself authorize implementation, and it is not an extra approval gate.
+- After the user accepts both the intent and the spec, write the plan and implement. A separate plan approval is not required unless the user asks. There is no acceptance yet, so there is no `plan.md`.
 
-## Code và test đang có
+## Code and tests that exist
 
-Chỉ trên branch này, chưa có trên `main` hay trên `feat/ai-backend-foundation`:
+Only on this branch. Not on `main`, and not on `feat/ai-backend-foundation`:
 
-- `backend/ai/src/skullfix_ai/operations/execute.py`: `execute_operation` trả `unavailable`, reason `operation-contract-missing`, `value` là `None` khi operation id không nằm trong tập agreed. Nhánh id đã agreed ném `NotImplementedError` và chưa có test.
-- `backend/ai/tests/unit/operations/test_missing_contract.py`: một unit test cho ba trường trên.
-- Record `features/ai-workspace-assistant/preflights/r7-s6-missing-contract.md`.
-- `AGENTS.md` và `docs/ai/setup.md` ghi lệnh test của lát cắt này.
+- `backend/ai/src/skullfix_ai/operations/execute.py`: `execute_operation` returns `unavailable`, reason `operation-contract-missing`, and `value` `None` when the operation id is not in the agreed set. The agreed-id branch raises `NotImplementedError` and has no test.
+- `backend/ai/tests/unit/operations/test_missing_contract.py`: one unit test for those three fields.
+- The record `features/ai-workspace-assistant/preflights/r7-s6-missing-contract.md`.
+- `AGENTS.md` and `docs/ai/setup.md` record the test command for this slice.
 
-Chưa có dịch vụ FastAPI, tích hợp Bedrock, persistence, hay reconstruction chạy được. Mock reconstruction chưa được viết.
+There is no FastAPI service, Bedrock integration, persistence, or working reconstruction. The reconstruction mock has not been written.
 
-## Chưa triển khai và contract còn mở
+## Not implemented, and contracts still open
 
-Chưa có agreed contract cho `measure.candidate`, `generate.candidate`, `inspect.candidate`, `edit.local`, hay `compare.revisions`. `generate.candidate.from_contour` vẫn unavailable.
+There is no agreed contract for `measure.candidate`, `generate.candidate`, `inspect.candidate`, `edit.local`, or `compare.revisions`. `generate.candidate.from_contour` stays unavailable.
 
-Còn mở: phép đo nào và đơn vị nào, local edit nào, ai cấp id, định dạng artifact và metadata tọa độ, workspace đọc in-process hay HTTP, và Bedrock model id. Không gán owner cho geometry thật.
+Still open: which measurement and which unit, which local edit, who mints ids, the artifact format and coordinate metadata, whether the workspace read is in-process or HTTP, and the Bedrock model id. Real geometry ownership is not assigned.
 
 ## Verification
 
-Trên branch này, từ repo root:
+On this branch, from the repo root:
 
 ```
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/operations/test_missing_contract.py
 ```
 
-Lần chạy gần nhất in `Ran 1 test` và `OK`. Test chỉ kiểm tra status, reason và `value` `None`. Nó không chứng minh không ghi database, không hoàn tất toàn bộ S6, và không phải integration test hay geometry thật.
+The latest run printed `Ran 1 test` and `OK`. The test checks only status, reason, and `value` `None`. It does not prove that nothing was written to a database, it does not complete all of S6, and it is not an integration test or real geometry.
 
-`python3 .agents/skills/intent-spec-plan/scripts/check_features.py .` báo 2 feature, 0 error, 0 warning trên cả hai branch. `git diff --check` sạch.
+`python3 .agents/skills/intent-spec-plan/scripts/check_features.py .` reported 2 features, 0 errors, and 0 warnings on both branches. `git diff --check` was clean.
 
-## Branch và thứ tự review
+## Branches and review order
 
-1. `feat/ai-backend-foundation`, base `main`. Draft PR nền tảng: https://github.com/binnguyenx/hack-princeton/pull/3. Gồm scaffold, tài liệu, intent/spec draft, workflow, preflight template, assignment. Chưa có operation code.
-2. `feat/ai-missing-contract-result`, base là branch ở trên. Draft PR lát cắt: https://github.com/binnguyenx/hack-princeton/pull/4. Thêm missing-contract, record R7/S6, lệnh test, và file tóm tắt này.
+1. `feat/ai-backend-foundation`, base `main`. Foundation draft PR: https://github.com/binnguyenx/hack-princeton/pull/3. Scaffold, docs, draft intent and spec, workflow, preflight template, and assignments. No operation code.
+2. `feat/ai-missing-contract-result`, based on the branch above. Slice draft PR: https://github.com/binnguyenx/hack-princeton/pull/4. Adds the missing-contract result, the R7/S6 record, the test command, and this summary.
 
-Review và merge dự kiến PR nền tảng trước, rồi PR lát cắt. PR lát cắt không lặp lại toàn bộ diff của PR nền tảng vì base của nó là branch nền tảng. Cả hai đều chưa nằm trên `main`.
+Review and merge the foundation PR first, then the slice PR. The slice PR does not repeat the foundation diff because its base is the foundation branch. Neither branch is on `main`.
