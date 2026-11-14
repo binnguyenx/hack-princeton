@@ -4,7 +4,7 @@ Intent: [intent.md](intent.md) · Status: draft · Last updated:2026-11-14
 
 ## Publication state
 
-Slice2 implements application repository, frozen Node-created data compatibility, transactional revision/cascade coordination, and paired SQLite/volume backups, FastAPI13 routes, shared HTTP contracts, default dev proxy, built serving and actual Chrome journeys. Other requirements below remain targets for dependent PRs; this intermediate branch does not claim unavailable runtime or live acceptance. Current upstream UI contracts are authoritative; proposed hardening and recovery are not accepted implicitly.
+Slice3 implements application repository, frozen Node-created data compatibility, transactional revision/cascade coordination, and paired SQLite/volume backups, FastAPI13 routes, shared HTTP contracts, default dev proxy, built serving and actual Chrome journeys, genuine LangGraph with a fake model, typed tools and isolated sandbox reconstruction. Other requirements below remain targets for dependent PRs; this intermediate branch does not claim unavailable runtime or live acceptance. Current upstream UI contracts are authoritative; proposed hardening and recovery are not accepted implicitly.
 
 ## Requirements
 

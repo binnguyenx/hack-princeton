@@ -30,7 +30,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 
 | Feature | Status | What it does |
 |-|-|-|
-| [express-to-fastapi](../features/express-to-fastapi/intent.md) | in progress | Publication slice2: FastAPI compatibility API, Express removal and current UI integration. |
+| [express-to-fastapi](../features/express-to-fastapi/intent.md) | in progress | Publication slice3: Repository-backed fake-model LangGraph and typed workspace tools. |
 | [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Accepted backend/state boundaries, structural schemas, authoritative SQLite application storage, and local artifact handling. The synchronous operation service and reconstruction mock are implemented; The live app already has Express CRUD APIs; Python has a read-only app workspace adapter. AI API/graphs/model integrations and live AI mutations remain unimplemented. The retry lifecycle is proposed pending review; real measurement, browser geometry, editing, inspection, and comparison contracts remain unresolved. |
 | [measure-candidate](../features/measure-candidate/intent.md) | proposed | Earlier draft of the measurement milestone. Folded into `ai-workspace-assistant`. Do not implement separately. |
 | [3D bone editor (umbrella)](../features/3d-bone-editor/README.md) | retired | Former mega-feature; split into category folders below. Root intent/spec/plan are retired — do not implement against them. |
