@@ -1,8 +1,8 @@
-# Plan: FastAPI compatibility API, Express removal and current UI integration
+# Plan: Repository-backed fake-model LangGraph and typed workspace tools
 
 Spec: [spec.md](spec.md) · Status: done · Date:2026-11-14
 
-> Historical: records verified publication slice2, not completion of every migration target.
+> Historical: records verified publication slice3, not completion of every migration target.
 
 ## Files that change
 
@@ -10,7 +10,7 @@ The source/test paths in spec.md and stage-specific preflights, runtime dependen
 
 ## Proof
 
-Python runner expects96 passing tests for the available modules. Application tests verify copied Node data, transactions, rollback/cleanup baseline, restart, hashes, metadata, pointers and sandbox separation. Later API/browser/graph proofs are available only when their slices are present.
+Python runner expects107 passing tests for the available modules. Application tests verify copied Node data, transactions, rollback/cleanup baseline, restart, hashes, metadata, pointers and sandbox separation. Later API/browser/graph proofs are available only when their slices are present.
 
 - R1: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R2: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
