@@ -59,9 +59,10 @@ export function prepareViewportMaterials(root: Object3D): void {
     for (const material of materials) {
       if (!(material instanceof MeshStandardMaterial)) continue
       if (material.metalness > 0.15) material.metalness = 0.04
-      if (material.roughness > 0.85) material.roughness = 0.62
-      // Slightly off-white so shaded recesses stay readable under wraparound lights.
-      if (material.color.getHex() === 0xffffff) material.color.set(0xc2c6d0)
+      if (material.roughness > 0.85) material.roughness = 0.55
+      // Mid slate bone — reads against the light gray studio grid, not a black void.
+      const hex = material.color.getHex()
+      if (hex === 0xffffff || hex === 0xc2c6d0) material.color.set(0x6f7682)
       material.envMapIntensity = 0
       material.needsUpdate = true
     }

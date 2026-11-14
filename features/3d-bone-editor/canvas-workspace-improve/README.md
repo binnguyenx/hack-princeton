@@ -168,7 +168,7 @@ Implementation: `SliceDock.tsx` + `SliceViewport.tsx` + `geometry/slices.ts`.
 | Control | Effect |
 |-|-|-|
 | **Collapse / Expand** | Hides or shows the three slice frames; link state remains conceptually “Linked” |
-| **Linked** badge | Documents that all planes share one crosshair (no unlink UI yet) |
+| **Linked** badge | Status label (not clickable): all planes share one crosshair. Hover explains this; unlink UI is not available yet |
 | Per-plane **Maximize / Restore** | Expands one plane (or 3D) via ViewFrame; other planes hide until restore |
 
 ### The three planes

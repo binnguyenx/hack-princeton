@@ -52,7 +52,11 @@ export function SliceDock({
         <div className="slice-dock__summary">
           <Link2 size={14} />
           <span>Slices: Axial · Sagittal · Coronal</span>
-          <span className="slice-dock__link-state">Linked</span>
+          <FeatureHint {...CANVAS_HINTS.linkedViews} side="top">
+            <span className="slice-dock__link-state" aria-label="Views are linked">
+              Linked
+            </span>
+          </FeatureHint>
         </div>
         <FeatureHint {...CANVAS_HINTS.expandDock} side="top">
           <button
@@ -72,9 +76,11 @@ export function SliceDock({
     <section className="slice-dock" aria-label="Synchronized slice dock">
       <div className="slice-dock__bar">
         <span>Cross-reference slices</span>
-        <span className="slice-dock__link-state">
-          <Link2 size={12} /> Linked
-        </span>
+        <FeatureHint {...CANVAS_HINTS.linkedViews} side="bottom">
+          <span className="slice-dock__link-state" aria-label="Views are linked">
+            <Link2 size={12} aria-hidden /> Linked
+          </span>
+        </FeatureHint>
         <FeatureHint {...CANVAS_HINTS.collapseDock} side="top">
           <button
             type="button"

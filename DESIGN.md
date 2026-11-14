@@ -1,43 +1,43 @@
 ---
 name: hack-princeton
-description: Dense Atlassian-like B2B chrome for project/case management; Figma/Blender-clean chrome for the 3D canvas — Operate, never soft wellness UI.
+description: Soft monochrome Operate UI — floating white islands on light gray, blue accent for strong actions; Atlassian grid/structure for management, quiet editor chrome for canvas.
 colors:
-  base: "#F4F5F7"
+  base: "#F0F2F5"
   elevated: "#FFFFFF"
-  ink: "#172B4D"
-  accent: "#0052CC"
-  signal: "#DE350B"
-  ink-muted: "#6B778C"
-  border: "#DFE1E6"
+  ink: "#1A1D21"
+  accent: "#2F6BFF"
+  signal: "#E5484D"
+  ink-muted: "#8B929A"
+  border: "#E4E6EA"
 typography:
   page-title:
-    fontFamily: "system-ui, \"Segoe UI\", \"SF Pro Text\", sans-serif"
+    fontFamily: "\"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.3
-    letterSpacing: "-0.01em"
+    letterSpacing: "-0.015em"
   section:
-    fontFamily: "system-ui, \"Segoe UI\", \"SF Pro Text\", sans-serif"
+    fontFamily: "\"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 600
     lineHeight: 1.35
     letterSpacing: "0"
   body:
-    fontFamily: "system-ui, \"Segoe UI\", \"SF Pro Text\", sans-serif"
+    fontFamily: "\"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.45
     letterSpacing: "0"
   meta:
-    fontFamily: "system-ui, \"Segoe UI\", \"SF Pro Text\", sans-serif"
+    fontFamily: "\"SF Pro Text\", \"Segoe UI\", system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 400
     lineHeight: 1.4
     letterSpacing: "0.01em"
 rounded:
-  sm: "3px"
-  md: "6px"
-  lg: "8px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
   pill: "999px"
 spacing:
   xs: "4px"
@@ -49,7 +49,7 @@ components:
   panel:
     backgroundColor: "{colors.elevated}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.lg}"
     padding: "{spacing.lg}"
   button-primary:
     backgroundColor: "{colors.accent}"
@@ -67,7 +67,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "6px 8px"
   tool-active:
-    backgroundColor: "#DEEBFF"
+    backgroundColor: "#E8EFFF"
     textColor: "{colors.accent}"
     rounded: "{rounded.sm}"
     padding: "6px 8px"
@@ -77,7 +77,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "6px 12px"
   viewport-frame:
-    backgroundColor: "#EBECF0"
+    backgroundColor: "#E8EAEE"
     textColor: "{colors.ink}"
     rounded: "{rounded.md}"
     padding: "{spacing.xs}"
@@ -87,139 +87,132 @@ components:
 
 ## Overview
 
-**Agents:** This file is the required visual system for all UI / front-end work on this repo. Read it before implementing or redesigning any chrome. Pair with `docs/design-conventions.md` for management vs canvas interaction rules and `PRODUCT.md` for brand constraints. Do not introduce a competing palette, type ramp, or layout language. The product display name is undecided; do not invent or hard-code a consumer brand in UI chrome beyond what `PRODUCT.md` allows.
+**Agents:** This file is the required visual system for all UI / front-end work on this repo. Read it before implementing or redesigning any chrome. Pair with `docs/design-conventions.md` for management vs canvas interaction rules and `PRODUCT.md` for brand constraints.
 
-**hack-princeton** is a dual-register **Operate** system:
+**hack-princeton** is a dual-register **Operate** system with one shared visual skin:
 
-1. **Management** — Atlassian-like B2B density: tables, toolbars, dropdowns, filters, project/case headers.
-2. **Canvas workspace** — Figma/Blender-like editor chrome: viewport-dominant, compact tool strips and context bars, quiet panels.
+1. **Structure (management)** — Atlassian-like **grid and business component layout**: tables, toolbars, filters, page headers, primary actions. Structure only — not Atlassian blue-box chrome.
+2. **Canvas workspace** — Viewport-dominant editor chrome: compact tool strips, quiet panels, Figma/Blender restraint in density.
 
-Soft Medit / large-radius neumorphic wellness UI is an **anti-reference**. Do not revive pill tool chips, 24px panel radii, or lavender soft-active fills.
+**Visual craft reference:** `.impeccable/reference/ui-styling-soft-monochrome.jpg` (soft floating islands, B/W/gray + blue accent).  
+**Layout density reference:** `.impeccable/reference/ui-styling-atlassian-b2b.jpg` (tables/toolbars/hierarchy — structure only).  
+**Anti-reference:** `.impeccable/reference/ui-styling-medit-soft.jpg` (clinical wellness / oversized pill theater — do not follow).
 
-Craft reference (management density/feel): `.impeccable/reference/ui-styling-atlassian-b2b.jpg`.  
-Anti-reference (do not follow): `.impeccable/reference/ui-styling-medit-soft.jpg`.
+Color strategy: **Restrained** monochrome neutrals + one accent. Main hierarchy: **Base → Ink → Accent**. `elevated` white and `border` are structural. `signal` is rare danger only — not a brand color.
 
-Color strategy: **Restrained** neutrals + one blue accent. Main hierarchy: **Base → Ink → Accent → Signal**. `elevated` white and `border` are structural, not extra brand hues. `ink-muted` is secondary text.
-
-Display-mesh quality (smooth medical surfaces vs blocky voxels) is a later rendering requirement; chrome here must not imply toy or game aesthetics.
+Pinned direction (2026-11-14): soft monochrome CAD Operate UI; accent blue only for strong actions; Atlassian retained as layout guideline.
 
 ## Colors
 
 | Token | Hex | Hierarchy role |
 |-|-|-|
-| `base` | `#F4F5F7` | App ground behind panels and tables |
-| `ink` | `#172B4D` | Primary text, icons, structure |
-| `accent` | `#0052CC` | Primary buttons, links, focus, active tool tint |
-| `signal` | `#DE350B` | Errors, blocking warnings, destructive confirm |
+| `base` | `#F0F2F5` | App ground behind floating panels |
+| `ink` | `#1A1D21` | Primary text, icons, structure |
+| `accent` | `#2F6BFF` | Primary buttons, focus, active tool tint |
 
 Supporting (not main brand colors):
 
-- `elevated` `#FFFFFF` — panels, table surfaces, menus
-- `ink-muted` `#6B778C` — secondary labels, timestamps, hints
-- `border` `#DFE1E6` — hairline rules, table grid, input edges
-- Active tool wash `#DEEBFF` (accent at low opacity)—selection/focus fill, not a fifth brand color
+- `elevated` `#FFFFFF` — panels, tables, menus, islands
+- `ink-muted` / `ink-subtle` — secondary labels, timestamps, hints
+- `border` `#E4E6EA` — hairline rules, input edges
+- Active wash `#E8EFFF` — selection/focus fill from accent at low opacity
+- `signal` `#E5484D` — errors / destructive confirms only
 
-Do not use soft lavender (`#C9CBE8`) or purple-indigo gradients. Selection and primary actions use Accent; danger uses Signal plus text—not color alone.
+Do not add purple gradients, lavender fills, or extra brand hues. Rest of the UI stays black / white / gray.
 
 ## Typography
 
-**System workhorse stack** for dense Operate UI: `system-ui`, Segoe UI, SF Pro Text, sans-serif. No Plus Jakarta Sans. No display serifs.
+Geometric system workhorse: SF Pro Text / Segoe UI / system-ui. Hierarchy by **weight**, not color noise.
 
 | Role | Size | Weight | Use |
 |-|-|-|-|
-| page-title | 1.25rem | 600 | Project/case page titles, workspace title |
-| section | 0.875rem | 600 | Panel headers, table section labels, dialog titles |
-| body | 0.875rem | 400 | Table cells, forms, ops feedback |
-| meta | 0.75rem | 400 | Timestamps, IDs, shortcut hints, column secondary |
-
-Prefer tabular figures in numeric columns when the stack supports them. Avoid all-caps tracking for section labels.
+| page-title | 1.25rem | 600 | Project/case titles |
+| section | 0.875rem | 600 | Panel headers, dialog titles |
+| body | 0.875rem | 400 | Tables, forms, ops feedback |
+| meta | 0.75rem | 400 | IDs, shortcuts, secondary |
 
 ## Layout
 
 ### Management surfaces
 
-Project list, case list, import, and related non-canvas screens:
+Keep Atlassian **information architecture**:
 
-1. Slim left nav or top app tabs for primary destinations
-2. Page header with title + primary action (New / Import)
-3. Toolbar row: search, Sort, Filter, overflow
-4. Data table or structured list as the main content—not a card collage
-5. Optional detail drawer or nested header for the selected project/case
+1. Slim left nav + main content
+2. Page header with title + primary action
+3. Toolbar: search, Sort, Filter
+4. Data table / structured list as main content
+5. Optional detail drawer
 
 Rules:
 
-- Dense but readable padding (`spacing.sm`–`md`); borders separate regions more than soft shadows
-- One job per region; marketing strips and wellness dashboards are forbidden
-- Desktop-first; management may later tighten for laptop widths, but mobile is not first-class this phase
+- Floating shell: padded app ground; sidebar and main as rounded white islands
+- Soft shadows + hairline borders for depth; generous gutters between islands
+- Dense enough for technical users; not rigid legacy enterprise chrome
+- No marketing/wellness dashboard kits
 
 ### Canvas workspace
 
-In-case 3D editor:
+1. Compact top context bar
+2. Compact mode rail + options strip
+3. Dominant viewport
+4. Quiet inspector / slice dock
 
-1. Compact **top context bar** (project / case / sample / candidate)—VS Code–like tabs or breadcrumb + overflow, not soft pills
-2. Compact **tool strip** (icon + short label) for included ops; modes, not toy chips
-3. Dominant **viewport** (majority of the screen)
-4. Optional **inspector** for selection, ownership, revision—quiet empty state
-
-Rules:
-
-- Viewport is the hero; chrome stays thin and structural
-- Distinguish **navigation** (orbit/pan/zoom) from **edit** tools in placement and active styling
-- No soft pill tool rails as the default editor chrome
+Viewport stays the hero; chrome is soft but thin.
 
 ## Elevation & Depth
 
-Prefer **hairline borders** (`border`) and light modal/menu shadows. Tables use row rules, not stacked cards.
+Soft diffuse charcoal-tinted shadows (see `.impeccable/design.json`). Panels float on Base. Prefer shadow **or** border for a surface — hairline border + soft panel shadow is allowed for islands matching the craft reference.
 
-- Panels: 1px border; optional very light shadow for floating menus/modals only (see `.impeccable/design.json`)
-- Active tools: accent wash + accent ink, not large soft shadows
-- Viewport sits in a slightly darker well (`viewport-frame` ground); geometry provides drama, not glowing UI
-
-No multi-layer dramatic shadows, neon glows, glassmorphism, or neumorphic wells.
+No neon glow, heavy glassmorphism, or multi-layer theatrical shadows.
 
 ## Shapes
 
-- Controls / buttons / inputs: `rounded.sm` (3px)
-- Panels / tables / viewport frame: `rounded.md`–`lg` (6–8px)
-- `rounded.pill` only for rare status dots or count badges—not tool buttons
-- Icon hit targets: square/rounded-sm wells, not circular soft blobs
+- Controls / buttons / inputs: `rounded.sm` (8px)
+- Cards / view frames: `rounded.md` (12px)
+- Shell islands (sidebar, main): `rounded.lg` (16px)
+- `rounded.pill` only for rare status dots / count badges — not tool rails
 
-Prefer sharp professional SaaS chrome over continuous “soft UI” curves.
+## Motion
+
+Personality: **Corporate / Premium** calm responsiveness (LottieFiles motion-design skill).
+
+| Token | Value | Use |
+|-|-|-|
+| Signature easing | `cubic-bezier(0.2, 0, 0, 1)` | ~80% of transitions |
+| Fast | 120ms | hover, press, tool toggle |
+| Normal | 220ms | panel / drawer / shadow lift |
+| Slow | 360ms | shell collapse, major layout |
+
+Patterns: button press scale ~0.98; card/panel hover shadow lift; sidebar width + fade; no bounce/overshoot. Honor `prefers-reduced-motion`.
 
 ## Components
 
-**Panel** — Elevated + border; small radius; used for inspector, dialogs, management side panes.
+**Panel** — White island, lg radius, soft panel shadow, quiet border.
 
-**Button primary** — Accent fill, white label. Secondary — elevated + border + ink. Danger — Signal fill for destructive confirms only.
+**Button primary** — Accent fill, white label (strong action only). Secondary — white + border + ink. Danger — Signal only for destructive confirms.
 
-**Tool control** — Idle: transparent/elevated + ink. Active: accent wash + accent text. Never use Signal for “selected.”
+**Tool control** — Idle ghost; active accent wash + accent ink.
 
-**Table** — Header row with meta/section weight; body rows with hairline separators; row hover subtle Base tint; selected row accent wash.
+**Table** — Structured business grid (Atlassian layout). Soft row hover; selected row accent wash.
 
-**Dropdown / menu** — Elevated, border, light shadow; dense items at body size.
+**Viewport frame** — Quiet well; geometry provides drama.
 
-**Viewport frame** — Quiet well holding the Three.js canvas; minimal bezel.
-
-**Feedback** — Neutral messages: ink / ink-muted. Failures: Signal + clear text; keep Signal rare.
-
-**Icons** — Outline/medium stroke; resting ink or ink-muted; active on accent wash.
-
-Wire all editor controls through the shared `ops/` layer; visual state must match operation state (selected tool, failed edit, unverified spatial metadata).
+**Icons** — Thin outline stroke; resting ink-muted; active on accent wash.
 
 ## Do's and Don'ts
 
 **Do**
 
-- Use Atlassian-like density on management: tables, toolbars, New/Sort/Filter/search
-- Use Figma/Blender-like restraint on the canvas: thin chrome, strong viewport
-- Use Accent for primary actions and active tools; Signal only for errors/destructive
-- Keep nav vs edit distinguishable on the canvas
-- Follow `docs/design-conventions.md` for shortcuts and management vs canvas patterns
+- Keep management as tables/toolbars/filters (Atlassian structure)
+- Keep canvas viewport-first with compact chrome
+- Use Accent only for strong actions and active tools
+- Use soft floating containers and calm motion
+- Follow `docs/design-conventions.md` for nav vs edit behavior
 
 **Don't**
 
-- Follow the Medit soft anti-reference (large radii, pill chips, lavender soft-active, airy wellness cards)
-- Build marketing/wellness dashboards (DNA heroes, supplement grids, fake clinical metrics)
-- Default tool UI to pill chips or 24px rounded panels
-- Add purple-to-indigo gradients or a fifth brand color
-- Put clinical claims or decorative badges on chrome
+- Revert to rigid Atlassian blue-box chrome as the visual skin
+- Follow the Medit wellness anti-reference (oversized pill theater, clinical marketing)
+- Scatter Accent across non-action surfaces
+- Add purple/lavender brand fills or decorative glass clutter
+- Break component layout or application logic for visual polish

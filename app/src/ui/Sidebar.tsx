@@ -41,7 +41,7 @@ export function Sidebar({
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const projectColorMap = ['#0052CC', '#00875A', '#FF991F', '#6554C0', '#36B37E']
+  const projectColorMap = ['#2F6BFF', '#1A1D21', '#6B7280', '#3D78FF', '#8B929A']
 
   return (
     <aside

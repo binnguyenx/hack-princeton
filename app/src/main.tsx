@@ -8,7 +8,7 @@ import './App.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Theme accentColor="blue" grayColor="slate" panelBackground="solid" radius="small" scaling="95%">
+    <Theme accentColor="blue" grayColor="gray" panelBackground="solid" radius="large" scaling="100%">
       <App />
     </Theme>
   </StrictMode>,
