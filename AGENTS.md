@@ -30,6 +30,8 @@ Before a major run: open the matching `SKILL.md` and follow it. Do not improvise
 
 ## UI / front-end design system (required)
 
+Design system name: **hack-princeton**. Product display name is undecided — do not ship “SkullFix” (or another brand) in UI chrome unless `PRODUCT.md` is updated.
+
 Agents **must** use this system for any UI, front-end, layout, styling, or visual work. Do not invent a parallel palette, type ramp, or chrome style.
 
 | File | Role |

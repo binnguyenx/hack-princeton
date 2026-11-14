@@ -1,4 +1,6 @@
-# SkullFix (HackPrinceton)
+# HackPrinceton (product name undecided)
+
+Design system: **hack-princeton** (`DESIGN.md`).
 
 ## Goal
 

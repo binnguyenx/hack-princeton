@@ -1,6 +1,6 @@
 # Design conventions (3D bone editor)
 
-**Agents:** Use this file with [`DESIGN.md`](../DESIGN.md) for all 3D-editor UI. Tokens and look live in `DESIGN.md`; nav-vs-edit, shortcuts, and state behavior live here. Onboard reminder: `AGENTS.md` § UI / front-end design system.
+**Agents:** Use the **hack-princeton** system ([`DESIGN.md`](../DESIGN.md)) for all 3D-editor UI. Tokens and look live in `DESIGN.md`; nav-vs-edit, shortcuts, and state behavior live here. Onboard reminder: `AGENTS.md` § UI / front-end design system. Product display name is undecided.
 
 **Visual system of record:** [`DESIGN.md`](../DESIGN.md) (tokens + Do’s/Don’ts).  
 **Sidecar:** [`.impeccable/design.json`](../.impeccable/design.json) (shadows, focus, motion).  

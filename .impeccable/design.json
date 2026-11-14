@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "product": "SkullFix",
+  "designSystem": "hack-princeton",
   "shadows": {
     "panel": "0 10px 30px rgba(26, 27, 31, 0.06)",
     "panel-active": "0 8px 24px rgba(26, 27, 31, 0.08)",

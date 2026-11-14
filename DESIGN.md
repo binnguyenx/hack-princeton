@@ -1,5 +1,5 @@
 ---
-name: SkullFix
+name: hack-princeton
 description: Soft, calm chrome for a cranial reconstruction 3D editor — viewport first, marketing-dashboard never.
 colors:
   base: "#F4F5F7"
@@ -72,13 +72,13 @@ components:
     padding: "{spacing.sm}"
 ---
 
-# SkullFix Design System
+# hack-princeton design system
 
 ## Overview
 
-**Agents:** This file is the required visual system for all UI / front-end work. Read it before implementing or redesigning any chrome. Pair with `docs/design-conventions.md` for 3D-editor interaction rules and `PRODUCT.md` for brand constraints. Do not introduce a competing palette, type ramp, or layout language.
+**Agents:** This file is the required visual system for all UI / front-end work on this repo. Read it before implementing or redesigning any chrome. Pair with `docs/design-conventions.md` for 3D-editor interaction rules and `PRODUCT.md` for brand constraints. Do not introduce a competing palette, type ramp, or layout language. The product display name is undecided; do not invent or hard-code a consumer brand in UI chrome beyond what `PRODUCT.md` allows.
 
-SkullFix chrome borrows the **soft medical UI feel** of the medit-style reference (light ground, large radii, quiet elevation, geometric sans) and applies it to an **Operate** surface: a 3D bone editor. The case viewport is the hero. UI is sparse scaffolding—tools, selection state, and honest errors—not a wellness dashboard.
+**hack-princeton** chrome borrows the **soft medical UI feel** of the medit-style reference (light ground, large radii, quiet elevation, geometric sans) and applies it to an **Operate** surface: a 3D bone editor. The case viewport is the hero. UI is sparse scaffolding—tools, selection state, and honest errors—not a wellness dashboard.
 
 Styling reference (feel only): `.impeccable/reference/ui-styling-medit-soft.jpg`.
 
