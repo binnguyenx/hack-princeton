@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "designSystem": "hack-princeton",
+  "shadows": {
+    "panel": "0 10px 30px rgba(26, 27, 31, 0.06)",
+    "panel-active": "0 8px 24px rgba(26, 27, 31, 0.08)",
+    "tool-active": "0 4px 14px rgba(201, 203, 232, 0.55)"
+  },
+  "focus": {
+    "ring": "0 0 0 3px rgba(201, 203, 232, 0.9)",
+    "ring-signal": "0 0 0 3px rgba(255, 159, 100, 0.55)"
+  },
+  "motion": {
+    "fast": "120ms ease-out",
+    "normal": "180ms ease-out"
+  },
+  "icons": {
+    "strokeWidth": 1.5,
+    "sizeSm": "16px",
+    "sizeMd": "20px"
+  },
+  "reference": ".impeccable/reference/ui-styling-medit-soft.jpg"
+}
