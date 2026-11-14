@@ -1,0 +1,55 @@
+# Spec: Express-to-FastAPI migration
+
+Intent: [intent.md](intent.md) · Status: draft · Last updated:2026-11-14
+
+## Publication state
+
+Slice1 implements application repository, frozen Node-created data compatibility, transactional revision/cascade coordination, and paired SQLite/volume backups. Other requirements below remain targets for dependent PRs; this intermediate branch does not claim unavailable runtime or live acceptance. Current upstream UI contracts are authoritative; proposed hardening and recovery are not accepted implicitly.
+
+## Requirements
+
+- R1. FastAPI must expose all 13 currently implemented routes under the same `/api` paths and HTTP methods listed in the route inventory.
+- R2. Successful responses must preserve current status codes, camelCase JSON keys, nested ProjectManifest structure, identifier values and relationships, nullability, omitted optional fields, and empty-array behavior.
+- R3. The authoritative ownership chain must remain User → Project → Case → Sample → Candidate → CandidateRevision. Source anatomy belongs to a Sample. A Candidate and every CandidateRevision belong to that Sample through the existing relationships.
+- R4. Sample import must accept multipart fields named `file`, `displayName`, `spatiallyVerified`, and `meta`. `file` contains raw bytes; `meta` is JSON text; only the exact string `true` currently maps to true; an absent or empty `displayName` falls back to the uploaded filename. Current Express JSON bodies are limited to 10 MB, while Multer keeps uploads in memory and declares no explicit file-size limit; any FastAPI limit change requires an explicit compatibility decision.
+- R5. Sample download must return the stored NRRD bytes unchanged with `application/octet-stream`. Volume hashes must remain lowercase raw SHA-256 hex strings without a `sha256:` prefix.
+- R6. Source spatial metadata must preserve `units`, optional `space`, `sizes`, `spacings`, and `bboxMm` without translating it to the sandbox spatial schema. Candidate poses must remain flat 16-element arrays in the current row-major application ordering and interpretation.
+- R7. Candidate creation must require a spatially verified Sample, create a Candidate and order-0 CandidateRevision in one SQLite transaction, reference the Sample's existing volume/hash, use the identity pose, and return both `candidateId` and `revisionId`.
+- R8. Transform must append a CandidateRevision using the current revision's volume/hash, assign the next order, persist the submitted flat pose, and atomically advance only that Candidate's `currentRevisionId`.
+- R9. Restore must validate that the revision belongs to the Candidate, then move `currentRevisionId` to that existing revision without adding a revision. Restoring below the maximum order is valid, and a later transform appends after the maximum existing order.
+- R10. The migration must preserve accepted deletion, cascade, transaction, rollback, and file-cleanup outcomes. Known defects or framework accidents in those areas must be classified and resolved explicitly before their FastAPI slice; they must not be silently copied or silently changed.
+- R11. FastAPI application storage must open and preserve the existing seven-table SQLite schema and `volumes/<volumeId>.nrrd` layout under `HACK_STORAGE_ROOT`, whose default is `data/storage`; the database filename remains `app-model.sqlite`.
+- R12. Existing identifiers, timestamps, case counts, relationships, revision pointers, raw hashes, JSON metadata, pose arrays, volume rows, and NRRD files must survive process restart and backend cutover.
+- R13. Compatibility and migration tests must use temporary roots and disposable database/file copies produced by the Node implementation. They must never mutate the user's live database or volume files.
+- R14. A reusable backend-neutral HTTP contract suite must run against Express before implementation and against FastAPI later. Backend startup/storage setup must be separate from API assertions, and generated IDs/timestamps may be normalized only while preserving identity links, order, hashes, poses, and metadata.
+- R15. Repository integration tests must separately prove SQLite/file transactions, cascades, shared volume survival, rollback, restart persistence, and compatibility with Node-created storage. Browser smoke tests must cover the user workflow but must not replace HTTP or repository tests.
+- R16. FastAPI validation and exception handling must map to the accepted public status/body contract instead of exposing default `422` validation responses, Python tracebacks, local paths, or framework-specific details.
+- R17. FastAPI routes must be thin. Application services/repositories own membership, persistence, revision, and file behavior; route functions own transport parsing and public error mapping.
+- R18. Development must run Vite and FastAPI as separate processes, with Vite proxying unchanged `/api` URLs to FastAPI. Express and FastAPI parity runs must use separate disposable database/volume roots. The S13 handoff/rollback rehearsal instead uses sequential ownership of one disposable database/volume copy, with exactly one backend writing it at a time. Neither mode may use live storage.
+- R19. Before FastAPI accepts live writes, cutover must stop the current writer, create and verify a consistent paired backup of `app-model.sqlite` and the complete `volumes/` directory, then start FastAPI as the sole writer. That snapshot supports rollback only while no later write has been acknowledged.
+- R20. Express, Multer, Vite middleware wiring, and Node-specific test setup may be removed only after contract, Node-created-data, restart, browser-smoke, backup, and rollback evidence passes against FastAPI.
+- R21. Migration parity must not add `expectedRevisionId`, `requestId`, idempotency, recovery, parent revisions, or different restore semantics. Each requires a separately accepted contract change.
+- R22. The authoritative live application repository/database must remain distinct from `SQLiteApplicationStorage`, the sandbox operation service, and synthetic artifact root. Future LangGraph checkpoint storage must use a third, separate database.
+- R23. The sandbox initializer must continue rejecting the live `app-model.sqlite` path and databases that contain the live project/sample/volume schema. Migration work must not weaken or bypass that protection.
+- R24. Reusable Python pieces are limited to compatible primitives and adapters. Live Pydantic models must represent the actual ProjectManifest and API contracts; sandbox cases, immutable revisions, run ownership, synthetic JSON artifacts, and result envelopes must not become live records by implication.
+- R25. The reconstruction mock remains replaceable and sandbox-only until a generated-NRRD publication contract is accepted. It must not be exposed as real geometry or used to populate the live viewport.
+- R26. Express runtime removal is complete only when the app starts, serves the browser workflow, and passes acceptance checks without importing or installing Express or Multer at runtime.
+- R27. The completed application must have one application backend: FastAPI/Python. React/TypeScript/Three.js remain the frontend, Vite remains frontend build/development tooling, and the isolated AI sandbox or future checkpoint stores must not be presented as additional live application backends.
+- R28. A production-style local launch must use the FastAPI application to serve the built frontend and the same `/api` routes. API routes must be registered before the SPA fallback; unknown `/api` paths must remain API errors, while non-API client routes may fall back to the built `index.html`. Static asset paths, startup readiness, and shutdown must be documented and verified.
+- R29. `vite preview` is frontend-only unless an explicit API-routing mechanism is later implemented and tested. The supported integrated built-frontend check must use the production-style FastAPI launch, not the current development middleware or an assumed preview proxy.
+- R30. Before live cutover, a disposable handoff/rollback rehearsal must prove that Express can create baseline data, FastAPI can continue on that same copied dataset, Express can then read and continue writing all FastAPI-produced data, and FastAPI can resume on the same preserved dataset. The backends must be stopped between handoffs and must never write concurrently.
+- R31. If current live data is incompatible or suspected corrupt, rollback must stop writes and preserve both current data and the pre-cutover backup for explicit reconciliation. A backup is not reconciliation. Any option that discards acknowledged writes is destructive and requires separate approval.
+- R32. Future live AI integration must use the same FastAPI application-service boundary as direct UI actions. A separate AI HTTP application backend is out of scope unless separately requested; separate sandbox and LangGraph checkpoint stores do not create additional live application backends.
+- R33. The successful live migration path must stop Express, create and verify the paired backup, start FastAPI as the sole live writer, verify readiness and normal operation, and finish with FastAPI running. Returning live ownership to Express is a separate conditional rollback action, not part of successful cutover.
+- R34. If live rollback is conditionally triggered after FastAPI acknowledges writes, it must stop writes and prefer the S13-verified Express code/runtime over the current compatible data. Before acknowledged writes, the paired snapshot may be restored. If compatibility or integrity is uncertain, preserve current data and backup for explicit reconciliation; discarding acknowledged data remains destructive and separately approved.
+
+## Where it lives
+
+- Application repository: `backend/ai/src/skullfix_ai/application/`
+- Paired backup helper: `backend/ai/scripts/application_snapshot.py`
+- Application regressions: `backend/ai/tests/integration/application/`
+- Synthetic Node baseline: `backend/ai/tests/fixtures/node-application-baseline/`
+
+## Decisions
+
+Retain the shipped public baseline during this migration. D1–D5 proposed validation/error/delete/cleanup amendments remain deferred; no new request identity, restore model or automatic recovery is added. Temporary roots and one-writer handoffs are required. The final documentation PR records verified local cutover rather than retroactively claiming each intermediate slice performed it.

@@ -1,0 +1,222 @@
+{
+  "projectId": "c99be35e-a896-4b5b-86f0-42f544ae7e94",
+  "caseId": "4ad2cb5d-fe6d-4e64-bbb2-319f897d332b",
+  "sampleId": "19b6e1b9-72b7-46c3-9277-17b73de3ea79",
+  "candidateId": "fb9eaaf6-87a9-4e12-b110-94c073150481",
+  "restoredRevisionId": "26b5d5c7-fa8d-4a4c-b56c-5c303b5bd9e7",
+  "projects": [
+    {
+      "id": "c99be35e-a896-4b5b-86f0-42f544ae7e94",
+      "name": "Frozen Node compatibility fixture",
+      "updatedAt": "2026-11-14T14:07:54.124Z",
+      "caseCount": 2
+    }
+  ],
+  "manifest": {
+    "formatVersion": 1,
+    "user": {
+      "id": "local-dev",
+      "displayName": "Local Dev"
+    },
+    "project": {
+      "id": "c99be35e-a896-4b5b-86f0-42f544ae7e94",
+      "ownerUserId": "local-dev",
+      "name": "Frozen Node compatibility fixture"
+    },
+    "cases": [
+      {
+        "id": "4ad2cb5d-fe6d-4e64-bbb2-319f897d332b",
+        "projectId": "c99be35e-a896-4b5b-86f0-42f544ae7e94",
+        "name": "Synthetic fixture case"
+      },
+      {
+        "id": "c6db0de4-a5f3-4f67-b849-d7d11f9c37a9",
+        "projectId": "c99be35e-a896-4b5b-86f0-42f544ae7e94",
+        "name": "Empty fixture case"
+      }
+    ],
+    "samples": [
+      {
+        "id": "19b6e1b9-72b7-46c3-9277-17b73de3ea79",
+        "caseId": "4ad2cb5d-fe6d-4e64-bbb2-319f897d332b",
+        "displayName": "Synthetic source",
+        "license": "unknown",
+        "spatiallyVerified": true,
+        "sourceAnatomy": {
+          "objectId": "8c600256-6dd4-4b23-baa0-2a453c1e5b30",
+          "sampleId": "19b6e1b9-72b7-46c3-9277-17b73de3ea79",
+          "volumeId": "637deede-5cbd-4e5b-aa48-a5b50c375c87",
+          "spatial": {
+            "units": "mm",
+            "space": "left-posterior-superior",
+            "sizes": [
+              2,
+              3,
+              4
+            ],
+            "spacings": [
+              1,
+              2,
+              3
+            ],
+            "bboxMm": [
+              2,
+              6,
+              12
+            ]
+          },
+          "volumeHash": "62cd76004885a25a189086f70987d96b2e49816b55ba58182288a0d0e841ba1f"
+        }
+      }
+    ],
+    "candidates": [
+      {
+        "objectId": "fb9eaaf6-87a9-4e12-b110-94c073150481",
+        "sampleId": "19b6e1b9-72b7-46c3-9277-17b73de3ea79",
+        "currentRevisionId": "26b5d5c7-fa8d-4a4c-b56c-5c303b5bd9e7"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "26b5d5c7-fa8d-4a4c-b56c-5c303b5bd9e7",
+        "candidateId": "fb9eaaf6-87a9-4e12-b110-94c073150481",
+        "order": 0,
+        "volumeId": "637deede-5cbd-4e5b-aa48-a5b50c375c87",
+        "pose": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "volumeHash": "62cd76004885a25a189086f70987d96b2e49816b55ba58182288a0d0e841ba1f"
+      },
+      {
+        "id": "dd90943c-faaf-4fe2-a49f-ec0312ec1ac8",
+        "candidateId": "fb9eaaf6-87a9-4e12-b110-94c073150481",
+        "order": 1,
+        "volumeId": "637deede-5cbd-4e5b-aa48-a5b50c375c87",
+        "pose": [
+          1,
+          0,
+          0,
+          7,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "volumeHash": "62cd76004885a25a189086f70987d96b2e49816b55ba58182288a0d0e841ba1f"
+      }
+    ],
+    "viewState": {
+      "selectionObjectId": null,
+      "camera": {
+        "position": [
+          0,
+          0,
+          500
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ]
+      },
+      "visibility": {},
+      "inspectionPlane": {
+        "enabled": false,
+        "axis": "z",
+        "offset": 0
+      }
+    },
+    "openDocuments": [],
+    "activeDocumentId": null
+  },
+  "bytes": [
+    115,
+    121,
+    110,
+    116,
+    104,
+    101,
+    116,
+    105,
+    99,
+    32,
+    102,
+    114,
+    111,
+    122,
+    101,
+    110,
+    32,
+    78,
+    111,
+    100,
+    101,
+    32,
+    118,
+    111,
+    108,
+    117,
+    109,
+    101,
+    59,
+    32,
+    110,
+    111,
+    116,
+    32,
+    99,
+    108,
+    105,
+    110,
+    105,
+    99,
+    97,
+    108,
+    32,
+    100,
+    97,
+    116,
+    97,
+    32,
+    111,
+    114,
+    32,
+    114,
+    101,
+    99,
+    111,
+    110,
+    115,
+    116,
+    114,
+    117,
+    99,
+    116,
+    105,
+    111,
+    110
+  ]
+}

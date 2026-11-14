@@ -8,3 +8,9 @@ app/node_modules/
 app/dist/
 app/public/fixtures/demo-project/volumes/*.nrrd
 
+
+# Local Python environment for the application backend
+.venv/
+
+# Durable local application records and NRRD uploads
+data/storage/
