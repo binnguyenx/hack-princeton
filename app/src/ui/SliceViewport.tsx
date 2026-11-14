@@ -1,153 +1,255 @@
-import { blendSlice, type CandidateBlend } from '../geometry/candidateBlend'
-import type { SourceLandmark } from '../domain/types'
 import { useEffect, useRef, useState } from 'react'
-import { extractSlice, slicePointToIjk, volumeIntensityRange, type IjkPoint, type SlicePlaneId, type VolumeSizes } from '../geometry/slices'
-import { fitSlice, regionWindow } from '../geometry/slicePresentation'
-import { updateCanvasRuntime } from '../debug/bridge'
+import {
+  computeSliceContentFit,
+  extractSlice,
+  ijkToSliceUv,
+  mapFittedViewToSliceUv,
+  mapSliceUvToFittedView,
+  sliceUvToIjk,
+  type IjkPoint,
+  type SliceContentFit,
+  type SlicePlaneId,
+  type VolumeSizes,
+} from '../geometry/slices'
 import type { CanvasMode } from './CanvasWorkspace'
+import { CANVAS_HINTS } from './canvasFeatureHints'
+import { FeatureHint } from './FeatureHint'
 
 type Props = {
-  foreground?: Uint8Array
-  foregroundReason?: string
-  landmarks?: SourceLandmark[]
-  plane: SlicePlaneId; label: string; voxels: Uint8Array; sizes: VolumeSizes; crosshair: IjkPoint
-  spacings?: [number, number, number]; mode: CanvasMode; windowCenter: number; windowWidth: number
-  onCrosshairChange: (point: IjkPoint) => void; onWindowChange: (center: number, width: number) => void
+  plane: SlicePlaneId
+  label: string
+  voxels: Uint8Array
+  sizes: VolumeSizes
+  crosshair: IjkPoint
+  mode: CanvasMode
+  windowCenter: number
+  windowWidth: number
+  onCrosshairChange: (point: IjkPoint) => void
+  onWindowChange: (center: number, width: number) => void
   onPlace: (point: IjkPoint) => void
 }
-type Drag = { kind: 'window' | 'region' | 'pan' | 'zoom'; x: number; y: number; center: number; width: number; start: IjkPoint; pan: [number, number]; zoom: number }
-const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(high, n))
 
-export function SliceViewport({ foreground, foregroundReason, landmarks = [], plane, label, voxels, sizes, spacings = [1, 1, 1], crosshair, mode,
-  windowCenter, windowWidth, onCrosshairChange, onWindowChange, onPlace }: Props) {
+/** Soft monochrome slice studio — air is Base gray; bone darkens toward Ink. */
+const SLICE_BG_RGB = [232, 234, 238] as const
+const SLICE_INK_RGB = [42, 46, 53] as const
+
+function fullFit(width: number, height: number): SliceContentFit {
+  return { width, height, u0: 0, v0: 0, u1: width, v1: height }
+}
+
+export function SliceViewport({
+  plane,
+  label,
+  voxels,
+  sizes,
+  crosshair,
+  mode,
+  windowCenter,
+  windowWidth,
+  onCrosshairChange,
+  onWindowChange,
+  onPlace,
+}: Props) {
+  const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const stageRef = useRef<HTMLDivElement>(null)
-  const drag = useRef<Drag | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [pan, setPan] = useState<[number, number]>([0, 0])
-  const [showForeground, setShowForeground] = useState(false)
-  const [opacity, setOpacity] = useState(.5)
-  const [blend, setBlend] = useState<CandidateBlend>('normal')
-  const [smooth, setSmooth] = useState(false)
-  const [box, setBox] = useState({ width: 1, height: 1 })
-  const [error, setError] = useState<string | null>(null)
-  const axis = plane === 'axial' ? 2 : plane === 'sagittal' ? 0 : 1
-  const u = plane === 'sagittal' ? 1 : 0
-  const v = plane === 'axial' ? 1 : 2
-  const offset = crosshair[axis], maxOffset = sizes[axis] - 1
-  const frame = fitSlice(Math.max(box.width, 1), Math.max(box.height, 1), sizes[u], sizes[v], Math.abs(spacings[u]), Math.abs(spacings[v]))
-  const reset = () => { setZoom(1); setPan([0, 0]); setError(null) }
-  const activate = () => updateCanvasRuntime({ activeView: plane })
-  const step = (delta: number) => {
-    const next = [...crosshair] as IjkPoint
-    next[axis] = clamp(next[axis] + delta, 0, maxOffset)
-    onCrosshairChange(next)
-  }
-  const automaticWindow = () => {
-    const [low, high] = volumeIntensityRange(voxels)
-    onWindowChange((low + high) / 2, Math.max(high - low, 1))
-  }
+  const fitRef = useRef<SliceContentFit>(fullFit(1, 1))
+  const viewSizeRef = useRef({ width: 1, height: 1 })
+  const dragRef = useRef<{
+    x: number
+    y: number
+    center: number
+    width: number
+  } | null>(null)
+  const [crosshairView, setCrosshairView] = useState({ x: 0.5, y: 0.5 })
+
+  const offset =
+    plane === 'axial' ? crosshair[2] : plane === 'sagittal' ? crosshair[0] : crosshair[1]
+  const maxOffset =
+    (plane === 'axial' ? sizes[2] : plane === 'sagittal' ? sizes[0] : sizes[1]) - 1
+
   useEffect(() => {
-    const stage = stageRef.current
-    if (!stage) return
-    const observer = new ResizeObserver(() => setBox({ width: stage.clientWidth, height: stage.clientHeight }))
-    observer.observe(stage)
-    return () => observer.disconnect()
-  }, [])
-  useEffect(() => { setZoom(1); setPan([0, 0]); drag.current = null }, [voxels])
-  useEffect(() => {
-    const canvas = canvasRef.current, context = canvas?.getContext('2d')
-    if (!canvas || !context) return
-    const slice = extractSlice(voxels, sizes, plane, offset)
-    canvas.width = slice.width; canvas.height = slice.height
-    const image = context.createImageData(slice.width, slice.height)
-    const candidate = foreground && showForeground ? extractSlice(foreground, sizes, plane, offset).values : undefined
-    image.data.set(blendSlice(slice.values, candidate, windowCenter, windowWidth, opacity, blend))
-    context.putImageData(image, 0, 0)
-  }, [voxels, sizes, plane, offset, windowCenter, windowWidth, foreground, showForeground, opacity, blend])
-  useEffect(() => {
+    const host = hostRef.current
     const canvas = canvasRef.current
-    if (!canvas) return
-    const wheel = (event: WheelEvent) => {
-      event.preventDefault(); activate()
-      if (event.ctrlKey || event.metaKey) setZoom((value) => clamp(value * Math.exp(-event.deltaY * .002), .5, 8))
-      else step(event.deltaY > 0 ? 1 : -1)
+    if (!host || !canvas) return
+    const context = canvas.getContext('2d')
+    if (!context) return
+
+    const paint = () => {
+      const rect = host.getBoundingClientRect()
+      const cssWidth = Math.max(1, Math.floor(rect.width))
+      const cssHeight = Math.max(1, Math.floor(rect.height))
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.floor(cssWidth * dpr)
+      canvas.height = Math.floor(cssHeight * dpr)
+      canvas.style.width = `${cssWidth}px`
+      canvas.style.height = `${cssHeight}px`
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
+      viewSizeRef.current = { width: cssWidth, height: cssHeight }
+
+      const slice = extractSlice(voxels, sizes, plane, offset)
+      const low = windowCenter - windowWidth / 2
+      const safeWidth = Math.max(windowWidth, 1)
+      const windowed = new Uint8Array(slice.values.length)
+      for (let index = 0; index < slice.values.length; index += 1) {
+        windowed[index] = Math.round(
+          Math.max(0, Math.min(255, ((slice.values[index]! - low) / safeWidth) * 255)),
+        )
+      }
+
+      const fit = computeSliceContentFit(windowed, slice.width, slice.height)
+      fitRef.current = fit
+
+      const source = document.createElement('canvas')
+      source.width = slice.width
+      source.height = slice.height
+      const sourceContext = source.getContext('2d')
+      if (!sourceContext) return
+      const image = sourceContext.createImageData(slice.width, slice.height)
+      for (let index = 0; index < windowed.length; index += 1) {
+        const t = windowed[index]! / 255
+        const pixel = index * 4
+        image.data[pixel] = Math.round(
+          SLICE_BG_RGB[0] + (SLICE_INK_RGB[0] - SLICE_BG_RGB[0]) * t,
+        )
+        image.data[pixel + 1] = Math.round(
+          SLICE_BG_RGB[1] + (SLICE_INK_RGB[1] - SLICE_BG_RGB[1]) * t,
+        )
+        image.data[pixel + 2] = Math.round(
+          SLICE_BG_RGB[2] + (SLICE_INK_RGB[2] - SLICE_BG_RGB[2]) * t,
+        )
+        image.data[pixel + 3] = 255
+      }
+      sourceContext.putImageData(image, 0, 0)
+
+      context.fillStyle = `rgb(${SLICE_BG_RGB.join(',')})`
+      context.fillRect(0, 0, cssWidth, cssHeight)
+      const contentW = Math.max(fit.u1 - fit.u0, 1)
+      const contentH = Math.max(fit.v1 - fit.v0, 1)
+      // Zoom to anatomy AABB, but draw the *full* plane — never crop source pixels
+      // or the vault gets a hard straight cut through bone.
+      const scale = Math.min(cssWidth / contentW, cssHeight / contentH) * 0.98
+      const centerU = (fit.u0 + fit.u1) / 2
+      const centerV = (fit.v0 + fit.v1) / 2
+      const offsetX = cssWidth / 2 - centerU * scale
+      const offsetY = cssHeight / 2 - centerV * scale
+      context.imageSmoothingEnabled = false
+      context.drawImage(
+        source,
+        0,
+        0,
+        slice.width,
+        slice.height,
+        offsetX,
+        offsetY,
+        slice.width * scale,
+        slice.height * scale,
+      )
+
+      const uv = ijkToSliceUv(plane, crosshair, sizes)
+      setCrosshairView(
+        mapSliceUvToFittedView(uv.u, uv.v, fit, cssWidth, cssHeight),
+      )
     }
-    canvas.addEventListener('wheel', wheel, { passive: false })
-    return () => canvas.removeEventListener('wheel', wheel)
-  })
-  function point(event: React.PointerEvent<HTMLCanvasElement>): IjkPoint {
+
+    paint()
+    const observer = new ResizeObserver(paint)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [
+    crosshair,
+    offset,
+    plane,
+    sizes,
+    voxels,
+    windowCenter,
+    windowWidth,
+  ])
+
+  function pointFromEvent(event: React.PointerEvent<HTMLCanvasElement>): IjkPoint {
     const bounds = event.currentTarget.getBoundingClientRect()
-    return slicePointToIjk(plane, (event.clientX - bounds.left) / Math.max(bounds.width, 1),
-      (event.clientY - bounds.top) / Math.max(bounds.height, 1), sizes, crosshair)
+    const view = viewSizeRef.current
+    const uv = mapFittedViewToSliceUv(
+      (event.clientX - bounds.left) / Math.max(bounds.width, 1),
+      (event.clientY - bounds.top) / Math.max(bounds.height, 1),
+      fitRef.current,
+      view.width,
+      view.height,
+    )
+    return sliceUvToIjk(plane, uv.u, uv.v, sizes, crosshair)
   }
-  return <div className={`slice-viewport is-${mode}`} onFocusCapture={activate} onPointerDownCapture={activate}>
-    <div className="slice-tools" role="toolbar" aria-label={`${label} slice controls`}>
-      <button type="button" aria-label={`Zoom in ${label}`} onClick={() => setZoom((n) => clamp(n * 1.25, .5, 8))}>+</button>
-      <button type="button" aria-label={`Zoom out ${label}`} onClick={() => setZoom((n) => clamp(n / 1.25, .5, 8))}>−</button>
-      <button type="button" aria-label={`Reset ${label} slice view`} onClick={reset}>Reset</button>
-      <button type="button" aria-label={`Automatic window ${label}`} onClick={automaticWindow}>Auto W/L</button>
-      <button type="button" aria-label={`Smooth interpolation ${label}`} aria-pressed={smooth} onClick={() => setSmooth((n) => !n)}>Smooth</button>
-      <button type="button" aria-label={`Candidate mask ${label}`} aria-pressed={showForeground && Boolean(foreground)} disabled={!foreground}
-        title={foreground ? 'Blend current identity-pose candidate mask' : foregroundReason ?? 'Open an identity-pose binary candidate'}
-        onClick={() => setShowForeground((value) => !value)}>Mask</button>
-      {showForeground && foreground ? <><input type="range" aria-label={`Candidate opacity ${label}`} min="0" max="100" value={opacity * 100}
-        onChange={(event) => setOpacity(Number(event.target.value) / 100)} />
-        <select aria-label={`Candidate blend ${label}`} value={blend} onChange={(event) => setBlend(event.target.value as CandidateBlend)}>
-          <option value="normal">Overlay</option><option value="maximum">Maximum</option><option value="difference">Difference</option>
-        </select></> : null}
-    </div>
-    <div className="slice-stage" ref={stageRef}>
-      <div className="slice-image" style={{ ...frame, transform: `translate(${pan[0]}px, ${pan[1]}px) scale(${zoom})` }}>
-        <canvas ref={canvasRef} aria-label={`${label} anatomy slice`} tabIndex={0}
-          style={{ imageRendering: smooth ? 'auto' : 'pixelated' }} data-zoom={zoom} data-pan={pan.join(',')}
-          onContextMenu={(event) => event.preventDefault()}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing || event.ctrlKey || event.metaKey || event.altKey) return
-            const key = event.key.toLowerCase()
-            if (['arrowleft', 'arrowdown', 'b'].includes(key)) step(-1)
-            else if (['arrowright', 'arrowup', 'f'].includes(key)) step(1)
-            else if (key === 't' && foreground) setShowForeground((value) => !value)
-            else if (key === 'r') reset()
-            else if (key === '+') setZoom((n) => clamp(n * 1.25, .5, 8))
-            else if (key === '-') setZoom((n) => clamp(n / 1.25, .5, 8))
-            else return
-            event.preventDefault(); event.stopPropagation()
-          }}
+
+  const planeHint =
+    plane === 'axial'
+      ? CANVAS_HINTS.axialSlice
+      : plane === 'sagittal'
+        ? CANVAS_HINTS.sagittalSlice
+        : CANVAS_HINTS.coronalSlice
+
+  return (
+    <div ref={hostRef} className={`slice-viewport is-${mode}`}>
+      <FeatureHint {...planeHint} side="top">
+        <canvas
+          ref={canvasRef}
+          aria-label={`${label} anatomy slice`}
           onPointerDown={(event) => {
-            event.currentTarget.focus({ preventScroll: true }); event.currentTarget.setPointerCapture(event.pointerId)
-            const kind = event.button === 1 || event.shiftKey ? 'pan' : event.button === 2 ? 'zoom'
-              : mode === 'window-level' ? (event.ctrlKey || event.metaKey ? 'region' : 'window') : null
-            if (kind) { drag.current = { kind, x: event.clientX, y: event.clientY, center: windowCenter,
-              width: windowWidth, start: point(event), pan, zoom }; return }
-            if (event.button !== 0) return
-            const picked = point(event); onCrosshairChange(picked)
-            if (mode === 'place') onPlace(picked)
+            event.currentTarget.setPointerCapture(event.pointerId)
+            if (mode === 'window-level') {
+              dragRef.current = {
+                x: event.clientX,
+                y: event.clientY,
+                center: windowCenter,
+                width: windowWidth,
+              }
+              return
+            }
+            const point = pointFromEvent(event)
+            onCrosshairChange(point)
+            if (mode === 'place') onPlace(point)
           }}
           onPointerMove={(event) => {
-            const start = drag.current
-            if (!start) return
-            const dx = event.clientX - start.x, dy = event.clientY - start.y
-            if (start.kind === 'window') onWindowChange(start.center + dx, Math.max(1, start.width + dy))
-            if (start.kind === 'pan') setPan([clamp(start.pan[0] + dx, -box.width, box.width), clamp(start.pan[1] + dy, -box.height, box.height)])
-            if (start.kind === 'zoom') setZoom(clamp(start.zoom * Math.exp(-dy * .01), .5, 8))
+            const drag = dragRef.current
+            if (!drag || mode !== 'window-level') return
+            onWindowChange(
+              drag.center + (event.clientX - drag.x),
+              Math.max(1, drag.width + (event.clientY - drag.y)),
+            )
           }}
-          onPointerUp={(event) => {
-            const start = drag.current; drag.current = null
-            if (start?.kind === 'region') {
-              try { const range = regionWindow(voxels, sizes, plane, start.start, point(event)); onWindowChange(range.center, range.width); setError(null) }
-              catch (reason) { setError(String(reason)) }
-            }
-          }} onPointerCancel={() => { drag.current = null }} onLostPointerCapture={() => { drag.current = null }} />
-        {landmarks.filter((point) => Math.abs(point.ijk[axis] - offset) < .5).map((point) =>
-          <span key={point.id} className="slice-landmark" title={point.label} aria-label={`Landmark ${point.label} in ${label}`}
-            style={{ left: `${point.ijk[u] / Math.max(sizes[u] - 1, 1) * 100}%`, top: `${point.ijk[v] / Math.max(sizes[v] - 1, 1) * 100}%` }}>+ {point.label}</span>)}
-        <div className="slice-viewport__crosshair slice-viewport__crosshair--x" style={{ top: `${crosshair[v] / Math.max(sizes[v] - 1, 1) * 100}%` }} />
-        <div className="slice-viewport__crosshair slice-viewport__crosshair--y" style={{ left: `${crosshair[u] / Math.max(sizes[u] - 1, 1) * 100}%` }} />
-      </div>
+          onPointerUp={() => {
+            dragRef.current = null
+          }}
+          onPointerCancel={() => {
+            dragRef.current = null
+          }}
+        />
+      </FeatureHint>
+      <div
+        className="slice-viewport__crosshair slice-viewport__crosshair--x"
+        style={{ top: `${crosshairView.y * 100}%` }}
+      />
+      <div
+        className="slice-viewport__crosshair slice-viewport__crosshair--y"
+        style={{ left: `${crosshairView.x * 100}%` }}
+      />
+      <FeatureHint
+        {...CANVAS_HINTS.sliceOffset}
+        label={`${label} slice offset`}
+        side="top"
+      >
+        <input
+          type="range"
+          className="slice-preview__offset"
+          aria-label={`${label} slice offset`}
+          min={0}
+          max={Math.max(maxOffset, 0)}
+          value={offset}
+          onChange={(event) => {
+            const next = Number(event.target.value)
+            if (plane === 'axial') onCrosshairChange([crosshair[0], crosshair[1], next])
+            else if (plane === 'sagittal') onCrosshairChange([next, crosshair[1], crosshair[2]])
+            else onCrosshairChange([crosshair[0], next, crosshair[2]])
+          }}
+        />
+      </FeatureHint>
     </div>
-    <input type="range" className="slice-preview__offset" aria-label={`${label} slice offset`} min={0} max={Math.max(maxOffset, 0)} value={offset}
-      onChange={(event) => { const next = [...crosshair] as IjkPoint; next[axis] = Number(event.target.value); onCrosshairChange(next) }} />
-    {error ? <div role="alert">{error}</div> : null}
-  </div>
+  )
 }

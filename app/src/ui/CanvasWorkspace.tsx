@@ -1,4 +1,3 @@
-import type { SourceLandmark } from '../domain/types'
 import { useState, type ReactNode } from 'react'
 import {
   Contrast,
@@ -17,23 +16,17 @@ import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
 export type CanvasMode = 'view' | 'window-level' | 'place'
 
 type Props = {
-  foreground?: Uint8Array
-  foregroundReason?: string
-  landmarks?: SourceLandmark[]
   documentName: string
   activeMode: CanvasMode
   volumeAvailable: boolean
   selectedObjectId: string | null
   onModeChange: (mode: CanvasMode) => void
-  placeDisabledReason?: string
-  inspectorVisible?: boolean
   inspector?: ReactNode
   status?: ReactNode
   viewControls?: ReactNode
   projection?: 'perspective' | 'orthographic'
   operationLabel?: string
   operationControls?: ReactNode
-  spacings?: [number, number, number]
   voxels?: Uint8Array
   volumeSizes?: VolumeSizes
   crosshair?: IjkPoint
@@ -65,18 +58,12 @@ export function CanvasWorkspace({
   volumeAvailable,
   selectedObjectId,
   onModeChange,
-  inspectorVisible = false,
-  placeDisabledReason,
   inspector,
   status,
   viewControls,
   projection = 'perspective',
   operationLabel,
   operationControls,
-  foreground,
-  foregroundReason,
-  landmarks,
-  spacings,
   voxels,
   volumeSizes,
   crosshair = [0, 0, 0],
@@ -102,7 +89,7 @@ export function CanvasWorkspace({
     <FeatureHintProvider>
       <div
         className={`cross-reference-workbench ${
-          selectedObjectId || inspectorVisible ? 'has-inspector' : ''
+          selectedObjectId ? 'has-inspector' : ''
         } ${isChatOpen ? 'has-chat' : ''}`}
       >
         <div className="canvas-context-strip" aria-label="Active mode options">
@@ -132,7 +119,7 @@ export function CanvasWorkspace({
           ) : null}
           {activeMode === 'place' ? (
             <span className="canvas-context-hint">
-              Place a saved source landmark · Keep placing is available in Inspector
+              Place point · One shot · anatomy remains unchanged
             </span>
           ) : null}
         </div>
@@ -140,13 +127,12 @@ export function CanvasWorkspace({
         <aside className="canvas-mode-rail" role="toolbar" aria-label="Interaction modes">
           {MODES.map((mode) => {
             const Icon = mode.icon
-            const reason = mode.id === 'place' ? placeDisabledReason : mode.id === 'window-level' && !volumeAvailable ? 'Requires volume intensity data' : undefined
-            const disabled = Boolean(reason)
+            const disabled = mode.id === 'window-level' && !volumeAvailable
             const button = (
               <button
                 type="button"
                 className={`canvas-mode-button ${activeMode === mode.id ? 'is-active' : ''}`}
-                aria-label={`${mode.label} mode`}
+                aria-label={disabled ? 'Requires volume intensity data' : `${mode.label} mode`}
                 aria-pressed={activeMode === mode.id}
                 disabled={disabled}
                 onClick={() => onModeChange(mode.id)}
@@ -160,7 +146,7 @@ export function CanvasWorkspace({
                 key={mode.id}
                 {...mode.hint}
                 side="right"
-                disabledReason={reason}
+                disabledReason={disabled ? 'Requires volume intensity data' : undefined}
               >
                 {/* Disabled buttons do not emit pointer events; span keeps the hint reachable. */}
                 {disabled ? <span className="feature-hint-target">{button}</span> : button}
@@ -189,10 +175,6 @@ export function CanvasWorkspace({
             <SliceDock
               collapsed={sliceDockCollapsed}
               onCollapsedChange={setSliceDockCollapsed}
-              foreground={foreground}
-                foregroundReason={foregroundReason}
-                landmarks={landmarks}
-              spacings={spacings}
               voxels={voxels}
               sizes={volumeSizes}
               crosshair={crosshair}
@@ -209,7 +191,7 @@ export function CanvasWorkspace({
           ) : null}
         </main>
 
-        {(selectedObjectId || inspectorVisible) && inspector ? (
+        {selectedObjectId && inspector ? (
           <aside className="canvas-inspector-drawer" aria-label="Inspector">
             {inspector}
           </aside>
