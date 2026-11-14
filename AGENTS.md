@@ -87,3 +87,7 @@ Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `
 - Do not end a major run after Build without Close (tests + diff vs intent/spec/plan + doc updates + Close report).
 - Do not freestyle UI colors, fonts, or layout when `DESIGN.md` exists — extend the system or ask before changing tokens.
 - Do not commit or push unless the user asks.
+
+## AI foundation publication
+
+Use docs/ai/workflow.md for the scoped AI exception. Synchronous sandbox operation service and replaceable reconstruction mock. Intent/spec are separate. After accepted requirements, no separate plan approval is needed unless requested. Per-task preflights do not grant acceptance. Test this branch with PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py (59 tests).
