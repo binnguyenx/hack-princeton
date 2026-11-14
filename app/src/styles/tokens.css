@@ -1,0 +1,32 @@
+:root {
+  --color-base: #f4f5f7;
+  --color-elevated: #ffffff;
+  --color-ink: #1a1b1f;
+  --color-soft-active: #c9cbe8;
+  --color-signal: #ff9f64;
+  --color-ink-muted: #5c5f6a;
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-base);
+}

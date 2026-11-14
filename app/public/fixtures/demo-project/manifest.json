@@ -1,0 +1,95 @@
+{
+  "formatVersion": 1,
+  "user": {
+    "id": "local-dev",
+    "displayName": "Local Dev"
+  },
+  "project": {
+    "id": "proj-demo",
+    "ownerUserId": "local-dev",
+    "name": "Demo cranial case"
+  },
+  "cases": [
+    {
+      "id": "case-1",
+      "projectId": "proj-demo",
+      "name": "Primary"
+    },
+    {
+      "id": "case-2",
+      "projectId": "proj-demo",
+      "name": "Secondary empty"
+    }
+  ],
+  "samples": [
+    {
+      "id": "sample-000",
+      "caseId": "case-1",
+      "sourceSampleDir": "data/samples/skullbreak-000-parietotemporal",
+      "license": "CC BY-NC-SA 4.0",
+      "spatiallyVerified": true,
+      "sourceAnatomy": {
+        "objectId": "obj-source-000",
+        "volumeId": "vol-source-000",
+        "units": "mm",
+        "space": "left-posterior-superior",
+        "sizes": [
+          512,
+          512,
+          512
+        ],
+        "spacings": [
+          0.4,
+          0.4,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "sample-001",
+      "caseId": "case-1",
+      "sourceSampleDir": "data/samples/skullbreak-001-frontoorbital",
+      "license": "CC BY-NC-SA 4.0",
+      "spatiallyVerified": true,
+      "sourceAnatomy": {
+        "objectId": "obj-source-001",
+        "volumeId": "vol-source-001",
+        "units": "mm",
+        "space": "left-posterior-superior",
+        "sizes": [
+          512,
+          512,
+          512
+        ],
+        "spacings": [
+          0.4,
+          0.4,
+          0.4
+        ]
+      }
+    }
+  ],
+  "candidates": [],
+  "revisions": [],
+  "viewState": {
+    "selectionObjectId": null,
+    "camera": {
+      "position": [
+        0,
+        0,
+        400
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ]
+    },
+    "visibility": {},
+    "inspectionPlane": {
+      "enabled": false,
+      "axis": "z",
+      "offset": 0
+    }
+  }
+}
