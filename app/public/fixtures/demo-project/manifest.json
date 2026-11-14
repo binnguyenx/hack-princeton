@@ -30,19 +30,28 @@
       "spatiallyVerified": true,
       "sourceAnatomy": {
         "objectId": "obj-source-000",
+        "sampleId": "sample-000",
         "volumeId": "vol-source-000",
-        "units": "mm",
-        "space": "left-posterior-superior",
-        "sizes": [
-          512,
-          512,
-          512
-        ],
-        "spacings": [
-          0.4,
-          0.4,
-          0.4
-        ]
+        "spatial": {
+          "units": "mm",
+          "space": "left-posterior-superior",
+          "sizes": [
+            512,
+            512,
+            512
+          ],
+          "spacings": [
+            0.4,
+            0.4,
+            0.4
+          ],
+          "bboxMm": [
+            204.8,
+            204.8,
+            204.8
+          ]
+        },
+        "volumeHash": ""
       }
     },
     {
@@ -53,19 +62,28 @@
       "spatiallyVerified": true,
       "sourceAnatomy": {
         "objectId": "obj-source-001",
+        "sampleId": "sample-001",
         "volumeId": "vol-source-001",
-        "units": "mm",
-        "space": "left-posterior-superior",
-        "sizes": [
-          512,
-          512,
-          512
-        ],
-        "spacings": [
-          0.4,
-          0.4,
-          0.4
-        ]
+        "spatial": {
+          "units": "mm",
+          "space": "left-posterior-superior",
+          "sizes": [
+            512,
+            512,
+            512
+          ],
+          "spacings": [
+            0.4,
+            0.4,
+            0.4
+          ],
+          "bboxMm": [
+            204.8,
+            204.8,
+            204.8
+          ]
+        },
+        "volumeHash": ""
       }
     }
   ],
