@@ -85,7 +85,7 @@ Run every deterministic backend suite from the repo root:
 PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py
 ```
 
-A healthy run reports `Ran 83 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
+A healthy run reports `Ran 96 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
 
 From the repo root, run storage and artifact tests:
 
@@ -141,4 +141,4 @@ Live authority is app/server/storageSqlite.ts and its /api routes. Python storag
 
 ## Publication slice status
 
-Python application repository and verified paired backups. Python checks expect83 tests. Read docs/ai/setup.md and the separate migration intent/spec. Existing Express dev behavior remains until the next API slice. Never point sandbox storage at the live app DB; providers/recovery/live AI mutation remain deferred.
+FastAPI compatibility API, Express removal and current UI integration. Python checks expect96 tests. Read docs/ai/setup.md and the separate migration intent/spec. FastAPI is the only active application backend; dev proxies to8000, preview is frontend-only. Express baseline/rollback evidence is retained outside the active app. Never point sandbox storage at the live app DB; providers/recovery/live AI mutation remain deferred.

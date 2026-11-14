@@ -1,0 +1,3 @@
+# Preflight: T05 disposable handoff and live gate
+
+Date: 2026-11-14. Scope: real Express→FastAPI→Express→FastAPI sequential ownership on a copied Node-created disposable DB/volume dataset; assert baseline/current data at each handoff and continued writes. Tests own temporary roots and kill/close the prior server before the next. Live cutover is not executed: no concrete root/procedure approval or agreed observation window. No live database is opened. Coordinator owns Node handoff tests and operator runbook. Proof: handoff.test.ts; browser/dev/built proof remains T04/T09. Failures must be recorded; do not replace HTTP handoff with unit mocks.
