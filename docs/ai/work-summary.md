@@ -58,7 +58,7 @@ Lần chạy gần nhất in `Ran 1 test` và `OK`. Test chỉ kiểm tra status
 
 ## Branch và thứ tự review
 
-1. `feat/ai-backend-foundation`, base `main`. Draft PR nền tảng: scaffold, tài liệu, intent/spec draft, workflow, preflight template, assignment. Chưa có operation code.
-2. `feat/ai-missing-contract-result`, base là branch ở trên. Draft PR này thêm lát cắt missing-contract, record R7/S6, lệnh test, và file tóm tắt này.
+1. `feat/ai-backend-foundation`, base `main`. Draft PR nền tảng: https://github.com/binnguyenx/hack-princeton/pull/3. Gồm scaffold, tài liệu, intent/spec draft, workflow, preflight template, assignment. Chưa có operation code.
+2. `feat/ai-missing-contract-result`, base là branch ở trên. Draft PR lát cắt: https://github.com/binnguyenx/hack-princeton/pull/4. Thêm missing-contract, record R7/S6, lệnh test, và file tóm tắt này.
 
 Review và merge dự kiến PR nền tảng trước, rồi PR lát cắt. PR lát cắt không lặp lại toàn bộ diff của PR nền tảng vì base của nó là branch nền tảng. Cả hai đều chưa nằm trên `main`.
