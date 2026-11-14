@@ -22,9 +22,16 @@ export type User = {
 export type SpatialMeta = {
   units: string
   space?: string
+  patientBasis?: 'RAS' | 'LPS'
   sizes: number[]
   spacings: number[]
   bboxMm: number[]
+  spaceOrigin?: [number, number, number]
+  spaceDirections?: [
+    [number, number, number],
+    [number, number, number],
+    [number, number, number],
+  ]
 }
 
 export type SourceAnatomy = {
@@ -101,12 +108,15 @@ export type CameraState = {
   target: [number, number, number]
 }
 
+export type NavigationScheme = 'blender-like' | 'alternate'
+
 export type ViewState = {
   selectionObjectId: string | null
   camera: CameraState
   /** objectId → visible */
   visibility: Record<string, boolean>
   inspectionPlane: InspectionPlane
+  navigationScheme?: NavigationScheme
 }
 
 export type VolumeStore = Map<string, Uint8Array>

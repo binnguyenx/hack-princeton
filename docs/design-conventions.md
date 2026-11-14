@@ -38,51 +38,77 @@ Behavior details: `features/3d-bone-editor/spec.md` (R14, R26–R34). Patterns b
 
 ## Canvas conventions
 
-### Layout
+The detailed journeys and component ownership contract live in
+`features/3d-bone-editor/canvas-workspace-improve/ui-journeys.md`.
 
-- One **project workspace** window at a time.
-- **Sidebar navigator:** Cases → Samples → Candidates; New case / Import sample / New candidate / Open document.
-- **Top taskbar:** one tab per **open sample or candidate** (not per case). Tab label = name + kind. Switch tab retargets viewport + inspector; close tab does not delete data.
-- Viewport occupies the majority of the remaining screen.
-- **Tool strip:** visible controls for included ops only (`select`, camera/nav, visibility, inspection plane, create candidate, transform, restore revision, save/open). Icon + short label; rectangular active state from `DESIGN.md`.
-- **Inspector:** selection, ownership, spatial verification, candidate revisions, Apply/Cancel when an edit tool is armed.
-- No marketing dashboard modules on the canvas.
-- Sample tabs are view-only for geometry; candidate tabs are the edit targets.
+### Structure
 
-### Navigation vs editing
+- Default to a dominant **3D view** with a compact synchronized
+  **Axial/Sagittal/Coronal slice dock** when volume data exists.
+- Keep document tabs and layout choice in the top document bar.
+- Keep only pointer modes—View, Window/Level, Place—in the left mode rail.
+- Put active-mode options in one contextual strip above the active view.
+- Attach Center, Reset, projection, direction, link, maximize, ruler, and
+  display controls to the `ViewFrame` they affect.
+- Open the inspector only for selection or operation review. With neither,
+  return its width to the viewport.
+- Keep compact RAS coordinates and recovery state in the bottom status strip;
+  expand LPS and IJK on request.
+- No marketing modules or management-table chrome inside the canvas.
 
-| Mode | Examples | Geometry effect | Active chrome |
-|-|-|-|-|
-| Navigate / inspect | Orbit, pan, zoom, visibility, inspection plane | None | Accent wash only while that view tool is selected; never write revisions |
-| Edit | Create candidate, transform Apply, restore revision | Yes, via `ops/` | Accent wash on the edit tool; Apply commits a revision |
+### Placement rule
 
-Camera drag must not invoke edit ops. If an edit tool is active, require an explicit Apply (or equivalent) before history changes—cancel leaves state unchanged (R9).
+| Scope | Primary home | Examples |
+|-|-|-|
+| Workspace | Document bar | tabs, layout, save/close, command search |
+| Pointer mode | Mode rail | View, Window/Level, Place |
+| Active mode | Context strip | preset, record type, one-shot/persistent, Apply/Cancel |
+| View | ViewFrame header/controller | Center, Reset, A/P/L/R/S/I, projection, link, ruler |
+| Object | Inspector drawer | visibility, opacity, metadata, revision |
+| Global feedback | Status strip | RAS, pending, WebGL, last result, recovery |
 
-### Shortcuts (minimal set)
+A command has one persistent primary control. Menus and command search may
+mirror it for discovery; another toolbar may not duplicate it.
 
-Behavior while typing in text fields: shortcuts that use plain letter keys are **disabled**; modifiers (⌘/Ctrl) still work.
+### Navigation, inspection, and editing
 
-| Shortcut | Action |
-|-|-|
-| `Space` + drag / middle-drag | Pan (navigate) |
-| Drag on viewport (navigate mode) | Orbit |
-| Scroll | Zoom |
-| `V` | Select object |
-| `T` | Transform candidate (edit tool; Apply separate) |
-| `Esc` | Cancel in-progress edit / clear tool to select |
-| `⌘/Ctrl+S` | Save project |
-| `⌘/Ctrl+Z` | Restore previous revision when supported by ops (no silent geometry mutate outside ops) |
+| Interaction | Effect | Revision write |
+|-|-|-|
+| Rotate, roll, pan, zoom, Center, Reset | Camera only | Never |
+| Crosshair and slice offset | Patient-space inspection state | Never |
+| Window/Level and display settings | Render/display state | Never |
+| Place | Draft record at patient coordinate | Only on explicit commit |
+| Candidate editing | Draft candidate state | Only on explicit Apply |
 
-Exact binding implementation must call the same `ops/` functions as the visible buttons.
+Camera input remains available while another mode is active through the
+documented Slicer modifiers. Navigation never silently completes placement or
+editing.
 
-### Selection, tool, and error states
+### Input conventions
 
-- **Idle tool:** transparent or elevated control, ink label/icon.
-- **Active tool:** accent wash + accent ink; focus ring from design sidecar.
-- **Selected object:** viewport highlight + inspector identity; do not use Signal.
-- **Unverified spatial metadata:** ink warning copy; do not mark sample verified; optional Signal only if blocking.
-- **Failed / rejected op:** show failure to caller; Signal + text; leave last completed candidate state intact.
-- **Save failure:** never report success; keep session editable; Signal + clear message.
+- Use the Slicer-standard bindings in the active feature spec rather than the
+  former Blender-first defaults.
+- View-scoped shortcuts require an active view; hover alone does not activate.
+- Plain-key shortcuts do not fire while typing. Displayed bindings match the
+  current platform.
+- One-button mouse and trackpad substitutions remain available.
+- Touch users receive direct active-view rotate, pan, zoom, Center, and Reset
+  controls; hover is never required.
+
+### State and feedback
+
+- **Idle mode:** transparent/elevated control with Ink label and icon.
+- **Active mode/view:** Accent wash + Accent ink + visible focus treatment.
+- **Selected object:** viewport highlight and inspector identity; never Signal.
+- **Disabled:** remains visible only when the reason teaches a prerequisite;
+  tooltip and accessible description name it.
+- **Pending:** owned by the originating control; duplicate input is blocked.
+- **Failed:** explain beside the affected view/control, preserve the last valid
+  frame, and offer one recovery action.
+- **All hidden:** show “All objects are hidden” and **Show all**.
+- **Render failure:** show **Rebuild View** without changing committed data.
+- Toasts may echo completion but cannot carry required instructions or be the
+  only proof that an action worked.
 
 ## R14 checklist
 

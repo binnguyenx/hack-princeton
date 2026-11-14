@@ -76,4 +76,41 @@ describe('R10 revisions', () => {
     expect(again).toHaveLength(4)
     expect(again.find((r) => r.id === first.id)?.pose).toEqual(first.pose)
   })
+
+  it('restore to already-current revision is idempotent (no dirty flip, no new revisions)', async () => {
+    const ctx = await openDemo()
+    const created = await createCandidate(ctx, 'sample-000')
+    expect(created.ok).toBe(true)
+    if (!created.ok) return
+
+    const before = readState(ctx)
+    if (!before.ok || !before.value) throw new Error('no state')
+    const candidate = before.value.candidates.find(
+      (c) => c.objectId === created.value.candidateId,
+    )
+    if (!candidate) throw new Error('candidate missing')
+    ctx.store.update((st) => ({ ...st, dirty: false }))
+    const reset = readState(ctx)
+    if (!reset.ok || !reset.value) throw new Error('no state')
+    const beforeDirty = reset.value.dirty
+    const beforeRevCount = before.value.revisions.filter(
+      (r) => r.candidateId === candidate.objectId,
+    ).length
+
+    const restored = restoreRevision(ctx, {
+      candidateId: candidate.objectId,
+      revisionId: candidate.currentRevisionId,
+    })
+    expect(restored.ok).toBe(true)
+
+    const after = readState(ctx)
+    if (!after.ok || !after.value) throw new Error('no state')
+    const afterCandidate = after.value.candidates.find((c) => c.objectId === candidate.objectId)
+    expect(afterCandidate?.currentRevisionId).toBe(candidate.currentRevisionId)
+    const afterRevCount = after.value.revisions.filter(
+      (r) => r.candidateId === candidate.objectId,
+    ).length
+    expect(afterRevCount).toBe(beforeRevCount)
+    expect(after.value.dirty).toBe(beforeDirty)
+  })
 })

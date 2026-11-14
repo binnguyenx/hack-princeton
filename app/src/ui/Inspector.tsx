@@ -12,12 +12,14 @@ export type InspectorProps = {
   state: EditorState | null
   activeTool: string
   onRestoreRevision: (candidateId: string, revisionId: string) => void
+  restoreDisabled?: boolean
 }
 
 export function Inspector({
   state,
   activeTool,
   onRestoreRevision,
+  restoreDisabled,
 }: InspectorProps) {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -170,6 +172,7 @@ export function Inspector({
                             type="button"
                             className="btn btn--secondary btn--xs"
                             title="Restore this revision"
+                            disabled={restoreDisabled}
                             onClick={() =>
                               onRestoreRevision(candidate!.objectId, rev.id)
                             }

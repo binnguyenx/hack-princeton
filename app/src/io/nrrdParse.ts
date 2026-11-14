@@ -22,6 +22,18 @@ function indexOfDoubleNewline(raw: Uint8Array): { split: number; sep: number } {
   return { split: -1, sep: 0 }
 }
 
+function parseVector(raw: string): [number, number, number] {
+  const values = raw
+    .replace(/^\(/, '')
+    .replace(/\)$/, '')
+    .split(',')
+    .map((value) => Number(value.trim()))
+  if (values.length !== 3 || !values.every(Number.isFinite)) {
+    throw new Error(`Invalid NRRD vector: ${raw}`)
+  }
+  return values as [number, number, number]
+}
+
 /** Browser-safe NRRD header parse (raw encoding assumed for voxel access). */
 export function parseNrrdBuffer(buf: Uint8Array): NrrdParseResult {
   const { split } = indexOfDoubleNewline(buf)
@@ -51,15 +63,39 @@ export function parseNrrdBuffer(buf: Uint8Array): NrrdParseResult {
   if (spacings.length < sizes.length) throw new Error('NRRD spacings incomplete')
   const bboxMm = sizes.map((s, i) => s * spacings[i])
   const space = header.space
+  const directionMatches = header['space directions']
+    ? [...header['space directions'].matchAll(/\(([^)]+)\)/g)]
+    : []
+  const spaceDirections =
+    directionMatches.length >= 3
+      ? (directionMatches.slice(0, 3).map((match) =>
+          parseVector(match[1]),
+        ) as [
+          [number, number, number],
+          [number, number, number],
+          [number, number, number],
+        ])
+      : undefined
+  const spaceOrigin = header['space origin']
+    ? parseVector(header['space origin'])
+    : undefined
+  const patientBasis = space?.toLowerCase().startsWith('right-')
+    ? 'RAS'
+    : space?.toLowerCase().startsWith('left-')
+      ? 'LPS'
+      : undefined
   return {
     bytes: buf,
     header,
     spatial: {
       units: space ? 'mm' : 'unknown',
       space,
+      patientBasis,
       sizes,
       spacings,
       bboxMm,
+      spaceOrigin,
+      spaceDirections,
     },
   }
 }

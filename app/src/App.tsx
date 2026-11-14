@@ -1,14 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiClient } from './api/client'
 import type { Object3D } from 'three'
-import { installDebugBridge } from './debug/bridge'
+import { installDebugBridge, updateCanvasRuntime } from './debug/bridge'
 import { volumeToDisplayMesh } from './geometry/derivedMesh'
+import { loadDisplayMeshAsset } from './geometry/displayMesh'
 import { applyPoseToObject } from './geometry/pose'
-import type { Mat4, SpatialMeta } from './domain/types'
+import { decodeNrrdVoxels } from './geometry/nrrdVoxels'
+import { ijkToRas, type Vec3 } from './geometry/coordinates'
+import {
+  volumeIntensityRange,
+  type IjkPoint,
+  type VolumeSizes,
+} from './geometry/slices'
+import type { Mat4, Sample, SpatialMeta } from './domain/types'
+import { buildCanvasCommands, type CommandId } from './commands/registry'
 import {
   closeDocument,
   navigateCamera,
   openDocument,
+  selectObject,
+  setVisibility,
   setActiveDocument,
 } from './ops'
 import {
@@ -23,15 +34,26 @@ import { AppHeader } from './ui/AppHeader'
 import { ProjectsHome } from './ui/ProjectsHome'
 import { CaseTableView } from './ui/CaseTableView'
 import { DocumentTaskbar } from './ui/DocumentTaskbar'
-import { ToolRail, type ToolId } from './ui/ToolRail'
+import type { ToolId } from './ui/ToolRail'
 import { Inspector } from './ui/Inspector'
-import { Viewport } from './viewport/Viewport'
+import { MenuBar } from './ui/MenuBar'
+import { CommandPalette } from './ui/CommandPalette'
+import { CanvasWorkspace, type CanvasMode } from './ui/CanvasWorkspace'
+import { CANVAS_HINTS } from './ui/canvasFeatureHints'
+import { FeatureHint } from './ui/FeatureHint'
+import { ViewController } from './ui/ViewController'
+import {
+  DEFAULT_LIGHTING_INTENSITY,
+  Viewport,
+  type CameraMotionMode,
+  type ProjectionMode,
+  type ViewPreset,
+} from './viewport/Viewport'
 import { NewProjectDialog } from './ui/dialogs/NewProjectDialog'
 import { NewCaseDialog } from './ui/dialogs/NewCaseDialog'
 import { ImportSampleDialog } from './ui/dialogs/ImportSampleDialog'
 
 const ctx = { store: editorStore }
-
 const nudgePose: Mat4 = [
   1, 0, 0, 8,
   0, 1, 0, 0,
@@ -40,6 +62,27 @@ const nudgePose: Mat4 = [
 ]
 
 export default function App() {
+  function normalizeCatalogKey(raw?: string): string | null {
+    if (!raw) return null
+    const cleaned = raw.trim().replace(/\\/g, '/')
+    if (!cleaned) return null
+    const base = cleaned.split('/').filter(Boolean).at(-1) ?? cleaned
+    return base.toLowerCase().replace(/\.nrrd$/i, '')
+  }
+
+  function resolveDisplayMeshAsset(sample: Sample): string | null {
+    if (sample.displayMeshAsset) {
+      return sample.displayMeshAsset.startsWith('/')
+        ? sample.displayMeshAsset
+        : `/${sample.displayMeshAsset}`
+    }
+    const fromDir = normalizeCatalogKey(sample.sourceSampleDir)
+    if (fromDir) return `/samples/${fromDir}/display_mesh.glb`
+    const fromName = normalizeCatalogKey(sample.displayName)
+    if (fromName) return `/samples/${fromName}/display_mesh.glb`
+    return null
+  }
+
   const [nav, setNav] = useState<NavItem>('projects')
   const [activeTool, setActiveTool] = useState<ToolId>('navigate')
   const [message, setMessage] = useState<string | null>(null)
@@ -51,11 +94,35 @@ export default function App() {
   const [projects, setProjects] = useState<ProjectSummary[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [catalog, setCatalog] = useState<SampleCatalogEntry[]>([])
+  const [pendingAction, setPendingAction] = useState<null | 'restore' | 'apply'>(null)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [focusNonce, setFocusNonce] = useState(0)
+  const [resetNonce, setResetNonce] = useState(0)
+  const [viewPreset, setViewPreset] = useState<ViewPreset | null>(null)
+  const [viewPresetNonce, setViewPresetNonce] = useState(0)
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>('view')
+  const [projection, setProjection] = useState<ProjectionMode>('perspective')
+  const [crosshairVisible, setCrosshairVisible] = useState(false)
+  const [lightingIntensity, setLightingIntensity] = useState(DEFAULT_LIGHTING_INTENSITY)
+  const [tiltLock, setTiltLock] = useState(false)
+  const [motionMode, setMotionMode] = useState<CameraMotionMode>('none')
+  const [rendererNonce, setRendererNonce] = useState(0)
+  const [rendererStatus, setRendererStatus] = useState<'ready' | 'lost' | 'restoring'>('ready')
+  const [sliceVolume, setSliceVolume] = useState<{
+    documentId: string
+    voxels: Uint8Array
+    sizes: VolumeSizes
+  } | null>(null)
+  const [sliceStatus, setSliceStatus] = useState<string | null>(null)
+  const [crosshairIjk, setCrosshairIjk] = useState<IjkPoint>([0, 0, 0])
+  const [windowCenter, setWindowCenter] = useState(127.5)
+  const [windowWidth, setWindowWidth] = useState(255)
 
   // Modal Dialog states (replacing window.prompt)
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [newCaseOpen, setNewCaseOpen] = useState(false)
   const [importSampleOpen, setImportSampleOpen] = useState(false)
+  const meshBuildSeqRef = useRef(0)
 
   const refresh = useCallback(() => setTick((t) => t + 1), [])
   const state = useMemo(() => editorStore.getState(), [tick])
@@ -128,42 +195,74 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuild when tab/tick changes
   }, [nav, state?.activeDocumentId, state?.revisions.length, tick])
 
-  async function ensureVolumeLoaded(docId: string): Promise<void> {
+  useEffect(() => {
+    if (nav !== 'canvas') return
     const st = editorStore.getState()
     if (!st) return
+    if (st.openDocuments.length > 0) return
+    if (st.samples.length === 0) return
+
+    const preferred =
+      (selectedCaseId
+        ? st.samples.find((s) => s.caseId === selectedCaseId)
+        : null) ?? st.samples[0]
+    if (!preferred) return
+
+    const opened = openDocument(ctx, { kind: 'sample', id: preferred.id })
+    if (!opened.ok) {
+      setSignal(true)
+      setMessage(opened.error)
+      return
+    }
+    setSignal(false)
+    setMessage(`Opened sample in 3D: ${preferred.displayName ?? preferred.id}`)
+    refresh()
+  }, [nav, selectedCaseId, state?.samples.length, state?.openDocuments.length, refresh])
+
+  async function ensureVolumeLoaded(docId: string, expectedVolumeId: string): Promise<void> {
+    const st = editorStore.getState()
+    if (!st) return
+    if (st.volumes.has(expectedVolumeId)) return
+
     const sample = st.samples.find((s) => s.id === docId)
-    if (!sample) {
-      const cand = st.candidates.find((c) => c.objectId === docId)
-      if (!cand) return
-      const source = st.samples.find((s) => s.id === cand.sampleId)
-      if (!source) return
-      if (st.volumes.has(source.sourceAnatomy.volumeId)) return
-      const bytes = await apiClient.fetchSampleVolume(source.id)
+    if (sample) {
+      const bytes = await apiClient.fetchSampleVolume(sample.id)
       editorStore.update((curr) => {
         const nextVolumes = new Map(curr.volumes)
-        nextVolumes.set(source.sourceAnatomy.volumeId, bytes)
+        nextVolumes.set(sample.sourceAnatomy.volumeId, bytes)
         return { ...curr, volumes: nextVolumes }
       })
       return
     }
-    if (st.volumes.has(sample.sourceAnatomy.volumeId)) return
-    const bytes = await apiClient.fetchSampleVolume(sample.id)
+
+    const cand = st.candidates.find((c) => c.objectId === docId)
+    if (!cand) return
+    const source = st.samples.find((s) => s.id === cand.sampleId)
+    if (!source) return
+    if (source.sourceAnatomy.volumeId !== expectedVolumeId) {
+      throw new Error('Candidate volume differs from source volume and cannot be fetched yet')
+    }
+    const bytes = await apiClient.fetchSampleVolume(source.id)
     editorStore.update((curr) => {
       const nextVolumes = new Map(curr.volumes)
-      nextVolumes.set(sample.sourceAnatomy.volumeId, bytes)
+      nextVolumes.set(source.sourceAnatomy.volumeId, bytes)
       return { ...curr, volumes: nextVolumes }
     })
   }
 
   async function rebuildMeshForActiveDocument() {
+    const buildSeq = ++meshBuildSeqRef.current
+    const isCurrentBuild = () => meshBuildSeqRef.current === buildSeq
     const st = editorStore.getState()
     if (!st?.activeDocumentId) {
+      if (!isCurrentBuild()) return
       setMesh(null)
       setViewportStatus('Select or open an anatomy asset to view in 3D')
       return
     }
     const doc = st.openDocuments.find((d) => d.id === st.activeDocumentId)
     if (!doc) {
+      if (!isCurrentBuild()) return
       setMesh(null)
       return
     }
@@ -175,19 +274,38 @@ export default function App() {
     if (doc.kind === 'sample') {
       const sample = st.samples.find((s) => s.id === doc.id)
       if (!sample) {
+        if (!isCurrentBuild()) return
         setViewportStatus('Sample volume missing')
         return
       }
       volumeId = sample.sourceAnatomy.volumeId
       spatial = sample.sourceAnatomy.spatial
+      const displayMeshAsset = resolveDisplayMeshAsset(sample)
+      if (displayMeshAsset) {
+        setViewportStatus('Loading realistic mesh…')
+        await new Promise((r) => setTimeout(r, 16))
+        if (!isCurrentBuild()) return
+        try {
+          const glb = await loadDisplayMeshAsset(displayMeshAsset)
+          if (!isCurrentBuild()) return
+          setMesh(glb)
+          setViewportStatus(null)
+          return
+        } catch {
+          // Fall through to reconstructed mesh when asset path does not exist.
+          setViewportStatus('Mesh asset missing — reconstructing surface')
+        }
+      }
     } else {
       const cand = st.candidates.find((c) => c.objectId === doc.id)
       if (!cand) {
+        if (!isCurrentBuild()) return
         setViewportStatus('Candidate record missing')
         return
       }
       const rev = st.revisions.find((r) => r.id === cand.currentRevisionId)
       if (!rev) {
+        if (!isCurrentBuild()) return
         setViewportStatus('Revision missing')
         return
       }
@@ -195,38 +313,161 @@ export default function App() {
       const sample = st.samples.find((s) => s.id === cand.sampleId)
       spatial = sample?.sourceAnatomy.spatial ?? null
       pose = rev.pose
+      const displayMeshAsset = sample ? resolveDisplayMeshAsset(sample) : null
+      if (displayMeshAsset) {
+        setViewportStatus('Loading realistic mesh…')
+        await new Promise((r) => setTimeout(r, 16))
+        if (!isCurrentBuild()) return
+        try {
+          const glb = await loadDisplayMeshAsset(displayMeshAsset)
+          if (!isCurrentBuild()) return
+          if (pose) applyPoseToObject(glb, pose)
+          setMesh(glb)
+          setViewportStatus(null)
+          return
+        } catch {
+          setViewportStatus('Mesh asset missing — reconstructing surface')
+        }
+      }
     }
 
     if (!volumeId || !spatial) {
+      if (!isCurrentBuild()) return
       setViewportStatus('No geometry for active document')
       return
     }
-    if (!st.volumes.get(volumeId)) {
-      try {
-        await ensureVolumeLoaded(doc.id)
-      } catch (e) {
-        setSignal(true)
-        setMessage(e instanceof Error ? e.message : String(e))
-      }
+    try {
+      await ensureVolumeLoaded(doc.id, volumeId)
+    } catch (e) {
+      if (!isCurrentBuild()) return
+      setMesh(null)
+      setSignal(true)
+      setMessage(e instanceof Error ? e.message : String(e))
+      setViewportStatus('Failed to load sample volume')
+      return
     }
     const bytes = editorStore.getState()?.volumes.get(volumeId)
     if (!bytes) {
+      if (!isCurrentBuild()) return
+      setMesh(null)
       setViewportStatus('Volume bytes missing')
       return
     }
 
-    setViewportStatus('Reconstructing anatomical surface…')
+    setViewportStatus('Rendering realistic skull surface…')
     await new Promise((r) => setTimeout(r, 16))
+    if (!isCurrentBuild()) return
     try {
-      const m = volumeToDisplayMesh(bytes, spatial, { resolution: 96 })
-      if (pose) applyPoseToObject(m, pose)
-      setMesh(m)
+      const mesh = volumeToDisplayMesh(bytes, spatial, { resolution: 128 })
+      if (!isCurrentBuild()) return
+      if (pose) applyPoseToObject(mesh, pose)
+      setMesh(mesh)
       setViewportStatus(null)
     } catch (e) {
+      if (!isCurrentBuild()) return
       setMesh(null)
       setSignal(true)
       setMessage(e instanceof Error ? e.message : String(e))
-      setViewportStatus('Surface reconstruction failed')
+      setViewportStatus('Realistic surface render failed')
+    }
+  }
+
+  function runCommand(id: CommandId) {
+    switch (id) {
+      case 'file.saveProject':
+        void onSave()
+        return
+      case 'tool.navigate':
+        setActiveTool('navigate')
+        return
+      case 'tool.select':
+        setActiveTool('select')
+        return
+      case 'tool.transform':
+        if (!isCandidateActive) {
+          setSignal(true)
+          setMessage('Open a candidate tab to transform')
+          return
+        }
+        setActiveTool('transform')
+        return
+      case 'object.applyDraft':
+        if (!isDraftActive) return
+        void applyTransform()
+        return
+      case 'object.cancelDraft':
+      case 'select.clear':
+        if (isDraftActive) {
+          setActiveTool('select')
+          setSignal(false)
+          setMessage('Transform cancelled')
+        }
+        selectObject(ctx, null)
+        refresh()
+        return
+      case 'object.restoreRevision':
+      case 'edit.undo':
+        void onRestore()
+        return
+      case 'window.commandSearch':
+        setCommandPaletteOpen(true)
+        return
+      case 'view.focus':
+        setFocusNonce((n) => n + 1)
+        setSignal(false)
+        setMessage('Focused active document')
+        return
+      case 'view.standardAnterior':
+        setViewPreset('anterior')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.standardPosterior':
+        setViewPreset('posterior')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.standardLeft':
+        setViewPreset('left')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.standardRight':
+        setViewPreset('right')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.standardSuperior':
+        setViewPreset('superior')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.standardInferior':
+        setViewPreset('inferior')
+        setViewPresetNonce((n) => n + 1)
+        return
+      case 'view.toggleVisibility': {
+        const st = editorStore.getState()
+        const targetObjectId = st?.view.selectionObjectId ?? st?.activeDocumentId ?? null
+        if (!targetObjectId) {
+          setSignal(true)
+          setMessage('Open a sample or candidate first')
+          return
+        }
+        // Guard against accidental full-scene disappearance from keyboard taps.
+        if (!st?.view.selectionObjectId && st?.view.visibility[targetObjectId] !== false) {
+          setSignal(true)
+          setMessage('Select an object first before hiding it')
+          return
+        }
+        const visible = st?.view.visibility?.[targetObjectId]
+        setVisibility(ctx, targetObjectId, visible === false)
+        setSignal(false)
+        setMessage(visible === false ? 'Object shown' : 'Object hidden')
+        refresh()
+        return
+      }
+      case 'edit.redo':
+        setSignal(false)
+        setMessage('Redo is reserved for next slice')
+        return
+      default:
+        return
     }
   }
 
@@ -235,26 +476,39 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (!e.metaKey && !e.ctrlKey) return
+        if (!(e.metaKey || e.ctrlKey) && e.key !== 'Escape') return
       }
       if (nav === 'canvas') {
-        if (e.key === 'v' || e.key === 'V') setActiveTool('select')
-        if (e.key === 't' || e.key === 'T') {
-          setActiveTool('transform')
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault()
+          setCommandPaletteOpen((open) => !open)
+          return
         }
+        if (e.key === 'v' || e.key === 'V') runCommand('tool.select')
+        if (e.key === 't' || e.key === 'T') {
+          runCommand('tool.transform')
+        }
+        if (e.key === 'n' || e.key === 'N') runCommand('tool.navigate')
+        if (e.key === 'f' || e.key === 'F') runCommand('view.focus')
+        if (e.key === 'h' || e.key === 'H') runCommand('view.toggleVisibility')
+        if (!e.ctrlKey && e.key === '1') runCommand('view.standardAnterior')
+        if (e.ctrlKey && e.key === '1') runCommand('view.standardPosterior')
+        if (!e.ctrlKey && e.key === '3') runCommand('view.standardLeft')
+        if (e.ctrlKey && e.key === '3') runCommand('view.standardRight')
+        if (!e.ctrlKey && e.key === '7') runCommand('view.standardSuperior')
+        if (e.ctrlKey && e.key === '7') runCommand('view.standardInferior')
+        if (e.key === 'Enter') runCommand('object.applyDraft')
         if (e.key === 'Escape') {
-          setActiveTool('select')
-          setMessage('Transform cancelled')
-          setSignal(false)
+          runCommand('object.cancelDraft')
         }
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        void onSave()
+        runCommand('file.saveProject')
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault()
-        void onRestore()
+        runCommand('edit.undo')
       }
     }
     window.addEventListener('keydown', onKey)
@@ -360,10 +614,14 @@ export default function App() {
       })
       await loadProject(activeProjectId)
       openDocument(ctx, { kind: 'sample', id: imported.sampleId })
+      const isSkullBreak = (meta.source ?? '').toLowerCase().includes('skullbreak')
+      const skullBreakNote = isSkullBreak
+        ? ' Note: this source is a SkullBreak cranial-segment mask, not a full head volume.'
+        : ''
       setMessage(
         imported.spatiallyVerified
-          ? `Imported and spatially verified: ${entry.label}`
-          : `Imported ${entry.label} (unverified — candidate creation blocked)`,
+          ? `Imported and spatially verified: ${entry.label}.${skullBreakNote}`
+          : `Imported ${entry.label} (unverified — candidate creation blocked).${skullBreakNote}`,
       )
       setSignal(false)
       refresh()
@@ -400,6 +658,12 @@ export default function App() {
   }
 
   async function onRestore() {
+    if (pendingAction) return
+    if (activeTool === 'transform') {
+      setSignal(true)
+      setMessage('Cancel or apply transform before restore')
+      return
+    }
     const candidateId = activeCandidateId()
     if (!candidateId) {
       setSignal(true)
@@ -417,20 +681,75 @@ export default function App() {
       setMessage('No earlier revision recorded yet')
       return
     }
-    const prev = revs[revs.length - 2]
+    const currentIdx = revs.findIndex((r) => r.id === cand.currentRevisionId)
+    if (currentIdx < 0) {
+      setSignal(true)
+      setMessage('Current revision pointer is invalid')
+      return
+    }
+    if (currentIdx === 0) {
+      setSignal(false)
+      setMessage('Already at earliest revision')
+      return
+    }
+    const prev = revs[currentIdx - 1]
     try {
+      setPendingAction('restore')
       await apiClient.restoreRevision(cand.objectId, prev.id)
-      if (activeProjectId) await loadProject(activeProjectId)
+      if (activeProjectId) {
+        await loadProject(activeProjectId)
+        openDocument(ctx, { kind: 'candidate', id: cand.objectId })
+      }
       setSignal(false)
       setMessage(`Restored revision R${prev.order}`)
       refresh()
     } catch (e) {
       setSignal(true)
       setMessage(e instanceof Error ? e.message : String(e))
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
+  async function restoreCandidateRevision(candidateId: string, revisionId: string) {
+    if (pendingAction) return
+    if (activeTool === 'transform') {
+      setSignal(true)
+      setMessage('Cancel or apply transform before restore')
+      return
+    }
+    const st = editorStore.getState()
+    const cand = st?.candidates.find((c) => c.objectId === candidateId)
+    if (!cand) {
+      setSignal(true)
+      setMessage('Candidate record missing')
+      return
+    }
+    if (cand.currentRevisionId === revisionId) {
+      setSignal(false)
+      setMessage('Revision already active')
+      return
+    }
+    try {
+      setPendingAction('restore')
+      await apiClient.restoreRevision(candidateId, revisionId)
+      if (activeProjectId) {
+        await loadProject(activeProjectId)
+        openDocument(ctx, { kind: 'candidate', id: candidateId })
+      }
+      setSignal(false)
+      setMessage('Revision restored')
+      refresh()
+    } catch (e) {
+      setSignal(true)
+      setMessage(e instanceof Error ? e.message : String(e))
+    } finally {
+      setPendingAction(null)
     }
   }
 
   async function applyTransform() {
+    if (pendingAction) return
     const candidateId = activeCandidateId()
     if (!candidateId) {
       setSignal(true)
@@ -438,8 +757,12 @@ export default function App() {
       return
     }
     try {
+      setPendingAction('apply')
       await apiClient.transformCandidate(candidateId, [...nudgePose])
-      if (activeProjectId) await loadProject(activeProjectId)
+      if (activeProjectId) {
+        await loadProject(activeProjectId)
+        openDocument(ctx, { kind: 'candidate', id: candidateId })
+      }
       setSignal(false)
       setMessage('Transform committed (new revision)')
       setActiveTool('select')
@@ -447,6 +770,8 @@ export default function App() {
     } catch (e) {
       setSignal(true)
       setMessage(e instanceof Error ? e.message : String(e))
+    } finally {
+      setPendingAction(null)
     }
   }
 
@@ -497,6 +822,114 @@ export default function App() {
 
   const selectedCase = state?.cases.find((c) => c.id === selectedCaseId)
   const isCandidateActive = activeCandidateId() !== null
+  const selectionObjectId = state?.view.selectionObjectId ?? null
+  const activeDocument = state?.openDocuments.find((document) => document.id === state.activeDocumentId)
+  const activeSample = activeDocument?.kind === 'sample'
+    ? state?.samples.find((sample) => sample.id === activeDocument.id)
+    : state?.samples.find((sample) =>
+        state.candidates.some((candidate) =>
+          candidate.objectId === activeDocument?.id && candidate.sampleId === sample.id,
+        ),
+      )
+  const activeCandidate = activeDocument?.kind === 'candidate'
+    ? state?.candidates.find((candidate) => candidate.objectId === activeDocument.id)
+    : undefined
+  const activeDocumentName =
+    activeCandidate?.displayName ?? activeSample?.displayName ?? 'No active anatomy'
+  const volumeAvailable = Boolean(activeSample?.sourceAnatomy.volumeId)
+  const activeSliceVolume =
+    sliceVolume?.documentId === activeDocument?.id ? sliceVolume : null
+  const crosshairRas: Vec3 = activeSample
+    ? ijkToRas(activeSample.sourceAnatomy.spatial, crosshairIjk)
+    : [0, 0, 0]
+  const isDraftActive = activeTool === 'transform'
+  const canRestore = (() => {
+    const candidateId = activeCandidateId()
+    if (!candidateId || !state) return false
+    const candidate = state.candidates.find((c) => c.objectId === candidateId)
+    if (!candidate) return false
+    const revs = state.revisions.filter((r) => r.candidateId === candidate.objectId)
+    return revs.length > 1
+  })()
+  const commands = buildCanvasCommands({
+    hasProject: !!state?.project,
+    hasActiveDocument: !!state?.activeDocumentId,
+    isCandidateActive,
+    isDraftActive,
+    canRestore,
+    hasSelection: !!selectionObjectId,
+  })
+
+  useEffect(() => {
+    if (activeTool !== 'transform') return
+    if (isCandidateActive) return
+    setActiveTool('select')
+  }, [activeTool, isCandidateActive])
+
+  useEffect(() => {
+    const documentId = activeDocument?.id
+    const volumeId = activeSample?.sourceAnatomy.volumeId
+    if (!documentId || !volumeId) {
+      setSliceVolume(null)
+      setSliceStatus(null)
+      return
+    }
+    let cancelled = false
+    setSliceStatus('Loading synchronized slices…')
+    void (async () => {
+      try {
+        await ensureVolumeLoaded(documentId, volumeId)
+        if (cancelled) return
+        const bytes = editorStore.getState()?.volumes.get(volumeId)
+        if (!bytes) throw new Error('Volume bytes are unavailable')
+        const decoded = decodeNrrdVoxels(bytes)
+        if (decoded.sizes.length < 3 || decoded.sizes.some((size) => !Number.isFinite(size) || size < 1)) {
+          throw new Error('Volume dimensions are invalid')
+        }
+        const sizes: VolumeSizes = [
+          decoded.sizes[0],
+          decoded.sizes[1],
+          decoded.sizes[2],
+        ]
+        const requiredVoxels = sizes[0] * sizes[1] * sizes[2]
+        if (decoded.voxels.length < requiredVoxels) {
+          throw new Error('Volume payload is shorter than its dimensions')
+        }
+        if (cancelled) return
+        const [minimum, maximum] = volumeIntensityRange(
+          decoded.voxels.subarray(0, requiredVoxels),
+        )
+        setWindowCenter((minimum + maximum) / 2)
+        setWindowWidth(Math.max(maximum - minimum, 1))
+        setSliceVolume({ documentId, voxels: decoded.voxels, sizes })
+        setCrosshairIjk([
+          Math.floor(sizes[0] / 2),
+          Math.floor(sizes[1] / 2),
+          Math.floor(sizes[2] / 2),
+        ])
+        setSliceStatus(null)
+      } catch (error) {
+        if (cancelled) return
+        setSliceVolume(null)
+        setSliceStatus(error instanceof Error ? error.message : String(error))
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeDocument?.id, activeSample?.sourceAnatomy.volumeId])
+
+  useEffect(() => {
+    updateCanvasRuntime({
+      mode: canvasMode,
+      crosshairRas,
+      sliceOffsets: {
+        axial: crosshairRas[2],
+        sagittal: crosshairRas[0],
+        coronal: crosshairRas[1],
+      },
+    })
+  }, [canvasMode, crosshairRas[0], crosshairRas[1], crosshairRas[2]])
 
   return (
     <div className="app-shell">
@@ -577,64 +1010,192 @@ export default function App() {
                   )
                 }}
                 onActivate={(kind, id) => {
-                  setActiveDocument(ctx, { kind, id })
+                  const res = setActiveDocument(ctx, { kind, id })
+                  if (!res.ok) {
+                    setSignal(true)
+                    setMessage(res.error)
+                    return
+                  }
                   refresh()
                 }}
                 onClose={(kind, id) => {
-                  closeDocument(ctx, { kind, id })
+                  const res = closeDocument(ctx, { kind, id })
+                  if (!res.ok) {
+                    setSignal(true)
+                    setMessage(res.error)
+                    return
+                  }
                   refresh()
                 }}
               />
 
               <div className="studio-viewport-container">
-                <ToolRail
-                  active={activeTool}
-                  onSelect={setActiveTool}
-                  onAction={(id) => {
-                    if (id === 'restore') {
-                      void onRestore()
-                    } else if (id === 'save') {
-                      void onSave()
-                    }
+                <MenuBar commands={commands} onRun={runCommand} />
+                <CanvasWorkspace
+                  documentName={activeDocumentName}
+                  activeMode={canvasMode}
+                  volumeAvailable={volumeAvailable}
+                  selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}
+                  projection={projection}
+                  voxels={activeSliceVolume?.voxels}
+                  volumeSizes={activeSliceVolume?.sizes}
+                  crosshair={crosshairIjk}
+                  crosshairRas={crosshairRas}
+                  windowCenter={windowCenter}
+                  windowWidth={windowWidth}
+                  onCrosshairChange={setCrosshairIjk}
+                  onWindowChange={(center, width) => {
+                    setWindowCenter(center)
+                    setWindowWidth(width)
                   }}
-                  onApplyTransform={() => void applyTransform()}
-                  onCancelTransform={() => {
-                    setActiveTool('select')
-                    setMessage('Transform cancelled')
+                  onPlace={(point) => {
+                    setCrosshairIjk(point)
+                    setMessage(`Point placed at IJK ${point.join(', ')}`)
                     setSignal(false)
+                    setCanvasMode('view')
                   }}
-                  message={message}
-                  signal={signal}
-                  isCandidateActive={isCandidateActive}
-                />
-
-                <Viewport
-                  navigate={activeTool === 'navigate'}
-                  mesh={mesh}
-                  status={viewportStatus}
-                  onCameraChange={(position, target) => {
-                    navigateCamera(ctx, { position, target })
+                  onModeChange={(mode) => {
+                    setCanvasMode(mode)
+                    setActiveTool(mode === 'view' ? 'navigate' : 'select')
                   }}
-                />
-
-                <Inspector
-                  state={state}
-                  activeTool={activeTool}
-                  onRestoreRevision={(candidateId, revisionId) => {
-                    void (async () => {
-                      try {
-                        await apiClient.restoreRevision(candidateId, revisionId)
-                        if (activeProjectId) await loadProject(activeProjectId)
-                        setSignal(false)
-                        setMessage('Revision restored')
-                        refresh()
-                      } catch (e) {
-                        setSignal(true)
-                        setMessage(e instanceof Error ? e.message : String(e))
-                      }
-                    })()
-                  }}
-                />
+                  operationLabel={isDraftActive ? 'Candidate transform preview' : undefined}
+                  operationControls={isDraftActive ? (
+                    <>
+                      <FeatureHint {...CANVAS_HINTS.applyDraft} side="bottom">
+                        <button
+                          type="button"
+                          className="btn btn--primary btn--xs"
+                          disabled={pendingAction !== null}
+                          onClick={() => void applyTransform()}
+                        >
+                          Apply
+                        </button>
+                      </FeatureHint>
+                      <FeatureHint {...CANVAS_HINTS.cancelDraft} side="bottom">
+                        <button
+                          type="button"
+                          className="btn btn--secondary btn--xs"
+                          disabled={pendingAction !== null}
+                          onClick={() => {
+                            setActiveTool('select')
+                            setMessage('Transform cancelled')
+                            setSignal(false)
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </FeatureHint>
+                    </>
+                  ) : (
+                    <>
+                      {rendererStatus !== 'ready' ? (
+                        <FeatureHint {...CANVAS_HINTS.rebuild} side="bottom">
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--xs"
+                            onClick={() => {
+                              setRendererStatus('restoring')
+                              setRendererNonce((nonce) => nonce + 1)
+                            }}
+                          >
+                            Rebuild view
+                          </button>
+                        </FeatureHint>
+                      ) : null}
+                      <FeatureHint {...CANVAS_HINTS.tiltLock} side="bottom">
+                        <button
+                          type="button"
+                          className={`canvas-context-action ${tiltLock ? 'is-active' : ''}`}
+                          aria-pressed={tiltLock}
+                          onClick={() => setTiltLock((locked) => !locked)}
+                        >
+                          Tilt lock
+                        </button>
+                      </FeatureHint>
+                      <FeatureHint {...CANVAS_HINTS.spin} side="bottom">
+                        <button
+                          type="button"
+                          className={`canvas-context-action ${motionMode === 'spin' ? 'is-active' : ''}`}
+                          aria-pressed={motionMode === 'spin'}
+                          onClick={() =>
+                            setMotionMode((mode) => (mode === 'spin' ? 'none' : 'spin'))
+                          }
+                        >
+                          Spin
+                        </button>
+                      </FeatureHint>
+                      <FeatureHint {...CANVAS_HINTS.rock} side="bottom">
+                        <button
+                          type="button"
+                          className={`canvas-context-action ${motionMode === 'rock' ? 'is-active' : ''}`}
+                          aria-pressed={motionMode === 'rock'}
+                          onClick={() =>
+                            setMotionMode((mode) => (mode === 'rock' ? 'none' : 'rock'))
+                          }
+                        >
+                          Rock
+                        </button>
+                      </FeatureHint>
+                    </>
+                  )}
+                  viewControls={(
+                    <ViewController
+                      projection={projection}
+                      crosshairEnabled={crosshairVisible}
+                      lightingIntensity={lightingIntensity}
+                      onCenter={() => setFocusNonce((nonce) => nonce + 1)}
+                      onReset={() => setResetNonce((nonce) => nonce + 1)}
+                      onPreset={(preset) => {
+                        setViewPreset(preset)
+                        setViewPresetNonce((nonce) => nonce + 1)
+                      }}
+                      onProjectionChange={setProjection}
+                      onCrosshairChange={setCrosshairVisible}
+                      onLightingChange={setLightingIntensity}
+                    />
+                  )}
+                  inspector={(
+                    <Inspector
+                      state={state}
+                      activeTool={activeTool}
+                      restoreDisabled={pendingAction !== null}
+                      onRestoreRevision={(candidateId, revisionId) => {
+                        void restoreCandidateRevision(candidateId, revisionId)
+                      }}
+                    />
+                  )}
+                  status={(
+                    <>
+                      <span>
+                        <strong>RAS</strong>{' '}
+                        R {crosshairRas[0].toFixed(2)} · A {crosshairRas[1].toFixed(2)} · S {crosshairRas[2].toFixed(2)} mm
+                      </span>
+                      <span className={signal ? 'has-signal' : ''}>
+                        {pendingAction ? 'Working…' : sliceStatus ?? message ?? `${canvasMode} mode · Ready`}
+                      </span>
+                    </>
+                  )}
+                >
+                  <Viewport
+                    objectId={activeDocument?.id}
+                    focusNonce={focusNonce}
+                    resetNonce={resetNonce}
+                    viewPreset={viewPreset}
+                    viewPresetNonce={viewPresetNonce}
+                    projection={projection}
+                    crosshairVisible={crosshairVisible}
+                    lightingIntensity={lightingIntensity}
+                    tiltLock={tiltLock}
+                    motionMode={motionMode}
+                    rendererNonce={rendererNonce}
+                    onContextStatusChange={setRendererStatus}
+                    mesh={mesh}
+                    status={viewportStatus}
+                    onCameraChange={(position, target) => {
+                      navigateCamera(ctx, { position, target })
+                    }}
+                  />
+                </CanvasWorkspace>
               </div>
             </div>
           ) : null}
@@ -660,6 +1221,12 @@ export default function App() {
         catalog={catalog}
         selectedCaseName={selectedCase?.name}
         onImport={(catalogId) => void handleImportSample(catalogId)}
+      />
+      <CommandPalette
+        open={commandPaletteOpen}
+        commands={commands}
+        onClose={() => setCommandPaletteOpen(false)}
+        onRun={runCommand}
       />
 
     </div>

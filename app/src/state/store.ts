@@ -6,6 +6,7 @@ export function emptyViewState(): ViewState {
     camera: { position: [0, 0, 400], target: [0, 0, 0] },
     visibility: {},
     inspectionPlane: { enabled: false, axis: 'z', offset: 0 },
+    navigationScheme: 'alternate',
   }
 }
 

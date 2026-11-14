@@ -8,6 +8,8 @@ export type SampleMetadata = {
   sampleId: string
   license: string
   primaryVolume: string
+  source?: string
+  defectType?: string
   spatial: {
     units: string
     space?: string
