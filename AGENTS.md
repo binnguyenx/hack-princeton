@@ -11,7 +11,7 @@ This repo is agent-agnostic. Cursor, Claude Code, Codex, Copilot, and similar to
 5. After Build, run **Close** before ending the run (see **Close (required)** below). A major run is not finished when the code compiles; it is finished when Close reports.
 6. Skip intent-spec-plan only for tiny work: typos, copy tweaks, bugfixes that restore already-documented behavior, throwaway spikes. Say so explicitly when you skip it.
 
-AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec stay separate. Foundation schemas, application storage, the synchronous operation service, and reconstruction mock are implemented; future graph/API/model work requires its own plan and preflight. Newly proposed requirements require review before implementation. Other features keep a human gate between each document.
+AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec stay separate. Foundation schemas, application storage, the synchronous operation service, and reconstruction mock are implemented; fake-model graph and application API have scoped plans/preflights; future provider/live-mutation work needs its own scope. Newly proposed requirements require review before implementation. Other features keep a human gate between each document.
 
 ## Project skills
 
@@ -64,19 +64,18 @@ Agents **must** use this system for any UI, front-end, layout, styling, or visua
 | `DESIGN.md` | **Source of truth** for colors, typography, layout, elevation, shapes, components, Do’s/Don’ts |
 | `.impeccable/design.json` | Shadows, focus rings, motion, icon stroke (sidecar tokens) |
 | `docs/design-conventions.md` | R14: management vs canvas, nav vs edit, shortcuts, selection/error states; points at `DESIGN.md` |
-| `.impeccable/reference/ui-styling-soft-monochrome.jpg` | Visual craft reference (soft monochrome + blue accent) |
-| `.impeccable/reference/ui-styling-atlassian-b2b.jpg` | Management **layout/grid** density reference only |
+| `.impeccable/reference/ui-styling-atlassian-b2b.jpg` | Management craft reference (density/feel) |
 | `.impeccable/reference/ui-styling-medit-soft.jpg` | Anti-reference — do not follow |
 
 Rules:
 
 - Before writing or changing UI code (`app/src/ui/`, CSS, component chrome, viewport framing), read `DESIGN.md` and apply its tokens.
-- Dual-register Operate UI: Atlassian-like **structure** on management (tables/toolbars); soft monochrome floating chrome app-wide; canvas stays viewport-first. Soft Medit wellness marketing chrome is rejected.
-- Three main colors: Base → Ink → Accent. Signal is rare danger only. Do not add brand hues or lavender fills.
+- Dual-register Operate UI: Atlassian-like B2B on management surfaces; Figma/Blender-clean chrome on the 3D canvas. Soft Medit / pill / large-radius wellness chrome is rejected.
+- At most four main colors with hierarchy: Base → Ink → Accent → Signal. Do not add brand hues or revive soft-active lavender.
 - Management may use tables/toolbars; still ban marketing/wellness dashboard kits. Canvas stays viewport-first with compact editor chrome.
 - Management surfaces are **Radix Themes-first** (`@radix-ui/themes`) with Radix primitives only where Themes lacks a required behavior primitive.
 - Interaction conventions live in `docs/design-conventions.md` (R14). Visual tokens stay in `DESIGN.md`.
-- For broader design craft workflows, use the `impeccable` skill; motion micro-interactions follow the `motion-design` skill. Both must honor `DESIGN.md` / `PRODUCT.md`.
+- For broader design craft workflows, use the `impeccable` skill; it must still honor `DESIGN.md` / `PRODUCT.md`.
 
 ## Build / test / lint
 
@@ -86,7 +85,7 @@ Run every deterministic backend suite from the repo root:
 PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py
 ```
 
-A healthy run reports `Ran 83 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
+A healthy run reports `Ran 157 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, live API (including foreground-volume measurement), and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
 
 From the repo root, run storage and artifact tests:
 
@@ -111,7 +110,7 @@ Run the missing-contract unit test:
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/operations/test_missing_contract.py
 ```
 
-A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No lint command. `backend/ai/tests/live/` must not be described as passing.
+A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No separate Python lint command; app uses npm run lint. `backend/ai/tests/live/` must not be described as passing.
 
 ```bash
 cd app && npm install && npm test && npm run build
@@ -138,8 +137,20 @@ A healthy run prints `Ran 11 tests` and `OK`. This validates shared-schema confo
 
 ## AI app integration
 
-Live authority is app/server/storageSqlite.ts and its /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports three existing warnings.
+Live authority is skullfix_ai.application.ApplicationRepository and the FastAPI /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports eight inherited warnings and no errors.
 
-## Publication slice status
+## Express-to-FastAPI migration
 
-Python application repository and verified paired backups. Python checks expect83 tests. Read docs/ai/setup.md and the separate migration intent/spec. Existing Express dev behavior remains until the next API slice. Never point sandbox storage at the live app DB; providers/recovery/live AI mutation remain deferred.
+Read `features/express-to-fastapi/intent.md` and `spec.md` before changing the live backend. Shared16 HTTP contracts were verified on both backends before removal and now run on FastAPI; the Express baseline remains in the independent recovery runtime; Python live-model repository, default FastAPI proxy/built serving, disposable S13 and fake-model LangGraph are implemented. Live cutover, full30-minute observation and Express removal are complete; read cutover-completion.md and preserve external recovery for7days. Preserve the current `/api` contract, seven-table SQLite schema, NRRD files, raw hashes, flat poses, and restore pointer. Use disposable roots, never the user's live data. Run the S13 Express/FastAPI handoff rehearsal sequentially on one disposable dataset before live cutover. Keep the live application repository, sandbox `SQLiteApplicationStorage`, and future checkpoint database separate. The successful migration ends with one FastAPI/Python backend as sole live writer; Vite is frontend tooling and Express is conditional rollback support. Never restore a pre-cutover snapshot over acknowledged post-cutover writes without separate destructive approval. Run focused contracts with `cd app && npm test -- tests/backendContract/fastapiContract.test.ts`.
+
+Run the full app contract/cross-runtime suite with SKULLFIX_PYTHON pointing to the installed backend environment; run browser checks with `cd app && npm run test:browser` after build. The dev server always proxies to FastAPI (default8000); HACK_API_ORIGIN overrides the target and preview never proxies. Express/Multer must not be reintroduced into active app dependencies. See docs/ai/setup.md for exact commands, current117 Python/99 app/10 browser evidence, explicit storage roots and remaining live-operation gates.
+
+## Read-only chat and manual placement
+
+The chat widget is deferred. app/src/api/chat.ts posts to /api/ai/chat with only FakeToolModel + workspace.describe_selection; use the mode=ro application snapshot and never bind a sandbox or mutation service to this route. New manual construction uses PlacementService at /api/candidates/{id}/placement with project/case/expected revision and a validated rigid pose. It is not a chat capability. Live mechanical foreground-volume uses ForegroundVolumeService at POST /api/candidates/{id}/measurements (revision-scoped GET history); it must not be bound into LangGraph yet and must not use sandbox storage. Preserve the13 compatibility routes and source NRRD bytes. UI delta axes are editor-world coordinates, not certified patient RAS; do not claim numeric placement generates an implant. Read scoped plans/preflights before changing either boundary. Current inventory157 Python tests (app/browser inventories unchanged by T2).
+
+## Canvas selection and visibility
+
+Use canonical sourceAnatomy.objectId for sample view state, candidate.objectId for candidate view state, and keep document ids distinct. Select/Visibility/Show All are shared view-only ops; debug callers notify the UI through OpsContext.onViewChange. They do not authorize legacy debug domain mutations or AI writes. Keep rendered mesh ownership and gesture identity guards, isolate/dispose selection helpers, and do not rebuild geometry on a view-state refresh. Visibility is session-only; hiding3D geometry does not hide2D reference slices. Browser proof: selectVisibility.e2e.ts with temporary storage, current10 total browser journeys. Face/region picking, persisted view settings and reconstruction remain separate scope.
+
+Portable manual package ZIPs use the same FastAPI application repository, never AI tool bindings. Save/Open creates a remapped project copy; it never replaces acknowledged writes. See canvas-workspace R76–R85 and docs/ai/setup.md for archive limits and actual dev/built browser proof. No dependency or schema migration is needed.

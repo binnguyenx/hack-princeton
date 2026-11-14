@@ -1,4 +1,5 @@
-import { expect, type Page, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './canvas-fixture'
 
 async function openCanvas(page: Page) {
   await page.goto('/')
@@ -70,15 +71,17 @@ test('Slicer-standard canvas controls change rendered state without mutating ana
   await page.mouse.up()
 
   await page.getByRole('button', { name: /Place mode/i }).click()
-  await page.mouse.click(sliceBox.x + sliceBox.width * 0.6, sliceBox.y + sliceBox.height * 0.4)
+  const placeBox = (await axialSlice.boundingBox())!
+  await page.mouse.click(placeBox.x + placeBox.width * 0.6, placeBox.y + placeBox.height * 0.4)
   await expect(page.getByRole('button', { name: /View mode/i })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
 
   const stateAfter = await page.evaluate(() => window.__hackPrincetonDebug?.readState())
-  expect(stateAfter?.revisions).toEqual(stateBefore?.revisions)
-  expect(stateAfter?.samples).toEqual(stateBefore?.samples)
+  expect(stateAfter?.ok && stateAfter.value?.revisions).toEqual(stateBefore?.ok && stateBefore.value?.revisions)
+  expect(stateAfter?.ok && stateAfter.value?.samples).toEqual(stateBefore?.ok && stateBefore.value?.samples)
+  expect(stateAfter?.ok && stateAfter.value?.landmarks).toHaveLength(1)
   expect(browserErrors).toEqual([])
 })
 

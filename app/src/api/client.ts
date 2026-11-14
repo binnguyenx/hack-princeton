@@ -112,10 +112,24 @@ export const apiClient = {
     return new Uint8Array(await res.arrayBuffer())
   },
 
+  async fetchCandidateRevisionVolume(candidateId: string, revisionId: string): Promise<Uint8Array> {
+    const response = await fetch(`${BASE}/candidates/${encodeURIComponent(candidateId)}/revisions/${encodeURIComponent(revisionId)}/volume`)
+    if (!response.ok) throw new Error(`Revision volume request failed (HTTP ${response.status}).`)
+    return new Uint8Array(await response.arrayBuffer())
+  },
+
   async transformCandidate(candidateId: string, pose: number[]): Promise<void> {
     return request<void>(`/candidates/${encodeURIComponent(candidateId)}/transform`, {
       method: 'POST',
       body: JSON.stringify({ pose }),
+    })
+  },
+
+  async placeCandidate(candidateId: string, input: {
+    project_id: string; case_id: string; expected_revision_id: string; pose: readonly number[]
+  }): Promise<{ revisionId: string }> {
+    return request<{ revisionId: string }>(`/candidates/${encodeURIComponent(candidateId)}/placement`, {
+      method: 'POST', body: JSON.stringify(input),
     })
   },
 
