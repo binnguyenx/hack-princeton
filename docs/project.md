@@ -14,7 +14,7 @@ A 3D design workspace for cranial vault reconstruction (cranioplasty): inspect a
 
 ## Architecture at a glance
 
-Greenfield. Expected responsibilities (not yet implemented): canvas/case state, geometry tools, reconstruction generator, AI agent + tool use, evidence retrieval, persistence. Stack and service boundaries are undecided; define them in feature specs as they land.
+Greenfield. Expected responsibilities (not yet implemented): canvas/case state, geometry tools, reconstruction generator, AI agent + tool use, evidence retrieval, persistence. The product-wide stack is still undecided. The AI owner's draft subproject is `backend/ai/`, described in `docs/ai/` and `features/ai-workspace-assistant/`. It does not define the 3D frontend or geometry algorithms.
 
 Draft product intent (not yet an accepted feature folder): `hackprinceton_intent.md`.
 
@@ -22,14 +22,17 @@ Draft product intent (not yet an accepted feature folder): `hackprinceton_intent
 
 | Feature | Status | What it does |
 |-|-|-|
-| — | — | No feature folders yet. Create via the `intent-spec-plan` skill. |
+| [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | proposed | AI requests on the shared workspace. After the scaffold and adapter boundary, a labeled reconstruction mock and the real measurement proceed independently. The first real integration milestone is one measurement shown in the frontend. Inspection, one edit, and comparison wait for their contracts. The mock does not complete that milestone. |
+| [measure-candidate](../features/measure-candidate/intent.md) | proposed | Earlier draft of the measurement milestone. Folded into `ai-workspace-assistant`. Do not implement separately. |
 
 Status values: proposed, in progress, shipped, retired.
 
 ## Build order
 
-1. Promote product direction into accepted feature intents/specs via intent-spec-plan (starting from `hackprinceton_intent.md` as draft input).
-2. Order concrete features once the first intents are accepted.
+1. Keep `hackprinceton_intent.md` as draft product input. Do not treat it as an accepted feature spec.
+2. Review `features/ai-workspace-assistant/intent.md` and `spec.md`. They may be updated in one round and stay separate files. Code only after both are explicitly accepted. The AI workflow exception is `docs/ai/workflow.md`. Do not treat this index as acceptance.
+3. Do not start a second implementation from `features/measure-candidate/`. That draft is folded into the assistant spec.
+4. Inside the AI feature, after the scaffold, shared schemas, and adapter boundary, the reconstruction mock and the real measurement are independent. The mock does not wait on mechanical tools or a measurement contract, and it does not complete the first real integration milestone. See `docs/ai/workflow.md`.
 
 ## Glossary
 

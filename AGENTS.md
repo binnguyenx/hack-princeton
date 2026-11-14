@@ -9,6 +9,8 @@ This repo is agent-agnostic. Cursor, Claude Code, Codex, Copilot, and similar to
 3. During the Build step, follow the **`tdd`** skill (red → green → refactor). Derive tests from the accepted `features/<name>/spec.md`.
 4. Skip intent-spec-plan only for tiny work: typos, copy tweaks, bugfixes that restore already-documented behavior, throwaway spikes. Say so explicitly when you skip it.
 
+AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec may be drafted in one round and stay separate files. After both are explicitly accepted, a separate plan approval is not required unless the user asks. Other features keep a human gate between each document.
+
 ## Project skills
 
 Canonical skills live in `.agents/skills/` (Agent Skills format). Tool-specific skill dirs are symlinks to the same folders so discovery works natively:
@@ -29,7 +31,7 @@ Before a major run: open the matching `SKILL.md` and follow it. Do not improvise
 
 ## Build / test / lint
 
-Not established yet (greenfield). When commands exist, record them here with what a healthy run looks like.
+Not established yet. When a command exists, record it here with what a healthy run looks like. `backend/ai/tests/live/` must not be described as passing.
 
 ## Conventions agents get wrong
 
