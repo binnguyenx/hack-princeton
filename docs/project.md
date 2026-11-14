@@ -1,6 +1,6 @@
 # HackPrinceton (product name undecided)
 
-Design system: **hack-princeton** (`DESIGN.md`).
+Design system: **hack-princeton** (`DESIGN.md`) — dual-register Operate UI (Atlassian-like management + Figma/Blender canvas). Soft Medit chrome is retired as an anti-reference.
 
 ## Goal
 
@@ -28,14 +28,21 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 
 | Feature | Status | What it does |
 |-|-|-|
-| [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
+| [3D bone editor (umbrella)](../features/3d-bone-editor/README.md) | retired | Former mega-feature; split into category folders below. Root intent/spec/plan are retired — do not implement against them. |
+| [Software app model](../features/3d-bone-editor/software-app-model/intent.md) | shipped | Domain + persistent local CRUD for project / case / sample / candidate / revision. |
+| [Business UI](../features/3d-bone-editor/business-ui/intent.md) | shipped | Atlassian-like management surfaces over the app model. |
+| [Canvas workspace](../features/3d-bone-editor/canvas-workspace/intent.md) | shipped | Unified canvas tools + viewport behavior, GLB-first rendering, restore/apply integrity, and clean-state UI contracts. |
+| [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
 
 Status values: proposed, in progress, shipped, retired.
 
 ## Build order
 
-1. Promote product direction into accepted feature intents/specs via intent-spec-plan (starting from `hackprinceton_intent.md` as draft input).
-2. Order concrete features once the first intents are accepted.
+1. Accept and build **software-app-model** (domain + disk/API CRUD) — foundation.
+2. **business-ui** (management chrome on a real model).
+3. **canvas-workspace** (canvas tools + viewport rendering and interaction integrity).
+4. **business-ui-polish** (Radix-first management redesign + UI consistency hardening).
+5. Do not reopen the retired umbrella plan under `features/3d-bone-editor/plan.md`.
 
 
 ## Design system
@@ -46,9 +53,10 @@ Agents building or changing UI / front-end must follow this system (also summari
 |-|-|
 | [`PRODUCT.md`](../PRODUCT.md) | Product truth and brand commitments |
 | [`DESIGN.md`](../DESIGN.md) | Visual tokens and Do’s/Don’ts (source of truth) |
-| [`design-conventions.md`](design-conventions.md) | 3D editor interaction conventions (R14) |
+| [`design-conventions.md`](design-conventions.md) | Management vs canvas conventions (R14) |
 | [`.impeccable/design.json`](../.impeccable/design.json) | Shadows, focus, motion sidecar |
-| [`.impeccable/reference/ui-styling-medit-soft.jpg`](../.impeccable/reference/ui-styling-medit-soft.jpg) | Styling feel reference (not layout) |
+| [`.impeccable/reference/ui-styling-atlassian-b2b.jpg`](../.impeccable/reference/ui-styling-atlassian-b2b.jpg) | Management craft reference (density/feel) |
+| [`.impeccable/reference/ui-styling-medit-soft.jpg`](../.impeccable/reference/ui-styling-medit-soft.jpg) | Anti-reference — do not follow |
 
 Stack for the first editor shell is recorded in `PRODUCT.md` (Vite + React + TypeScript + Three.js).
 
