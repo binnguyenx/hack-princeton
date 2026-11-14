@@ -16,6 +16,7 @@ import type { ProjectRegistry } from './projectRegistry'
 export type OpsContext = {
   store: EditorStore
   registry?: ProjectRegistry
+  onViewChange?: () => void
   saveWriter?: (
     dir: string,
     state: EditorState,
@@ -77,19 +78,49 @@ export function navigateCamera(ctx: OpsContext, camera: CameraState): OpResult {
   return ok()
 }
 
+export function getActiveObjectId(state: EditorState | null): string | null {
+  const document = state?.openDocuments.find((item) => item.id === state.activeDocumentId)
+  if (!document || !state) return null
+  return document.kind === 'sample'
+    ? state.samples.find((sample) => sample.id === document.id)?.sourceAnatomy.objectId ?? null
+    : state.candidates.find((candidate) => candidate.objectId === document.id)?.objectId ?? null
+}
+
+function knownObject(state: EditorState, objectId: string): boolean {
+  return state.samples.some((sample) => sample.sourceAnatomy.objectId === objectId)
+    || state.candidates.some((candidate) => candidate.objectId === objectId)
+}
+
 export function setVisibility(
   ctx: OpsContext,
   objectId: string,
   visible: boolean,
 ): OpResult {
-  if (!ctx.store.getState()) return fail('No project open')
+  const state = ctx.store.getState()
+  if (!state) return fail('No project open')
+  if (!knownObject(state, objectId)) return fail(`Unknown object: ${objectId}`)
+  if (typeof visible !== 'boolean') return fail('Visibility must be a boolean')
   ctx.store.update((st) => ({
     ...st,
     view: {
       ...st.view,
+      selectionObjectId: !visible && st.view.selectionObjectId === objectId ? null : st.view.selectionObjectId,
       visibility: { ...st.view.visibility, [objectId]: visible },
     },
   }))
+  ctx.onViewChange?.()
+  return ok()
+}
+
+export function showAllObjects(ctx: OpsContext): OpResult {
+  const state = ctx.store.getState()
+  if (!state) return fail('No project open')
+  const ids = [...state.samples.map((sample) => sample.sourceAnatomy.objectId),
+    ...state.candidates.map((candidate) => candidate.objectId)]
+  ctx.store.update((st) => ({ ...st, view: { ...st.view,
+    visibility: { ...st.view.visibility, ...Object.fromEntries(ids.map((id) => [id, true])) },
+  } }))
+  ctx.onViewChange?.()
   return ok()
 }
 
@@ -109,15 +140,14 @@ export function selectObject(ctx: OpsContext, objectId: string | null): OpResult
   const s = ctx.store.getState()
   if (!s) return fail('No project open')
   if (objectId) {
-    const known =
-      s.samples.some((x) => x.sourceAnatomy.objectId === objectId) ||
-      s.candidates.some((c) => c.objectId === objectId)
-    if (!known) return fail(`Unknown object: ${objectId}`)
+    if (!knownObject(s, objectId)) return fail(`Unknown object: ${objectId}`)
+    if (s.view.visibility[objectId] === false) return fail('Cannot select a hidden object')
   }
   ctx.store.update((st) => ({
     ...st,
     view: { ...st.view, selectionObjectId: objectId },
   }))
+  ctx.onViewChange?.()
   return ok()
 }
 
@@ -308,6 +338,7 @@ export function openDocument(
       ? st.openDocuments
       : [...st.openDocuments, { kind: args.kind, id: args.id }],
     activeDocumentId: args.id,
+    view: st.activeDocumentId === args.id ? st.view : { ...st.view, selectionObjectId: null },
   }))
   return ok()
 }
@@ -330,7 +361,8 @@ export function closeDocument(
     if (activeDocumentId === args.id) {
       activeDocumentId = openDocuments[openDocuments.length - 1]?.id ?? null
     }
-    return { ...st, openDocuments, activeDocumentId }
+    return { ...st, openDocuments, activeDocumentId,
+      view: st.activeDocumentId === activeDocumentId ? st.view : { ...st.view, selectionObjectId: null } }
   })
   return ok()
 }
@@ -345,7 +377,8 @@ export function setActiveDocument(
     (d) => d.kind === args.kind && d.id === args.id,
   )
   if (!open) return fail('Document tab is not open')
-  ctx.store.update((st) => ({ ...st, activeDocumentId: args.id }))
+  ctx.store.update((st) => ({ ...st, activeDocumentId: args.id,
+    view: st.activeDocumentId === args.id ? st.view : { ...st.view, selectionObjectId: null } }))
   return ok()
 }
 

@@ -51,3 +51,5 @@ Biomedical engineers (and later surgeons) need durable case data. Coding agents 
 2026-11-14 — Product owner: **delete in v1**; **confirm entities** as listed in Desired outcome (User, Project, Case, Sample/source anatomy, Candidate, Candidate revision).
 2026-11-14 — Product owner: use **SQLite for metadata** and **local filesystem for NRRD binaries** in v1.
 2026-11-14 — Product owner: candidate revision **R0 references the sample volume + pose** (no candidate byte copy in this unit).
+
+2026-11-14 — The owner authorized the portable ZIP Save/Open follow-up under canvas-workspace R76–R85. SQLite/files stay primary; opening creates a remapped project copy rather than overwriting the live model. The earlier v1 package deferral is historical, not a prohibition on this scoped follow-up.

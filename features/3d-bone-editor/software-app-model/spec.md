@@ -108,7 +108,7 @@ None in this unit.
 
 - D1. **Delete in v1** for project, case, sample, and candidate (with cascades as in R8–R11). Why: product owner confirmed; empty trash/undo-delete deferred. Alternatives: soft-delete — deferred.
 - D2. Candidate revision R0 references the sample `volumeId` + identity pose; no candidate byte copy in v1. Why: transform-only editing, lower disk use, consistent with protected source + revision pointers. Alternatives: copy bytes at candidate create (deferred to a future amendment).
-- D3. `data/storage/` is the live app store for this unit with SQLite metadata and filesystem NRRD binaries. Portable zip package export/import is out of scope for v1 Proof (intent allowed deferral). Why: one operational persistence path first. Alternatives: package-as-primary — deferred.
+- D3. `data/storage/` is the live app store for this unit with SQLite metadata and filesystem NRRD binaries. Portable zip package export/import was deferred from the original v1 Proof; the later authorized canvas-workspace R76–R85 follow-up supplies it as a secondary import/export surface. Why: one operational persistence path first. Alternatives: package-as-primary — deferred.
 - D4. API transport left to the plan (Express-on-Vite vs plain handlers) as long as R5–R13 hold. Why: behavior over framework.
 - D5. Entities confirmed as in intent R1 table — no Task/Issue tracker entities. Why: product confirmed cranial study model.
 - D6. Test strategy is two-seam by default (storage + HTTP), with atomic NRRD failure cases as first-class proof. Why: catches parity drift and half-write bugs that single-seam testing can miss.
@@ -129,3 +129,7 @@ None in this unit.
 ## Out of scope
 
 Business UI, canvas tool UX, viewport/GLB rendering, AI, measure/annotate/sculpt, cloud/auth, soft-delete/trash, rename-as-separate-feature (create-with-name only unless amended), portable package round-trip as primary store.
+
+## Portable package follow-up
+
+Implemented scope/limits and verified copy/rollback/restart behavior are defined once in canvas-workspace/spec.md R76–R85 and plans/save-open-package.md. They add manual create-copy import/export over the same Python application repository, not a second store or replacement of acknowledged records. No automatic acceptance of unrelated app-model targets is inferred.
