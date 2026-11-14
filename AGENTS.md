@@ -74,10 +74,10 @@ Rules:
 ## Build / test / lint
 
 ```bash
-cd app && npm install && npm run sync:fixtures && npm test && npm run build
+cd app && npm install && npm test && npm run build
 ```
 
-Healthy: Vitest reports all tests passed; `npm run build` completes. Dev: `npm run dev` then open the printed URL. Sample inspection: `data/README.md`.
+Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `cd app && npm run dev` (opens one editor; demo case loads automatically). Sample inspection: `data/README.md`.
 
 ## Conventions agents get wrong
 

@@ -4,16 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run sync:fixtures && vite",
+    "build": "npm run sync:fixtures && tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
+    "preview": "npm run sync:fixtures && vite preview",
     "test": "vitest run",
     "test:integration": "vitest run",
     "test:watch": "vitest",
     "sync:fixtures": "rm -rf public/fixtures/demo-project && mkdir -p public/fixtures && cp -R ../data/fixtures/demo-project public/fixtures/demo-project"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "three": "^0.187.0"

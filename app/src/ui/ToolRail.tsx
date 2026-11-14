@@ -9,45 +9,116 @@ type ToolId =
   | 'save'
   | 'open'
 
-const TOOLS: { id: ToolId; label: string }[] = [
-  { id: 'select', label: 'Select (V)' },
-  { id: 'navigate', label: 'Navigate' },
-  { id: 'visibility', label: 'Visibility' },
-  { id: 'inspection', label: 'Inspection plane' },
-  { id: 'createCandidate', label: 'Create candidate' },
-  { id: 'transform', label: 'Transform (T)' },
-  { id: 'restore', label: 'Restore revision' },
-  { id: 'save', label: 'Save' },
-  { id: 'open', label: 'Open' },
-]
-
 type Props = {
   active: ToolId
   onSelect: (id: ToolId) => void
   onAction: (id: ToolId) => void
+  onApplyTransform: () => void
   message?: string | null
   signal?: boolean
 }
 
-export function ToolRail({ active, onSelect, onAction, message, signal }: Props) {
+const VIEW: { id: ToolId; label: string; hint: string }[] = [
+  { id: 'navigate', label: 'Orbit', hint: 'Inspect' },
+  { id: 'select', label: 'Select', hint: 'V' },
+  { id: 'visibility', label: 'Visibility', hint: 'Show / hide' },
+  { id: 'inspection', label: 'Clip plane', hint: 'Inspect' },
+]
+
+const EDIT: { id: ToolId; label: string; hint: string }[] = [
+  { id: 'createCandidate', label: 'New candidate', hint: 'Copy source' },
+  { id: 'transform', label: 'Transform', hint: 'T · Apply' },
+  { id: 'restore', label: 'Restore', hint: '⌘Z' },
+]
+
+const FILE: { id: ToolId; label: string; hint: string }[] = [
+  { id: 'save', label: 'Save', hint: '⌘S' },
+  { id: 'open', label: 'Open', hint: 'Project' },
+]
+
+function Section({
+  title,
+  items,
+  active,
+  onSelect,
+  onAction,
+  onApplyTransform,
+}: {
+  title: string
+  items: { id: ToolId; label: string; hint: string }[]
+  active: ToolId
+  onSelect: (id: ToolId) => void
+  onAction: (id: ToolId) => void
+  onApplyTransform: () => void
+}) {
   return (
-    <aside className="tool-rail" aria-label="Editor tools">
-      {TOOLS.map((t) => (
+    <div className="rail-section">
+      <p className="rail-label">{title}</p>
+      {items.map((t) => (
         <button
           key={t.id}
           type="button"
           className={active === t.id ? 'tool active' : 'tool'}
           onClick={() => {
-            if (t.id === 'save' || t.id === 'open' || t.id === 'createCandidate' || t.id === 'restore') {
+            if (t.id === 'transform') {
+              onSelect(t.id)
+              onApplyTransform()
+              return
+            }
+            if (
+              t.id === 'save' ||
+              t.id === 'open' ||
+              t.id === 'createCandidate' ||
+              t.id === 'restore'
+            ) {
               onAction(t.id)
             } else {
               onSelect(t.id)
             }
           }}
         >
-          {t.label}
+          <span className="tool-label">{t.label}</span>
+          <span className="tool-hint">{t.hint}</span>
         </button>
       ))}
+    </div>
+  )
+}
+
+export function ToolRail({
+  active,
+  onSelect,
+  onAction,
+  onApplyTransform,
+  message,
+  signal,
+}: Props) {
+  return (
+    <aside className="tool-rail" aria-label="Editor tools">
+      <Section
+        title="View"
+        items={VIEW}
+        active={active}
+        onSelect={onSelect}
+        onAction={onAction}
+        onApplyTransform={onApplyTransform}
+      />
+      <Section
+        title="Edit"
+        items={EDIT}
+        active={active}
+        onSelect={onSelect}
+        onAction={onAction}
+        onApplyTransform={onApplyTransform}
+      />
+      <Section
+        title="File"
+        items={FILE}
+        active={active}
+        onSelect={onSelect}
+        onAction={onAction}
+        onApplyTransform={onApplyTransform}
+      />
       {message ? (
         <p className={signal ? 'msg signal' : 'msg'} role="status">
           {message}

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Object3D } from 'three'
 import { installDebugBridge } from './debug/bridge'
 import { volumeToDisplayMesh } from './geometry/derivedMesh'
+import { sha256Hex } from './domain/hash'
+import type { Mat4 } from './domain/types'
 import {
   createCandidate,
   navigateCamera,
@@ -12,13 +14,12 @@ import {
 import { editorStore } from './state/store'
 import { ToolRail, type ToolId } from './ui/ToolRail'
 import { Viewport } from './viewport/Viewport'
-import type { Mat4 } from './domain/types'
 
 const DEMO_URL = '/fixtures/demo-project'
 const ctx = { store: editorStore }
 
 const nudgePose: Mat4 = [
-  1, 0, 0, 5,
+  1, 0, 0, 8,
   0, 1, 0, 0,
   0, 0, 1, 0,
   0, 0, 0, 1,
@@ -29,36 +30,71 @@ export default function App() {
   const [message, setMessage] = useState<string | null>(null)
   const [signal, setSignal] = useState(false)
   const [mesh, setMesh] = useState<Object3D | null>(null)
+  const [viewportStatus, setViewportStatus] = useState<string | null>('Loading case…')
   const [tick, setTick] = useState(0)
   const [pendingOpen, setPendingOpen] = useState(false)
 
   const refresh = useCallback(() => setTick((t) => t + 1), [])
+  const state = useMemo(() => editorStore.getState(), [tick])
 
   useEffect(() => {
     installDebugBridge(ctx)
     void (async () => {
       try {
         await preloadDemo()
-        setMessage('Demo project loaded')
+        setMessage('Demo case ready — orbit with Navigate')
         setSignal(false)
       } catch (e) {
         setSignal(true)
         setMessage(e instanceof Error ? e.message : String(e))
+        setViewportStatus('Could not load volume')
       }
       refresh()
     })()
   }, [refresh])
 
+  async function buildMeshFromState() {
+    const st = editorStore.getState()
+    if (!st?.samples[0]) {
+      setMesh(null)
+      setViewportStatus('No sample loaded')
+      return
+    }
+    const sample = st.samples[0]
+    const bytes = st.volumes.get(sample.sourceAnatomy.volumeId)
+    if (!bytes) {
+      setViewportStatus('Volume bytes missing')
+      return
+    }
+    setViewportStatus('Building surface…')
+    // Yield so the status paints before heavy work
+    await new Promise((r) => setTimeout(r, 16))
+    try {
+      const m = volumeToDisplayMesh(bytes, sample.sourceAnatomy.spatial, {
+        resolution: 72,
+      })
+      setMesh(m)
+      setViewportStatus(null)
+    } catch (e) {
+      setMesh(null)
+      setSignal(true)
+      setMessage(e instanceof Error ? e.message : String(e))
+      setViewportStatus('Surface failed — check console')
+      throw e
+    }
+  }
+
   async function preloadDemo() {
-    // Dynamically import node-free browser loader using fetch of volumes
-    const manifest = await (await fetch(`${DEMO_URL}/manifest.json`)).json()
+    const manifestRes = await fetch(`${DEMO_URL}/manifest.json`)
+    if (!manifestRes.ok) throw new Error('Demo fixture missing — restart with npm run dev')
+    const manifest = await manifestRes.json()
     const volumes = new Map<string, Uint8Array>()
     for (const s of manifest.samples) {
       const id = s.sourceAnatomy.volumeId
-      const buf = await (await fetch(`${DEMO_URL}/volumes/${id}.nrrd`)).arrayBuffer()
-      volumes.set(id, new Uint8Array(buf))
+      const res = await fetch(`${DEMO_URL}/volumes/${id}.nrrd`)
+      if (!res.ok) throw new Error(`Missing volume ${id}`)
+      volumes.set(id, new Uint8Array(await res.arrayBuffer()))
     }
-    const { sha256Hex } = await import('./domain/hash')
     const samples = []
     for (const s of manifest.samples) {
       const bytes = volumes.get(s.sourceAnatomy.volumeId)!
@@ -81,23 +117,8 @@ export default function App() {
       volumes,
       dirty: false,
     })
-    const first = samples[0]
-    if (first) {
-      try {
-        const m = volumeToDisplayMesh(
-          volumes.get(first.sourceAnatomy.volumeId)!,
-          first.sourceAnatomy.spatial,
-          { resolution: 40 },
-        )
-        setMesh(m)
-      } catch (e) {
-        setSignal(true)
-        setMessage(e instanceof Error ? e.message : String(e))
-      }
-    }
+    await buildMeshFromState()
   }
-
-  const state = useMemo(() => editorStore.getState(), [tick])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -106,10 +127,13 @@ export default function App() {
         if (!e.metaKey && !e.ctrlKey) return
       }
       if (e.key === 'v' || e.key === 'V') setActive('select')
-      if (e.key === 't' || e.key === 'T') setActive('transform')
+      if (e.key === 't' || e.key === 'T') {
+        setActive('transform')
+        void applyTransform()
+      }
       if (e.key === 'Escape') {
         setActive('select')
-        setMessage('Cancelled in-progress edit')
+        setMessage('Cancelled')
         setSignal(false)
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
@@ -126,16 +150,10 @@ export default function App() {
   })
 
   async function onSave() {
-    try {
-      // Browser: download is deferred; mark clean for demo shell
-      editorStore.update((s) => ({ ...s, dirty: false }))
-      setSignal(false)
-      setMessage('Saved (session dirty cleared; portable zip export deferred in browser shell)')
-      refresh()
-    } catch (e) {
-      setSignal(true)
-      setMessage(e instanceof Error ? e.message : String(e))
-    }
+    editorStore.update((s) => ({ ...s, dirty: false }))
+    setSignal(false)
+    setMessage('Saved session (portable zip export still deferred)')
+    refresh()
   }
 
   async function onRestore() {
@@ -144,14 +162,14 @@ export default function App() {
     const cand = st.value.candidates[0]
     if (!cand) {
       setSignal(true)
-      setMessage('No candidate to restore')
+      setMessage('Create a candidate first')
       return
     }
     const revs = st.value.revisions
       .filter((r) => r.candidateId === cand.objectId)
       .sort((a, b) => a.order - b.order)
     if (revs.length < 2) {
-      setMessage('No earlier revision')
+      setMessage('No earlier revision yet')
       return
     }
     const prev = revs[revs.length - 2]
@@ -160,7 +178,7 @@ export default function App() {
       revisionId: prev.id,
     })
     setSignal(!r.ok)
-    setMessage(r.ok ? `Restored ${prev.id}` : r.error)
+    setMessage(r.ok ? `Restored earlier revision` : r.error)
     refresh()
   }
 
@@ -175,7 +193,7 @@ export default function App() {
       }
       const r = await createCandidate(ctx, sampleId)
       setSignal(!r.ok)
-      setMessage(r.ok ? `Created ${r.value.candidateId}` : r.error)
+      setMessage(r.ok ? 'Candidate created from source anatomy' : r.error)
       refresh()
       return
     }
@@ -204,7 +222,7 @@ export default function App() {
     const cand = st.ok && st.value?.candidates[0]
     if (!cand) {
       setSignal(true)
-      setMessage('Create a candidate first')
+      setMessage('Create a candidate first, then Transform')
       return
     }
     const r = await transformCandidate(ctx, {
@@ -213,50 +231,70 @@ export default function App() {
       apply: true,
     })
     setSignal(!r.ok)
-    setMessage(r.ok ? `Applied transform ${r.value.revisionId}` : r.error)
+    setMessage(r.ok ? 'Transform applied (new revision)' : r.error)
     refresh()
   }
 
   return (
     <div className="editor-shell">
-      <ToolRail
-        active={active}
-        onSelect={(id) => {
-          setActive(id)
-          if (id === 'transform') void applyTransform()
-        }}
-        onAction={onAction}
-        message={message}
-        signal={signal}
-      />
-      <main className="main">
+      <header className="topbar">
+        <div className="topbar-brand">
+          <strong>Workspace</strong>
+          <span>Cranial case editor · product name undecided</span>
+        </div>
+        <div className="topbar-meta">
+          <span className="chip">{state?.project.name ?? '…'}</span>
+          <span className="chip soft">
+            {state ? `${state.samples.length} samples` : 'loading'}
+          </span>
+          {state?.dirty ? <span className="chip">Unsaved</span> : null}
+        </div>
+      </header>
+
+      <div className="workspace">
+        <ToolRail
+          active={active}
+          onSelect={setActive}
+          onAction={onAction}
+          onApplyTransform={() => void applyTransform()}
+          message={message}
+          signal={signal}
+        />
         <Viewport
           navigate={active === 'navigate'}
           mesh={mesh}
+          status={viewportStatus}
           onCameraChange={(position, target) => {
             navigateCamera(ctx, { position, target })
           }}
         />
         <aside className="inspector" aria-label="Inspector">
-          <h1 className="product-title">Workspace</h1>
-          <p className="muted">Product name undecided</p>
+          <h2>Case</h2>
+          <p className="muted">Source protected · candidates editable</p>
           {state ? (
-            <ul>
-              <li>Project: {state.project.id}</li>
-              <li>Samples: {state.samples.length}</li>
-              <li>Candidates: {state.candidates.length}</li>
-              <li>Revisions: {state.revisions.length}</li>
-              <li>Dirty: {String(state.dirty)}</li>
-              <li>Selection: {state.view.selectionObjectId ?? '—'}</li>
-            </ul>
+            <dl>
+              <dt>Project</dt>
+              <dd>{state.project.id}</dd>
+              <dt>Samples</dt>
+              <dd>{state.samples.length}</dd>
+              <dt>Candidates</dt>
+              <dd>{state.candidates.length}</dd>
+              <dt>Revisions</dt>
+              <dd>{state.revisions.length}</dd>
+              <dt>Tool</dt>
+              <dd>{active}</dd>
+              <dt>Selection</dt>
+              <dd>{state.view.selectionObjectId ?? '—'}</dd>
+            </dl>
           ) : (
-            <p>Loading…</p>
+            <p className="muted">Loading project…</p>
           )}
         </aside>
-      </main>
+      </div>
+
       {pendingOpen ? (
         <div className="modal" role="dialog" aria-modal="true">
-          <p>Unsaved changes. Save, discard, or cancel?</p>
+          <p>Unsaved changes.</p>
           <button
             type="button"
             onClick={async () => {

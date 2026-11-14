@@ -3,10 +3,10 @@
 ## Launch
 
 ```bash
-cd app && npm install && npm run sync:fixtures && npm run dev
+cd app && npm install && npm run dev
 ```
 
-Open the printed localhost URL.
+Open the printed localhost URL. One editor app; the demo case loads on start.
 
 ## Coding-agent access
 
