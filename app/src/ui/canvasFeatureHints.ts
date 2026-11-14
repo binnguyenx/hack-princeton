@@ -1,6 +1,8 @@
 /** Shared hover-copy for Cross-reference Workbench controls (demo + tester UX). */
 
 export const CANVAS_HINTS = {
+  objectVisibility: { label: 'Object visibility', description: 'Hide or show the active object. Geometry and revision history stay unchanged.', shortcut: 'H' },
+  showAllObjects: { label: 'Show all objects', description: 'Restore visibility for every known source and candidate in this session.' },
   modeView: {
     label: 'View mode',
     description:
@@ -33,33 +35,33 @@ export const CANVAS_HINTS = {
     label: 'Anterior view',
     description:
       'Look at the model from the front of the patient (camera along +Y / anterior). Standard clinical “face-on” direction.',
-    shortcut: 'A',
+    shortcut: 'End / Keypad1',
   },
   viewPosterior: {
     label: 'Posterior view',
     description:
       'Look at the model from the back of the head (camera along −Y / posterior).',
-    shortcut: 'P',
+    shortcut: 'Shift+End',
   },
   viewLeft: {
     label: 'Left view',
     description: 'Look from the patient’s left side (camera along −X).',
-    shortcut: 'L',
+    shortcut: 'PageDown / Keypad3',
   },
   viewRight: {
     label: 'Right view',
     description: 'Look from the patient’s right side (camera along +X).',
-    shortcut: 'R',
+    shortcut: 'Shift+PageDown',
   },
   viewSuperior: {
     label: 'Superior view',
     description: 'Look down from above the head (camera along +Z / superior).',
-    shortcut: 'S',
+    shortcut: 'Home / Keypad7',
   },
   viewInferior: {
     label: 'Inferior view',
     description: 'Look up from below (camera along −Z / inferior).',
-    shortcut: 'I',
+    shortcut: 'Shift+Home',
   },
   projection: {
     label: 'Projection',
@@ -105,11 +107,6 @@ export const CANVAS_HINTS = {
   cancelDraft: {
     label: 'Cancel transform',
     description: 'Discard the in-progress candidate transform draft without writing a revision.',
-  },
-  linkedViews: {
-    label: 'Linked views',
-    description:
-      'Status only — not a button. The three planes share one RAS crosshair, so moving a slice or clicking anatomy updates all three together. Independent (unlinked) planes are not available yet.',
   },
   collapseDock: {
     label: 'Collapse slice dock',

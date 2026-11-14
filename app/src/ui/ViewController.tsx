@@ -1,5 +1,7 @@
 import {
   Box,
+  Eye,
+  EyeOff,
   Crosshair,
   Focus,
   RotateCcw,
@@ -12,6 +14,12 @@ import { FeatureHint } from './FeatureHint'
 export type ProjectionMode = 'perspective' | 'orthographic'
 
 type Props = {
+  diagnosticsEnabled?: boolean
+  onDiagnosticsChange?: (enabled: boolean) => void
+  objectVisible?: boolean
+  canToggleVisibility?: boolean
+  onToggleVisibility?: () => void
+  onShowAll?: () => void
   projection: ProjectionMode
   crosshairEnabled: boolean
   lightingIntensity: number
@@ -38,6 +46,12 @@ const DIRECTIONS: {
 ]
 
 export function ViewController({
+  diagnosticsEnabled = false,
+  onDiagnosticsChange,
+  objectVisible = true,
+  canToggleVisibility = false,
+  onToggleVisibility,
+  onShowAll,
   projection,
   crosshairEnabled,
   lightingIntensity,
@@ -50,6 +64,8 @@ export function ViewController({
 }: Props) {
   return (
     <div className="view-controller" role="toolbar" aria-label="3D view controls">
+      {onDiagnosticsChange ? <button type="button" className="canvas-icon-button" aria-label="Rendering diagnostics" aria-pressed={diagnosticsEnabled}
+        title="Measured render-loop FPS and renderer draw counts" onClick={() => onDiagnosticsChange(!diagnosticsEnabled)}>FPS</button> : null}
       <FeatureHint {...CANVAS_HINTS.centerView} side="bottom">
         <button type="button" className="canvas-icon-button" aria-label="Center 3D view" onClick={onCenter}>
           <Focus size={14} />
@@ -99,6 +115,17 @@ export function ViewController({
         >
           <Crosshair size={14} />
         </button>
+      </FeatureHint>
+      <FeatureHint {...CANVAS_HINTS.objectVisibility} side="bottom">
+        <button type="button" className="canvas-icon-button"
+          aria-label={objectVisible ? 'Hide active object' : 'Show active object'}
+          aria-pressed={!objectVisible} disabled={!canToggleVisibility} onClick={onToggleVisibility}>
+          {objectVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+        </button>
+      </FeatureHint>
+      <FeatureHint {...CANVAS_HINTS.showAllObjects} side="bottom">
+        <button type="button" className="canvas-icon-button" aria-label="Show all objects"
+          disabled={!onShowAll} onClick={onShowAll}><Eye size={14} /><span>All</span></button>
       </FeatureHint>
       <FeatureHint {...CANVAS_HINTS.lighting} side="bottom">
         <label className="view-controller__lighting">

@@ -17,6 +17,7 @@ import {
   setActiveDocument,
   setInspectionPlane,
   setVisibility,
+  showAllObjects,
   transformCandidate,
 } from './session'
 import { importPreparedSample } from './importPrepared'
@@ -26,6 +27,7 @@ export const publicOps = {
   listProjects,
   navigateCamera,
   setVisibility,
+  showAllObjects,
   setInspectionPlane,
   selectObject,
   createProject,

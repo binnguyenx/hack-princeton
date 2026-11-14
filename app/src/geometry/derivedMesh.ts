@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js'
 import type { SpatialMeta } from '../domain/types'
+import { gridDisplayMatrix } from './gridDisplay'
 import { decodeNrrdVoxels } from './nrrdVoxels'
 
 /**
@@ -63,7 +64,7 @@ export function volumeToDisplayMesh(
   mc.update()
   if (mc.count <= 0) throw new Error('Fallback isosurface reconstruction produced no triangles')
 
-  const [spx, spy, spz] = spatial.spacings
-  mc.scale.set((sx * spx) / 2, (sy * spy) / 2, (sz * spz) / 2)
+  // Transform derived vertices, keeping the root pose independent of the grid frame.
+  mc.geometry.applyMatrix4(gridDisplayMatrix(spatial))
   return mc
 }
