@@ -1,7 +1,11 @@
 # Intent: AI workspace for bone reconstruction design
 
-Author: Vien Nguyen · Date: 2026-11-13 · Status: draft
-Project: HackPrinceton · Working name: SkullFix
+Author: Vien Nguyen · Date: 2026-11-13 · Status: draft (living product brief)  
+Last updated: 2026-11-14  
+Project: HackPrinceton · Product display name: **undecided** (do not ship “SkullFix” in UI chrome)  
+Design system: **hack-princeton** (`DESIGN.md`, `PRODUCT.md`)
+
+> This file is **draft product input**, not an accepted feature folder. Accepted behavior lives under `features/` and is indexed in `docs/project.md`. When this brief and a feature conflict, the accepted feature `spec.md` wins for implementation.
 
 ## Problem
 
@@ -43,6 +47,85 @@ Human guidance is intended to improve alignment with the user's design goal. Ana
 
 The demo deliverable is a reviewable digital reconstruction proposal. It is not automatically a finished implant specification for manufacture.
 
+## Current product state (2026-11-14)
+
+What has landed since the original draft. Feature folders remain the implementation authority.
+
+### Software app model — shipped
+
+`features/3d-bone-editor/software-app-model/`
+
+- Durable local domain: **User → Project → Case → Sample → Candidate → Candidate revision**.
+- **SQLite** for metadata; **filesystem** for NRRD bytes under `data/storage/`.
+- Live authority is `app/server/storageSqlite.ts` and Express `/api` routes. Prepared NRRD volumes are authoritative geometry; display meshes are derived, not the save source of truth.
+- Candidate revision R0 references the sample volume + pose (no byte copy at create). Delete is in v1. Portable zip export deferred.
+- Source anatomy is protected; edits attach to candidates/revisions only.
+
+### Business / management UI — shipped
+
+`features/3d-bone-editor/business-ui/` and `business-ui-polish/`
+
+- Management surfaces for projects, cases, samples, and candidates: list/create/open, hand off “open in 3D” to the canvas.
+- **Atlassian role = layout/structure** (tables, toolbars, filters, page headers) — not the visual skin.
+- **Radix Themes first** for management composition; Radix primitives where Themes lacks behavior; no `window.prompt`.
+- Soft monochrome skin shared with the canvas (see Design below). Medit/wellness marketing chrome is an anti-reference.
+
+### Canvas workspace — shipped (base)
+
+`features/3d-bone-editor/canvas-workspace/`
+
+- Unified canvas: load sample, inspect anatomy, create/select candidate, rigid **transform with Apply / Cancel**, restore prior revision, persist via app model.
+- GLB-first / smooth display-mesh path for viewport quality; view actions never silently become edits.
+- Shared ops surface for toolbar, shortcuts, and `window.__hackPrincetonDebug` automation.
+
+### Mechanical canvas from 3D Slicer — shipped (Cross-reference Workbench)
+
+`features/3d-bone-editor/canvas-workspace-improve/`
+
+Behavioral contract is distilled from Slicer’s interacting-with-views, 3D view, mouse/keyboard, and coordinate-systems docs. Parity means **observable behavior**, not Qt chrome or full Slicer modules.
+
+**Decided and implemented**
+
+| Topic | Decision |
+| --- | --- |
+| Coordinate truth | Internal patient/world = **RAS** (+X Right, +Y Anterior, +Z Superior). Files default to **LPS** unless metadata declares RAS; one LPS→RAS flip on the first two axes. Full IJK→patient affine preserved. |
+| Layout | **3D-first Cross-reference Workbench**: dominant 3D view + persistent compact **Axial / Sagittal / Coronal** slice dock; maximize/restore a single view. |
+| Crosshair | Shared RAS point; Shift-pick moves crosshair; linked slices scroll together. “Linked” is status of shared crosshair sync (not a no-op control). |
+| Modes | **View** (default), **Window/Level**, **Place** (one-shot or persistent). Escape cancels unfinished placement. |
+| Navigation | Slicer-like orbit / pan / zoom / roll; Center / Reset View; standard anatomical views; view actions never mutate model transforms or source bytes. |
+| Status | Compact RAS mm by default; expandable LPS / IJK. |
+| Failure | Named viewport errors; Rebuild View on WebGL loss; last valid scene retained; Reset View always reachable. |
+| Slice framing | Full plane drawn; auto-fit around anatomy; superior-up on sagittal/coronal for LPS Z-up volumes; volume-edge FOV falls back to full-plane framing when the scan mask touches a volume face. |
+| Out of this contract | Mesh sculpt, boolean repair, implant generation, DICOM DB, Slicer modules beyond the linked view/coordinate sections. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
+
+### Design system — soft monochrome Operate UI
+
+Pinned 2026-11-14 (`PRODUCT.md`, `DESIGN.md`):
+
+- Light gray ground, floating white containers, quiet depth; **Base → Ink → Accent** (accent blue only for strong actions); Signal for danger only.
+- Dual register: Atlassian **structure** on management; Figma/Blender **density** on canvas chrome; same soft monochrome skin everywhere.
+- Motion: Corporate/Premium micro-interactions (`cubic-bezier(0.2, 0, 0, 1)`); functional feedback, not decoration.
+- Studio viewport: soft gray ground + 3D grid; slate display-mesh contrast against `#e8eaee`.
+
+### AI workspace assistant — in progress (foundation)
+
+`features/ai-workspace-assistant/`
+
+- Accepted foundation: backend identity ownership ideas, shared structural schemas, SQLite/artifact storage in the Python sandbox, synchronous operation service, labeled reconstruction **mock**.
+- Live app already owns project CRUD; Python has a **read-only** app workspace adapter. Do not point Python sandbox storage at `app-model.sqlite`.
+- **Not done:** live AI chat mutations, real measurement/edit/compare contracts, graph/API/model integration, cited knowledge retrieval. Retry lifecycle is proposed pending review.
+
+### Sample / training data
+
+Curated SkullBreak cases under `data/samples/` (CC BY-NC-SA 4.0); inspection notes in `data/README.md`. Samples are not the app project store until product docs say so.
+
+### Still aspirational (desired outcome, not shipped)
+
+- Guided / learned bone completion as a first-class generate path.
+- Quantitative measurement suite and review-result records as specified in the tables below.
+- Agent that executes the same ops as mechanical tools with grounded explanations.
+- Voxel sculpt, advanced annotations, contour-guided regeneration, raw CT preparation, clinical approval, manufacture, cloud collaboration.
+
 ## Affected users and systems
 
 Biomedical engineers here means medical design or imaging/CAD specialists who construct patient-specific geometry. Surgeons contribute clinical objectives, anatomical interpretation, surgical constraints, and review. Responsibilities overlap: either person may operate the tools. A surgeon does not necessarily hand over a complete numerical engineering specification.
@@ -63,7 +146,7 @@ The workflow below synthesizes published planning practices [4–6]. The named r
 
 **Plain English:** Convert the scan into the bone model the design will use, then check that it represents the intended anatomy. A clean-looking render alone does not establish that the model is correct.
 
-**Expected output:** A source bone volume and display surface with physical units, orientation, and coordinate metadata. Keep this reference available while experimenting on separate candidates. Raw CT ingestion versus prepared-model input remains undecided.
+**Expected output:** A source bone volume and display surface with physical units, orientation, and coordinate metadata. Keep this reference available while experimenting on separate candidates. **Demo decision:** prepared NRRD / segmented volumes are the working input; raw CT ingestion remains out of current scope.
 
 **3. Construct a reconstruction candidate**
 
@@ -73,6 +156,8 @@ The workflow below synthesizes published planning practices [4–6]. The named r
 
 **Expected output:** A separately editable candidate with its source, reference geometry, constraints, and revision history. Generating missing anatomy is only one part of designing an implant.
 
+**Shipped today:** candidate entity + rigid transform revisions against protected sample anatomy. **Not shipped:** sculpt, boolean repair, learned completion as a product generate path (mock adapter exists in AI sandbox only).
+
 **4. Inspect geometry and review the intended repair**
 
 **Technical:** The engineer examines geometric properties and discrepancies. The surgeon reviews whether the proposal addresses the intended contour and surgical requirements. Both can inspect cross-sections, annotate the interface, and compare candidates. Numeric geometry measurements support this review; they do not establish clinical suitability by themselves.
@@ -80,6 +165,8 @@ The workflow below synthesizes published planning practices [4–6]. The named r
 **Plain English:** Check the piece from several views, identify where it fails to match the intended design, and mark what should change. Some questions can be answered by a calculation; others require human judgment.
 
 **Expected output:** A revision-specific measurement report, annotated concerns, and localized change requests. Distinguish human observations from computed values and model predictions.
+
+**Shipped today:** synchronized 3D + orthogonal slices, crosshair, window/level, place mode, coordinate readout. **Not shipped:** agreed quantitative measurement methods and formal review-result records.
 
 **5. Revise and hand off the digital proposal**
 
@@ -115,26 +202,28 @@ These records stay attached to the geometry revision that produced them. Missing
 
 Candidate shared objects include source anatomy, defect annotations, landmarks, measurement lines, reference surfaces, regions of interest, candidate segments, and inspection planes. Trim planes, local editing brushes, and preservation masks remain proposed controls. An inspection plane changes visibility; a geometry-editing tool changes a candidate.
 
-| System responsibility | Intended behavior |
-| --- | --- |
-| Canvas and case state | Display and select objects; retain annotations, constraints, candidates, and revisions in one coordinate system. |
-| Geometry tools | Perform explicit construction/editing operations and calculate measurements. |
-| Reconstruction generator | Infer or construct a candidate missing-bone shape using the supported inputs and constraints. |
-| AI agent | Read case context, interpret requests, call tools, and explain their actual results. |
-| Evidence retrieval | Supply cited source passages for knowledge questions; distinguish general literature from case-specific findings. |
-| Persistence | Save anatomy references, candidate versions, constraints, results, and operation history. |
+| System responsibility | Intended behavior | Status |
+| --- | --- | --- |
+| Canvas and case state | Display and select objects; retain annotations, constraints, candidates, and revisions in one coordinate system. | Partial — case/candidate/revision + view/crosshair state shipped; rich annotations deferred. |
+| Geometry tools | Perform explicit construction/editing operations and calculate measurements. | Partial — rigid transform + place; measure/sculpt open. |
+| Reconstruction generator | Infer or construct a candidate missing-bone shape using the supported inputs and constraints. | Mock adapter only; real method undecided. |
+| AI agent | Read case context, interpret requests, call tools, and explain their actual results. | Foundation in progress; live mutations not available. |
+| Evidence retrieval | Supply cited source passages for knowledge questions; distinguish general literature from case-specific findings. | Not started. |
+| Persistence | Save anatomy references, candidate versions, constraints, results, and operation history. | App-model CRUD shipped; AI review/run records in Python sandbox. |
 
-A segmented volume with derived display meshes remains a proposed representation. Full spatial metadata must be preserved. Source anatomy remains separate from experimental edits; simplified display geometry should not silently replace measurement geometry. Technical stack, storage schema, and service boundaries belong in subsequent specifications.
+A segmented volume with derived display meshes is the working representation. Full spatial metadata must be preserved. Source anatomy remains separate from experimental edits; simplified display geometry should not silently replace measurement geometry. Technical stack for the editor shell: Vite + React + TypeScript + Three.js (`PRODUCT.md`).
 
 ## Constraints
 
-- This is a HackPrinceton prototype for prepared research/demo cases. The team has general software expertise and no medical background; explain specialized terms alongside their use.
+- This is a HackPrinceton prototype for prepared research/demo cases. The team has general software expertise and limited medical background; explain specialized terms alongside their use.
 - Provide the same feature set to both user groups. Engineering-first prioritization concerns task depth, not access restrictions or role-specific UI.
 - Include agentic behavior. Custom model training is optional.
 - Use deterministic algorithms for quantities or edits that are fully defined by existing geometry. Use a learned reconstruction model where missing anatomy must be inferred.
 - Record what was supplied by a human, predicted by a model, or calculated by a tool. Keep generated objects separate and edits recoverable.
 - Do not silently ignore unsupported constraints. Acknowledge them before claiming the request was fulfilled.
 - Use accessible data and document applicable licenses. Keep evaluation targets out of runtime generation and agent context.
+- UI / front-end work must follow `DESIGN.md` / `PRODUCT.md` (soft monochrome Operate UI). Mechanical canvas behavior must follow the accepted Slicer-parity specs under `canvas-workspace-improve/`.
+- Mechanical tools and the future agent share one operation layer; direct tools must work without chat.
 
 **Data and ML direction**
 
@@ -146,13 +235,13 @@ Evaluate missing-piece overlap and physical surface distances, runtime, constrai
 
 **Provisional staging**
 
-The initial intent placed generation after a mechanical-and-agent MVP. Generation is now explicitly part of the intended product, but its exact hackathon delivery phase has not been finalized.
-
 | Draft milestone | Intended outcome | Decision status |
 | --- | --- | --- |
-| Mechanical foundation | Inspect, annotate, constrain, construct/edit, measure, and compare a prepared case. | Needed foundation; exact tools and metrics remain open. |
-| Agent-enabled MVP | Execute supported canvas operations through chat and provide grounded explanations and cited knowledge. | Agreed direction; exact minimum demonstration remains open. |
-| Guided generation | Generate a starting replacement and refine a candidate using implemented human constraints. | Agreed capability; MVP versus first stretch phase remains open. |
+| Mechanical foundation — inspect & persist | Inspect prepared case in 3D + linked slices; durable project/case/sample/candidate/revision; rigid candidate transform with recoverable revisions. | **Shipped** (app model + canvas + Slicer Cross-reference Workbench). |
+| Mechanical foundation — measure & compare | Annotate, constrain, measure, and compare with agreed metric contracts. | Still needed; exact tools and metrics remain open. |
+| Business management shell | Atlassian-structured management CRUD with soft monochrome + Radix Themes. | **Shipped** (business-ui + polish). |
+| Agent-enabled MVP | Execute supported canvas operations through chat and provide grounded explanations and cited knowledge. | Agreed direction; foundation in progress; live demo minimum still open. |
+| Guided generation | Generate a starting replacement and refine a candidate using implemented human constraints. | Agreed capability; MVP versus stretch still open; sandbox mock only today. |
 | Optional model work | Train or fine-tune a reconstruction model and compare it with a baseline. | Preference, not a required milestone or dependency. |
 | Further stretch work | Richer local editing, raw CT preparation, or additional planning objects. | Candidates to scope separately; not automatically committed. |
 
@@ -164,17 +253,20 @@ The initial intent placed generation after a mechanical-and-agent MVP. Generatio
 - Treating a bone-completion result as a complete manufacturable implant with validated material and fixation specifications.
 - Separate applications or hardcoded workflows by profession. Real-time multiuser collaboration is not required merely to support both groups.
 - Writing implementation plans or treating every proposal in this document as an accepted technical requirement.
+- Copying full 3D Slicer application modules (DICOM database, Segment Editor as product scope, Python console, extensions) beyond the accepted view/coordinate parity boundary.
 
 ## Open questions
 
 1. Which cranial vault defect types and locations will the first case support?
-2. Does the first workflow begin with a prepared segmented model or raw CT? Prepared models remain the simpler proposal.
-3. Which actual corrections and guidance controls should be implemented first? Planar trimming is one candidate, not an agreed clinical priority.
+2. ~~Does the first workflow begin with a prepared segmented model or raw CT?~~ → **Prepared NRRD / segmented volumes** for the current demo phase.
+3. Which actual corrections and guidance controls should be implemented first after rigid transform? Planar trimming is one candidate, not an agreed clinical priority. Slicer Segment Editor is a candidate *reference* for a later geometry-edit contract, not adopted wholesale.
 4. Which measurements are essential for the first demonstration, and what are their exact definitions and expected precision?
 5. Which generation method can we run with available data, licenses, hardware, and time? Which constraints can it genuinely honor?
 6. Does guided generation belong in the MVP or the first stretch phase?
 7. What candidate import/export format and review record are needed for the demo?
 8. What small held-out evaluation and example workflow will demonstrate generation, editing, and agent tool use working together?
+9. Which browser/device combinations are acceptance targets for touch (and later stereo) capability checks?
+10. When AI live mutations land, what exact protocol validates browser-executed geometry commits against app-model revisions?
 
 **Research basis**
 
@@ -192,7 +284,10 @@ The cited sources establish clinical context and technical precedents. Product r
 10. [Google, Rules of Machine Learning](https://developers.google.com/machine-learning/guides/rules-of-ml) — metrics, simple baselines, and reliable pipelines.
 11. [AutoImplantPipe](https://github.com/biodatlab/autoimplantpipe) — documented inference/training entry points and checkpoint licensing notes; access and execution still require verification.
 12. [3D Slicer Markups](https://slicer.readthedocs.io/en/latest/user_guide/modules/markups.html) and [Segment Editor](https://slicer.readthedocs.io/en/latest/user_guide/modules/segmenteditor.html) — established annotation and geometry-editing concepts.
+13. [3D Slicer: Interacting with views](https://slicer.readthedocs.io/en/latest/user_guide/user_interface.html#interacting-with-views), [3D view](https://slicer.readthedocs.io/en/latest/user_guide/user_interface.html#d-view), [Mouse and keyboard](https://slicer.readthedocs.io/en/latest/user_guide/user_interface.html#mouse-keyboard-shortcuts), [Coordinate systems](https://slicer.readthedocs.io/en/latest/user_guide/coordinate_systems.html) — normative reference boundary for the shipped Cross-reference Workbench.
 
 ## Amendments
 
 2026-11-13 — Draft revised to record shared capabilities for biomedical engineers and surgeons, engineering-first task priorities, technical and plain-English workflow descriptions, human-guided generation, and optional custom model training. Earlier exact editing choices and stage assignments remain proposals. Status remains draft.
+
+2026-11-14 — Product state catch-up: recorded shipped **software app model**, **business UI + polish**, **canvas workspace**, and **Slicer-standard Cross-reference Workbench** (RAS/LPS, linked slices, View/W/L/Place, view≠edit). Recorded soft monochrome Operate design system and AI foundation-in-progress. Marked prepared NRRD as the demo anatomy input. Updated staging, system-responsibility status, and open questions. Product display name remains undecided; this file stays draft product input, not an accepted feature spec.
