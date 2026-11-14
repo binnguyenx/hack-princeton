@@ -98,10 +98,29 @@ export default function App() {
     const samples = []
     for (const s of manifest.samples) {
       const bytes = volumes.get(s.sourceAnatomy.volumeId)!
+      const raw = s.sourceAnatomy
+      // Support both nested { spatial } and flattened fixture shapes
+      const spatial = raw.spatial ?? {
+        units: raw.units ?? 'mm',
+        space: raw.space,
+        sizes: raw.sizes,
+        spacings: raw.spacings,
+        bboxMm:
+          raw.bboxMm ??
+          (raw.sizes && raw.spacings
+            ? raw.sizes.map((n: number, i: number) => n * raw.spacings[i])
+            : []),
+      }
+      if (!spatial?.sizes?.length) {
+        throw new Error('Sample missing spatial.sizes — check fixture manifest')
+      }
       samples.push({
         ...s,
         sourceAnatomy: {
-          ...s.sourceAnatomy,
+          objectId: raw.objectId,
+          sampleId: s.id,
+          volumeId: raw.volumeId,
+          spatial,
           volumeHash: await sha256Hex(bytes),
         },
       })
