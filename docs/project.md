@@ -30,6 +30,9 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 |-|-|-|
 | [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
 
+| [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Shared Pydantic contracts, canonical synthetic fixtures, evaluation scenarios and agent assignments. Future app mutation and model integration remain unavailable. |
+| [measure-candidate](../features/measure-candidate/intent.md) | proposed | Historical draft folded into the assistant. |
+
 Status values: proposed, in progress, shipped, retired.
 
 ## Build order

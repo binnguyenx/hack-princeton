@@ -1,0 +1,176 @@
+{
+  "fixture_version": "skullfix-demo-v1",
+  "description": "Deterministic synthetic state for AI/backend contract validation. It contains no patient data or benchmark ground truth.",
+  "artifact_base_directory": "artifacts",
+  "coordinate_conventions": {
+    "units": "unitless",
+    "meaning": "Fixture-local synthetic coordinates only. They are not physical measurements or a proposed real geometry standard.",
+    "transform_representation": "row-major 4x4 matrix"
+  },
+  "artifacts": [
+    {
+      "artifact_id": "artifact-source-primary-v1",
+      "path": "source-anatomy-primary.json",
+      "content_hash": "sha256:326afbc3adc383d166985953e478a1bfe4dadd345805e17a7d2ed6a21e6c90bf",
+      "media_type": "application/vnd.skullfix.synthetic-fixture+json",
+      "provenance": "test-double",
+      "limitations": ["Synthetic source anatomy; not patient anatomy or benchmark ground truth."]
+    },
+    {
+      "artifact_id": "artifact-source-secondary-v1",
+      "path": "source-anatomy-secondary.json",
+      "content_hash": "sha256:cf31aa441af2fcab64ea3d2d32fccb822ca84aa916a75627ab9f364dfe5da46f",
+      "media_type": "application/vnd.skullfix.synthetic-fixture+json",
+      "provenance": "test-double",
+      "limitations": ["Synthetic source anatomy; not patient anatomy or benchmark ground truth."]
+    },
+    {
+      "artifact_id": "artifact-candidate-demo-r1",
+      "path": "mock-candidate-r1.json",
+      "content_hash": "sha256:6c107a2cb7fb518d64c486ebd38ca517359c0d38da701aecf86235416c5f7368",
+      "media_type": "application/vnd.skullfix.synthetic-fixture+json",
+      "provenance": "mock",
+      "limitations": ["This artifact is not a real reconstruction and makes no claim of anatomical or geometric quality."]
+    },
+    {
+      "artifact_id": "artifact-candidate-demo-r2",
+      "path": "mock-candidate-r2.json",
+      "content_hash": "sha256:496c4194f1ccace21c9bd92bb2e5a53ccf40594596cfbdc088385ad52cbd52b6",
+      "media_type": "application/vnd.skullfix.synthetic-fixture+json",
+      "provenance": "mock",
+      "limitations": ["This artifact is not a real reconstruction and makes no claim of anatomical or geometric quality."]
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "case-demo-primary",
+      "label": "Primary synthetic prepared case",
+      "source_anatomy": {
+        "revision_id": "anatomy-revision-primary-v1",
+        "artifact_id": "artifact-source-primary-v1",
+        "spatial_metadata": {
+          "units": "unitless",
+          "coordinate_frame": "fixture-primary-local",
+          "transforms": [
+            {
+              "from_frame": "fixture-primary-local",
+              "to_frame": "fixture-primary-local",
+              "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+            }
+          ]
+        }
+      },
+      "candidates": [
+        {
+          "candidate_id": "candidate-demo-primary",
+          "current_revision_id": "candidate-revision-primary-r2",
+          "revisions": [
+            {
+              "revision_id": "candidate-revision-primary-r1",
+              "parent_revision_id": null,
+              "operation_id": "generate.candidate",
+              "validated_parameters": {"fixture_variant": "initial"},
+              "artifact_id": "artifact-candidate-demo-r1",
+              "provenance": "mock",
+              "spatial_metadata": {
+                "units": "unitless",
+                "coordinate_frame": "fixture-primary-local",
+                "transforms": [
+                  {
+                    "from_frame": "fixture-primary-local",
+                    "to_frame": "fixture-primary-local",
+                    "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+                  }
+                ]
+              }
+            },
+            {
+              "revision_id": "candidate-revision-primary-r2",
+              "parent_revision_id": "candidate-revision-primary-r1",
+              "operation_id": "generate.candidate",
+              "validated_parameters": {"fixture_variant": "current"},
+              "artifact_id": "artifact-candidate-demo-r2",
+              "provenance": "mock",
+              "spatial_metadata": {
+                "units": "unitless",
+                "coordinate_frame": "fixture-primary-local",
+                "transforms": [
+                  {
+                    "from_frame": "fixture-primary-local",
+                    "to_frame": "fixture-primary-local",
+                    "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "persisted_regions": [
+        {
+          "region_id": "region-primary-current",
+          "geometry_revision_id": "candidate-revision-primary-r2",
+          "coordinate_frame": "fixture-primary-local"
+        }
+      ]
+    },
+    {
+      "case_id": "case-demo-secondary",
+      "label": "Secondary synthetic cross-case guard",
+      "source_anatomy": {
+        "revision_id": "anatomy-revision-secondary-v1",
+        "artifact_id": "artifact-source-secondary-v1",
+        "spatial_metadata": {
+          "units": "unitless",
+          "coordinate_frame": "fixture-secondary-local",
+          "transforms": [
+            {
+              "from_frame": "fixture-secondary-local",
+              "to_frame": "fixture-secondary-local",
+              "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+            }
+          ]
+        }
+      },
+      "candidates": [],
+      "persisted_regions": []
+    }
+  ],
+  "selections": [
+    {
+      "selection_id": "selection-source-primary",
+      "case_id": "case-demo-primary",
+      "kind": "source-anatomy",
+      "geometry_revision_id": "anatomy-revision-primary-v1",
+      "coordinate_frame": "fixture-primary-local"
+    },
+    {
+      "selection_id": "selection-region-primary-current",
+      "case_id": "case-demo-primary",
+      "kind": "persisted-region",
+      "reference_id": "region-primary-current",
+      "geometry_revision_id": "candidate-revision-primary-r2",
+      "coordinate_frame": "fixture-primary-local"
+    },
+    {
+      "selection_id": "selection-source-secondary",
+      "case_id": "case-demo-secondary",
+      "kind": "source-anatomy",
+      "geometry_revision_id": "anatomy-revision-secondary-v1",
+      "coordinate_frame": "fixture-secondary-local"
+    }
+  ],
+  "review_results": [
+    {
+      "review_result_id": "review-test-double-r1",
+      "case_id": "case-demo-primary",
+      "candidate_id": "candidate-demo-primary",
+      "revision_id": "candidate-revision-primary-r1",
+      "operation_id": "measure.candidate",
+      "method_id": "fixture-history-sentinel",
+      "output": {"sentinel": "attached-to-r1-only"},
+      "provenance": "test-double",
+      "limitations": ["Persistence-scoping sentinel only; not a real measurement and has no numeric value."]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "fixture_version": "skullfix-demo-v1",
+  "results": [
+    {
+      "sample_id": "result-mock-generate-completed",
+      "for_request_sample_id": "request-mock-generate-ai",
+      "envelope": {
+        "run_id": "run-demo-mock-ai-001",
+        "request_id": "request-demo-mock-ai-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "generate.candidate",
+        "status": "completed",
+        "input_revisions": {
+          "source_anatomy_revision_id": "anatomy-revision-primary-v1"
+        },
+        "output_candidate_id": "candidate-demo-generated",
+        "output_revision_id": "candidate-revision-generated-r1",
+        "artifacts": [
+          {
+            "artifact_id": "artifact-candidate-demo-r1",
+            "content_hash": "sha256:6c107a2cb7fb518d64c486ebd38ca517359c0d38da701aecf86235416c5f7368",
+            "media_type": "application/vnd.skullfix.synthetic-fixture+json",
+            "retrieval_url": "/api/artifacts/artifact-candidate-demo-r1"
+          }
+        ],
+        "output": {
+          "kind": "candidate-generation",
+          "spatial_metadata": {
+            "units": "unitless",
+            "coordinate_frame": "fixture-primary-local",
+            "transforms": [
+              {
+                "from_frame": "fixture-primary-local",
+                "to_frame": "fixture-primary-local",
+                "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+              }
+            ]
+          }
+        },
+        "source": "mock",
+        "limitations": [
+          "This synthetic artifact is not a real reconstruction and makes no measurement or geometric-quality claim."
+        ],
+        "error": null
+      }
+    },
+    {
+      "sample_id": "result-real-measurement-unavailable",
+      "for_request_sample_id": "request-unavailable-real-measurement",
+      "envelope": {
+        "run_id": "run-demo-measurement-001",
+        "request_id": "request-demo-measurement-001",
+        "case_id": "case-demo-primary",
+        "operation_id": "measure.candidate",
+        "status": "unavailable",
+        "input_revisions": {
+          "expected_revision_id": "candidate-revision-primary-r2"
+        },
+        "output_candidate_id": null,
+        "output_revision_id": null,
+        "artifacts": [],
+        "output": null,
+        "source": null,
+        "limitations": [],
+        "error": {
+          "code": "operation-contract-missing",
+          "message": "No agreed contract is available for this real operation.",
+          "details": {}
+        }
+      }
+    }
+  ]
+}
