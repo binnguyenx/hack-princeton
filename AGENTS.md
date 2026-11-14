@@ -11,7 +11,7 @@ This repo is agent-agnostic. Cursor, Claude Code, Codex, Copilot, and similar to
 5. After Build, run **Close** before ending the run (see **Close (required)** below). A major run is not finished when the code compiles; it is finished when Close reports.
 6. Skip intent-spec-plan only for tiny work: typos, copy tweaks, bugfixes that restore already-documented behavior, throwaway spikes. Say so explicitly when you skip it.
 
-AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec stay separate. Foundation schemas, application storage, the synchronous operation service, and reconstruction mock are implemented; future graph/API/model work requires its own plan and preflight. Newly proposed requirements require review before implementation. Other features keep a human gate between each document.
+AI/backend work under `backend/ai/`, `docs/ai/`, and `features/ai-workspace-assistant/` follows [docs/ai/workflow.md](docs/ai/workflow.md). Intent and spec stay separate. Foundation schemas, application storage, the synchronous operation service, and reconstruction mock are implemented; fake-model graph and application API have scoped plans/preflights; future provider/live-mutation work needs its own scope. Newly proposed requirements require review before implementation. Other features keep a human gate between each document.
 
 ## Project skills
 
@@ -110,7 +110,7 @@ Run the missing-contract unit test:
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/operations/test_missing_contract.py
 ```
 
-A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No lint command. `backend/ai/tests/live/` must not be described as passing.
+A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No separate Python lint command; app uses npm run lint. `backend/ai/tests/live/` must not be described as passing.
 
 ```bash
 cd app && npm install && npm test && npm run build
@@ -137,8 +137,10 @@ A healthy run prints `Ran 11 tests` and `OK`. This validates shared-schema confo
 
 ## AI app integration
 
-Live authority is app/server/storageSqlite.ts and its /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports three existing warnings.
+Live authority is skullfix_ai.application.ApplicationRepository and the FastAPI /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports two existing warnings.
 
-## Publication slice status
+## Express-to-FastAPI migration
 
-Repository-backed fake-model LangGraph and typed workspace tools. Python checks expect107 tests. Read docs/ai/setup.md and the separate migration intent/spec. FastAPI is the only active application backend; dev proxies to8000, preview is frontend-only. Express baseline/rollback evidence is retained outside the active app. Never point sandbox storage at the live app DB; providers/recovery/live AI mutation remain deferred.
+Read `features/express-to-fastapi/intent.md` and `spec.md` before changing the live backend. Shared16 HTTP contracts were verified on both backends before removal and now run on FastAPI; the Express baseline remains in the independent recovery runtime; Python live-model repository, default FastAPI proxy/built serving, disposable S13 and fake-model LangGraph are implemented. Live cutover, full30-minute observation and Express removal are complete; read cutover-completion.md and preserve external recovery for7days. Preserve the current `/api` contract, seven-table SQLite schema, NRRD files, raw hashes, flat poses, and restore pointer. Use disposable roots, never the user's live data. Run the S13 Express/FastAPI handoff rehearsal sequentially on one disposable dataset before live cutover. Keep the live application repository, sandbox `SQLiteApplicationStorage`, and future checkpoint database separate. The successful migration ends with one FastAPI/Python backend as sole live writer; Vite is frontend tooling and Express is conditional rollback support. Never restore a pre-cutover snapshot over acknowledged post-cutover writes without separate destructive approval. Run focused contracts with `cd app && npm test -- tests/backendContract/fastapiContract.test.ts`.
+
+Run the full app contract/cross-runtime suite with SKULLFIX_PYTHON pointing to the installed backend environment; run browser checks with `cd app && npm run test:browser` after build. The dev server always proxies to FastAPI (default8000); HACK_API_ORIGIN overrides the target and preview never proxies. Express/Multer must not be reintroduced into active app dependencies. See docs/ai/setup.md for exact commands, current107 Python/87 app/5 browser evidence, explicit storage roots and remaining live-operation gates.
