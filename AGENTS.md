@@ -90,4 +90,4 @@ Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `
 
 ## AI foundation publication
 
-Use docs/ai/workflow.md for the scoped AI exception. SQLite schema-v2 application storage and coordinated local-artifact lifecycle. Intent/spec are separate. After accepted requirements, no separate plan approval is needed unless requested. Per-task preflights do not grant acceptance. Test this branch with PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py (42 tests).
+Use docs/ai/workflow.md for the scoped AI exception. Synchronous sandbox operation service and replaceable reconstruction mock. Intent/spec are separate. After accepted requirements, no separate plan approval is needed unless requested. Per-task preflights do not grant acceptance. Test this branch with PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py (59 tests).
