@@ -2,3 +2,9 @@
 data/raw/*
 !data/raw/README.md
 !data/raw/*.sha256
+
+# App
+app/node_modules/
+app/dist/
+app/public/fixtures/demo-project/volumes/*.nrrd
+

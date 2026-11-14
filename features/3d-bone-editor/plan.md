@@ -8,6 +8,15 @@ Build a local-first browser editor on prepared NRRD volumes as the only authorit
 
 Stack and product constraints are already recorded in [`PRODUCT.md`](../../PRODUCT.md): Vite + React + TypeScript + Three.js in `app/`. UI must follow the merged **hack-princeton** system ([`DESIGN.md`](../../DESIGN.md), [`.impeccable/design.json`](../../.impeccable/design.json), [`docs/design-conventions.md`](../../docs/design-conventions.md)); do not invent a second palette or recreate those files. Debug bridge name is `window.__hackPrincetonDebug` (do not put a product brand string in chrome; display name remains undecided per `PRODUCT.md`).
 
+### Locked implementation contracts
+
+- **NRRD parse:** `three/addons/loaders/NRRDLoader.js` (plus thin `app/src/io/nrrd.ts` for verification against `metadata.json`).
+- **Display mesh:** `three/addons/objects/MarchingCubes.js` behind `app/src/geometry/derivedMesh.ts` (display only).
+- **`transformCandidate` Apply:** rigid **pose** on the existing volume (4×4); do not rewrite voxels. `createCandidate` copies volume once → revision 0.
+- **Portable package:** directory (canonical) with `manifest.json` + `volumes/<volumeId>.nrrd`; browser may zip the same tree. Transform revisions store pose + `volumeId` in the manifest, not a new NRRD.
+- **Cmd/Ctrl+Z:** `restoreRevision` via ops; **no separate undo stack** this phase.
+- **Samples:** three curated cases under `data/samples/` with `metadata.json` (R3). Primary app import uses `defective_skull.nrrd`.
+
 ### Settled edge-case rules
 
 1. **Unverified → createCandidate:** `createCandidate` **rejects** if the sample is not spatially verified. Caller sees a failure; no candidate or revision is created.
@@ -108,3 +117,4 @@ Plus the manual MCP checklist in `docs/dev-mcp-setup.md`.
 ## Deviations
 
 - 2026-11-14 — Sample acquisition prioritized for **manual inspection / future training**, not app runtime store. Downloaded SkullBreak training from Zenodo (`data/raw/skullbreak_training.zip`; FIT URL 404). Curated **3** cases under `data/samples/` (parietotemporal 000, frontoorbital 001, bilateral 002). Cloud/app-package schema and “parse once” pipeline **deferred**. Spec R15 (≥2 samples for import/render) not fully discharged until app import wires to these files.
+- 2026-11-14 — Mechanical shell scaffolding landed in `app/`: domain + session/persistence ops, NRRD verify vs `metadata.json`, portable package IO, Vitest proof (16 passing), Vite UI shell + `__hackPrincetonDebug`, `docs/ops-catalog.md` + `docs/dev-mcp-setup.md`. Browser save is session dirty-clear only (zip download deferred). MarchingCubes display uses downsampled field. Full Playwright MCP checklist (S8) not yet run in this pass.
