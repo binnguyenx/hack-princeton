@@ -20,6 +20,15 @@ Keep the existing app Express API and SQLite store authoritative. Add a read-onl
 
 ## Proof
 
+- R64: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+- R65: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+- R66: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+- R67: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+- R68: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+- R69: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
+
+- R70, R71, R72, R73, R74, R75, R76, R77, R78, R79: contract-only fold-in; decision record [plans/t1c-measurement-contract.md](plans/t1c-measurement-contract.md); canonical text in spec.md and docs/ai/contracts.md. No runtime/measurement implementation authorized.
+
 - R58, R59, R60, R61, R62: Python workspace integration tests and real app storage-to-Python contract tests.
 - R63: manual contract/code trace, offline tests, feature checker and git diff --check.
 - Regression context: prior requirements remain scoped to their documented demo/foundation or future behavior. This slice does not implement R35–R39, model execution, API mutation CAS/idempotency, or a common cross-runtime operation writer.
@@ -40,3 +49,7 @@ Python offline suite: 64 tests passed. App suite: 42 tests passed including Pyth
 ## Deviations
 
 No app runtime source or UI styling changed. The app build regenerated app/public/fixtures/demo-project/manifest.json, replacing its stale flattened source metadata with the canonical nested spatial shape. A cross-language test was added to prove the actual endpoint, not only a Python fixture. No live AI writer, API CAS/idempotency extension, graph, model, or real reconstruction was implemented.
+
+## Read-only chat follow-up proof
+
+R64,R65,R66,R67,R68,R69: scoped implementation plan [plans/read-only-chat.md](plans/read-only-chat.md); backend HTTP regression test_chat.py, typed client chatClient.test.ts and actual browser chat.e2e.ts. Earlier proof above remains historical app alignment.

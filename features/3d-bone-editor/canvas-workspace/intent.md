@@ -166,3 +166,19 @@ Sample-related update wiring:
 ## Amendments
 
 _(empty until accepted)_
+
+## Manual construction amendment (2026-11-14)
+
+The owner authorized defining and implementing real mechanical construction on the existing UI after read-only chat transport. The first bounded tool is manual rigid placement of an existing candidate: numeric editor-axis translation and rotation, transient preview, explicit commit, cancellation and revision restore. This replaces the fixed8mm demonstration action. It does not generate an implant, remove/add voxels, infer a defect, calculate clinical quality or enable AI writes. Subsequent shape construction/reconstruction needs its own operation contract.
+
+## Select and Visibility amendment (2026-11-14)
+
+The owner authorized implementing object-level Select and rendered Visibility before reconstruction. In Select mode, clicking the currently loaded mesh selects its canonical source/candidate object with a visible outline; background click/Escape clears selection and navigation drags do not select. Hidden geometry is not pickable. Visibility changes only presentation, preserves geometry/pose/history and can be recovered through a visible Show action and Show All. Scope is the one active rendered document, with per-object state retained across tab switches in the current session; no face/region selection, multi-object assembly, backend view persistence, reconstruction or AI mutation is introduced. Existing dirty work is preserved.
+
+## Save/Open Package amendment (2026-11-14)
+
+The owner authorized portable Save/Open Package in the existing UI. Save downloads a ZIP of committed backend project records and every referenced NRRD, plus validated presentation state. Unapplied drafts must be applied or cancelled first. Open Package imports a new project copy with fresh ids and local ownership; it never overwrites an existing project. Preserve ownership links, spatial metadata, raw hashes, volume aliasing, poses, revision order and restored current pointers. Invalid/incomplete packages fail visibly and do not replace the open project. SQLite/files remain primary storage. Legacy Node folder helpers are not browser APIs. No reconstruction, AI live mutation or new database schema is introduced.
+
+- 2026-11-14: Continue the missing mechanical tools automatically in dependency order after portable packages. First make shortcuts/debug controls truthful, calibrate physical inspection, persist source landmarks and provide basic point-to-point measurements. Keep source bytes immutable and AI tools read-only. Advanced slice/display support depends on actual available volumes and browser capabilities. Shape editing and real reconstruction require explicit operation/reference/validation contracts; do not claim those are supplied by navigation or mock reconstruction.
+- 2026-11-14 continuation: Within the automatic mechanical-tools request, implement a bounded manual binary-voxel prototype: candidate-only box fill/erase and explicit ROI/I-plane mirrored source completion. These generate real changed NRRD revisions, not reconstruction mock artifacts. They do not infer anatomical midline/defect or establish implant quality. Preserve provenance, source integrity, expected-revision commits and deterministic fixture oracles; unsupported grids/poses fail explicitly. General reconstruction, sculpting and quality metrics remain separate unsatisfied scope.
+- 2026-11-14 continuation: The current candidate binary grid supplies a concrete foreground layer after voxel operations. Add view-only candidate-mask blending/opacity and renderer diagnostics using actual loaded data; keep unavailable segmentation, arbitrary layers, oblique reformat and unsupported rendering capabilities explicit.
