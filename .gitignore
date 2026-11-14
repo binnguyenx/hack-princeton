@@ -1,0 +1,4 @@
+# Full dataset archives and any extracted raw trees
+data/raw/*
+!data/raw/README.md
+!data/raw/*.sha256

@@ -20,6 +20,10 @@ Greenfield. Expected responsibilities (not yet implemented): canvas/case state, 
 
 Draft product intent (not yet an accepted feature folder): `hackprinceton_intent.md`.
 
+## Sample data
+
+Curated SkullBreak cases for manual inspection and later training: [`data/`](../data/README.md) (`samples/` committed; `raw/` zip gitignored). Inspection steps for humans and agents are in that README.
+
 ## Features
 
 | Feature | Status | What it does |
