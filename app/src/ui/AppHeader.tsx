@@ -1,4 +1,5 @@
 import { ChevronRight, Save, Plus, FileUp, FolderOpen } from 'lucide-react'
+import { Badge, Button, Flex } from '@radix-ui/themes'
 
 export type AppHeaderProps = {
   projectName?: string
@@ -47,72 +48,78 @@ export function AppHeader({
         ) : null}
       </nav>
 
-      <div className="app-header__actions">
+      <Flex align="center" gap="2">
         {isDirty ? (
-          <span className="badge badge--pill badge--warning" title="Unsaved session state">
+          <Badge color="amber" variant="soft" title="Unsaved session state">
             Unsaved Changes
-          </span>
+          </Badge>
         ) : null}
 
         {onSave && projectName ? (
-          <button
+          <Button
             type="button"
-            className="btn btn--secondary btn--sm"
+            variant="soft"
+            color="gray"
+            size="1"
             onClick={onSave}
             title="Save Project (⌘S)"
           >
             <Save size={14} />
-            <span>Save</span>
-          </button>
+            Save
+          </Button>
         ) : null}
 
         {onImportSample && projectName ? (
-          <button
+          <Button
             type="button"
-            className="btn btn--secondary btn--sm"
+            variant="soft"
+            color="gray"
+            size="1"
             onClick={onImportSample}
             title="Import Prepared Sample (NRRD)"
           >
             <FileUp size={14} />
-            <span>Import Sample</span>
-          </button>
+            Import Sample
+          </Button>
         ) : null}
 
         {onNewCase && projectName ? (
-          <button
+          <Button
             type="button"
-            className="btn btn--primary btn--sm"
+            size="1"
             onClick={onNewCase}
             title="Create Patient Case"
           >
             <Plus size={14} />
-            <span>New Case</span>
-          </button>
+            New Case
+          </Button>
         ) : null}
 
         {!projectName && onNewProject ? (
-          <button
+          <Button
             type="button"
-            className="btn btn--primary btn--sm"
+            size="1"
             onClick={onNewProject}
           >
             <Plus size={14} />
-            <span>New Project</span>
-          </button>
+            New Project
+          </Button>
         ) : null}
 
         {onOpenPackage ? (
-          <button
+          <Button
             type="button"
-            className="btn btn--secondary btn--sm"
+            variant="soft"
+            color="gray"
+            size="1"
             onClick={onOpenPackage}
             title="Open Portable Project Package"
           >
             <FolderOpen size={14} />
-            <span>Open Package…</span>
-          </button>
+            Open Package
+          </Button>
         ) : null}
-      </div>
+      </Flex>
     </header>
   )
 }

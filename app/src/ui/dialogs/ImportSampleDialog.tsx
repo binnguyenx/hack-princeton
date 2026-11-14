@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Button, Flex, Text } from '@radix-ui/themes'
 import { FileUp, CheckCircle2, ShieldCheck, X } from 'lucide-react'
 import type { SampleCatalogEntry } from '../../ops/importPrepared'
 
@@ -19,6 +20,13 @@ export function ImportSampleDialog({
   onImport,
 }: ImportSampleDialogProps) {
   const [selectedId, setSelectedId] = useState<string>(catalog[0]?.id ?? '')
+
+  useEffect(() => {
+    if (!open) return
+    if (catalog.length === 0) return
+    if (catalog.some((entry) => entry.id === selectedId)) return
+    setSelectedId(catalog[0].id)
+  }, [open, catalog, selectedId])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,10 +90,10 @@ export function ImportSampleDialog({
                         <ShieldCheck size={12} /> NRRD Verified
                       </span>
                     </div>
-                    <div className="catalog-card__meta">
-                      <span>Volume: <code>{entry.primaryVolume}</code></span>
-                      <span>License: {entry.license}</span>
-                    </div>
+                    <Flex className="catalog-card__meta" gap="3">
+                      <Text size="1">Volume: <code>{entry.primaryVolume}</code></Text>
+                      <Text size="1">License: {entry.license}</Text>
+                    </Flex>
                   </div>
                 )
               })}
@@ -99,22 +107,22 @@ export function ImportSampleDialog({
               </div>
             ) : null}
 
-            <div className="dialog-actions">
-              <button
+            <Flex className="dialog-actions" justify="end" gap="2">
+              <Button
                 type="button"
-                className="btn btn--secondary"
+                variant="soft"
+                color="gray"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="btn btn--primary"
                 disabled={!selectedId}
               >
                 Import Sample
-              </button>
-            </div>
+              </Button>
+            </Flex>
           </form>
         </Dialog.Content>
       </Dialog.Portal>

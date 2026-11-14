@@ -1,5 +1,16 @@
 import { useState } from 'react'
 import { Folder, FolderPlus, FolderOpen, ExternalLink, Search } from 'lucide-react'
+import {
+  Badge,
+  Box,
+  Button,
+  Card,
+  Flex,
+  Heading,
+  Table,
+  Text,
+  TextField,
+} from '@radix-ui/themes'
 import type { ProjectSummary } from '../domain/types'
 import { NewProjectDialog } from './dialogs/NewProjectDialog'
 
@@ -24,88 +35,86 @@ export function ProjectsHome({
   const filtered = projects.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+  const hasResults = filtered.length > 0
 
   return (
     <section className="projects-home" aria-label="Projects home">
-      <header className="projects-home__header">
-        <div className="projects-home__title-cluster">
-          <Folder className="projects-home__icon" size={24} />
-          <div>
-            <h1 className="projects-home__title">Reconstruction Projects</h1>
-            <p className="projects-home__subtitle">
-              Manage cranial reconstruction studies, patient cases, and anatomical repair models.
-            </p>
-          </div>
-        </div>
-        <div className="projects-home__actions">
+      <Flex justify="between" align="start" gap="4" mb="4">
+        <Flex align="start" gap="3">
+          <Box className="projects-home__icon-box">
+            <Folder size={18} />
+          </Box>
+          <Box>
+            <Heading size="5">Projects</Heading>
+            <Text color="gray" size="2">
+              Manage reconstruction studies, cases, and prepared anatomy assets.
+            </Text>
+          </Box>
+        </Flex>
+        <Flex gap="2">
           {onOpenPackage ? (
-            <button
-              type="button"
-              className="btn btn--secondary"
-              onClick={onOpenPackage}
-            >
-              <FolderOpen size={15} />
-              <span>Open Package…</span>
-            </button>
+            <Button type="button" variant="soft" color="gray" onClick={onOpenPackage}>
+              <FolderOpen size={14} />
+              Open Package
+            </Button>
           ) : null}
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => setDialogOpen(true)}
-          >
+          <Button type="button" onClick={() => setDialogOpen(true)}>
             <FolderPlus size={15} />
-            <span>New Project</span>
-          </button>
-        </div>
-      </header>
+            New Project
+          </Button>
+        </Flex>
+      </Flex>
 
       {projects.length > 0 ? (
-        <div className="projects-home__toolbar">
-          <div className="table-search">
-            <Search size={14} className="table-search__icon" />
-            <input
-              type="text"
-              className="table-search__input"
-              placeholder="Filter projects by name…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
+        <Box mb="3" style={{ maxWidth: 320 }}>
+          <TextField.Root
+            size="2"
+            placeholder="Filter projects by name…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          >
+            <TextField.Slot side="left">
+              <Search size={14} />
+            </TextField.Slot>
+          </TextField.Root>
+        </Box>
       ) : null}
 
       {projects.length === 0 ? (
-        <div className="empty-management-state">
+        <Card className="empty-management-state">
           <FolderOpen size={48} className="empty-icon" />
-          <h3>No projects yet</h3>
-          <p>
+          <Heading size="4">No projects yet</Heading>
+          <Text color="gray" size="2">
             Create a local reconstruction project to start importing patient anatomies and generating cranial implants.
-          </p>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => setDialogOpen(true)}
-          >
+          </Text>
+          <Button type="button" onClick={() => setDialogOpen(true)}>
             <FolderPlus size={15} />
-            <span>Create a project</span>
-          </button>
-        </div>
+            Create a project
+          </Button>
+        </Card>
       ) : (
-        <div className="case-table-wrapper">
-          <table className="enterprise-table">
-            <thead>
-              <tr>
-                <th scope="col" style={{ width: '35%' }}>Project Name</th>
-                <th scope="col" style={{ width: '20%' }}>Operator</th>
-                <th scope="col" style={{ width: '15%' }}>Cases</th>
-                <th scope="col" style={{ width: '20%' }}>Last Updated</th>
-                <th scope="col" style={{ width: '20%', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <Card>
+          <Table.Root variant="surface" size="2">
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Project Name</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Operator</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Cases</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Last Updated</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell justify="end">Actions</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {!hasResults ? (
+                <Table.Row>
+                  <Table.Cell colSpan={5}>
+                    <Text size="2" color="gray">No projects match your filter.</Text>
+                  </Table.Cell>
+                </Table.Row>
+              ) : null}
               {filtered.map((p) => (
-                <tr key={p.id} className="enterprise-table__row">
-                  <td className="asset-name-cell">
+                <Table.Row key={p.id}>
+                  <Table.RowHeaderCell>
                     <button
                       type="button"
                       className="project-name-link"
@@ -113,53 +122,46 @@ export function ProjectsHome({
                     >
                       {p.name}
                     </button>
-                  </td>
-                  <td>
-                    <div className="avatar-stack">
-                      <span className="avatar-circle" title="Local Dev">LD</span>
-                      <span className="avatar-label">Local Dev</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge badge--pill badge--neutral">
+                  </Table.RowHeaderCell>
+                  <Table.Cell>Local Dev</Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="soft" color="gray">
                       {p.caseCount} {p.caseCount === 1 ? 'case' : 'cases'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="timestamp-text">
+                    </Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Text size="2" color="gray">
                       {new Date(p.updatedAt).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div className="row-action-cluster" style={{ justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        className="btn btn--secondary btn--xs"
-                        onClick={() => onOpenProject(p.id)}
-                      >
+                    </Text>
+                  </Table.Cell>
+                  <Table.Cell justify="end">
+                    <Flex gap="2" justify="end">
+                      <Button type="button" size="1" variant="soft" color="gray" onClick={() => onOpenProject(p.id)}>
                         <ExternalLink size={12} />
-                        <span>Open</span>
-                      </button>
+                        Open
+                      </Button>
                       {onDeleteProject ? (
-                        <button
+                        <Button
                           type="button"
-                          className="btn btn--secondary btn--xs"
+                          size="1"
+                          variant="soft"
+                          color="red"
                           onClick={() => onDeleteProject(p.id)}
                         >
-                          <span>Delete Project</span>
-                        </button>
+                          Delete Project
+                        </Button>
                       ) : null}
-                    </div>
-                  </td>
-                </tr>
+                    </Flex>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </Table.Body>
+          </Table.Root>
+        </Card>
       )}
 
       <NewProjectDialog

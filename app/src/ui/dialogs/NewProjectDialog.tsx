@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Button, Flex, TextField } from '@radix-ui/themes'
 import { FolderPlus, X } from 'lucide-react'
 
 export type NewProjectDialogProps = {
@@ -48,33 +49,32 @@ export function NewProjectDialog({
               <label htmlFor="project-name" className="form-label">
                 Project Name
               </label>
-              <input
+              <TextField.Root
                 id="project-name"
-                type="text"
-                className="form-input"
-                placeholder="e.g. SkullBreak Reconstruction Study 01"
+                size="2"
+                placeholder="e.g. Reconstruction Study 01"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
                 required
               />
             </div>
-            <div className="dialog-actions">
-              <button
+            <Flex className="dialog-actions" justify="end" gap="2">
+              <Button
                 type="button"
-                className="btn btn--secondary"
+                variant="soft"
+                color="gray"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="btn btn--primary"
                 disabled={!name.trim()}
               >
                 Create Project
-              </button>
-            </div>
+              </Button>
+            </Flex>
           </form>
         </Dialog.Content>
       </Dialog.Portal>

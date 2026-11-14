@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { Badge, Box, Flex, IconButton, Separator, Text, TextField } from '@radix-ui/themes'
 import {
   Folder,
   Layers,
-  Box,
+  Box as CubeIcon,
   Plus,
   Search,
   ChevronLeft,
@@ -49,9 +50,9 @@ export function Sidebar({
     >
       <div className="sidebar-header">
         <div className="sidebar-org">
-          <div className="sidebar-avatar" title="Cranial Reconstruction Studio">
+          <Box className="sidebar-avatar" title="Cranial Reconstruction Studio">
             CR
-          </div>
+          </Box>
           {!collapsed ? (
             <div className="sidebar-org__meta">
               <span className="sidebar-org__name">Cranial Studio</span>
@@ -59,28 +60,34 @@ export function Sidebar({
             </div>
           ) : null}
         </div>
-        <button
+        <IconButton
           type="button"
-          className="sidebar-toggle"
+          variant="ghost"
+          color="gray"
+          size="1"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
+        </IconButton>
       </div>
 
       {!collapsed ? (
-        <div className="sidebar-search">
-          <Search size={14} className="sidebar-search__icon" />
-          <input
-            type="text"
-            className="sidebar-search__input"
+        <Box px="3" pt="2">
+          <TextField.Root
+            size="1"
             placeholder="Search…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <kbd className="sidebar-search__kbd">⌘F</kbd>
-        </div>
+          >
+            <TextField.Slot side="left">
+              <Search size={13} />
+            </TextField.Slot>
+            <TextField.Slot side="right">
+              <Text size="1" color="gray">⌘F</Text>
+            </TextField.Slot>
+          </TextField.Root>
+        </Box>
       ) : null}
 
       <div className="sidebar-section">
@@ -114,7 +121,7 @@ export function Sidebar({
             disabled={!currentProject}
             title={currentProject ? '3D Studio Canvas' : 'Open a project first'}
           >
-            <Box size={16} />
+            <CubeIcon size={16} />
             {!collapsed ? <span>3D Studio Canvas</span> : null}
           </button>
         </nav>
@@ -160,18 +167,23 @@ export function Sidebar({
         </ul>
       </div>
 
+      <Separator size="4" />
       <div className="sidebar-footer">
         {!collapsed ? (
-          <div className="sidebar-system-info">
-            <div className="sidebar-system-row">
+          <Flex direction="column" gap="2">
+            <Flex align="center" gap="2">
               <Activity size={12} />
-              <span>{isDirty ? 'Unsaved changes' : 'Session synced'}</span>
-            </div>
-            <div className="sidebar-system-row sidebar-system-row--muted">
+              {isDirty ? (
+                <Badge variant="soft" color="amber">Unsaved changes</Badge>
+              ) : (
+                <Badge variant="soft" color="green">Session synced</Badge>
+              )}
+            </Flex>
+            <Flex align="center" gap="2" className="sidebar-system-row--muted">
               <Code2 size={12} />
-              <span>Debug bridge active</span>
-            </div>
-          </div>
+              <Text size="1" color="gray">Debug bridge active</Text>
+            </Flex>
+          </Flex>
         ) : null}
       </div>
     </aside>

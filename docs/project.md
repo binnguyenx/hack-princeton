@@ -33,6 +33,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Accepted backend/state boundaries, structural schemas, authoritative SQLite application storage, and local artifact handling. The synchronous operation service and reconstruction mock are implemented; The live app already has Express CRUD APIs; Python has a read-only app workspace adapter. AI API/graphs/model integrations and live AI mutations remain unimplemented. The retry lifecycle is proposed pending review; real measurement, browser geometry, editing, inspection, and comparison contracts remain unresolved. |
 | [measure-candidate](../features/measure-candidate/intent.md) | proposed | Earlier draft of the measurement milestone. Folded into `ai-workspace-assistant`. Do not implement separately. |
 | [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
+| [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
 

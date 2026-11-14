@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Button, Flex, TextField } from '@radix-ui/themes'
 import { PlusCircle, X } from 'lucide-react'
 
 export type NewCaseDialogProps = {
@@ -49,10 +50,9 @@ export function NewCaseDialog({
               <label htmlFor="case-name" className="form-label">
                 Case Name / Identifier
               </label>
-              <input
+              <TextField.Root
                 id="case-name"
-                type="text"
-                className="form-input"
+                size="2"
                 placeholder="e.g. Case 000: Parietotemporal Reconstruction"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -60,22 +60,22 @@ export function NewCaseDialog({
                 required
               />
             </div>
-            <div className="dialog-actions">
-              <button
+            <Flex className="dialog-actions" justify="end" gap="2">
+              <Button
                 type="button"
-                className="btn btn--secondary"
+                variant="soft"
+                color="gray"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="btn btn--primary"
                 disabled={!name.trim()}
               >
                 Create Case
-              </button>
-            </div>
+              </Button>
+            </Flex>
           </form>
         </Dialog.Content>
       </Dialog.Portal>

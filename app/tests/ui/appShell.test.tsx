@@ -168,6 +168,63 @@ describe('R35-R38, R41-R42 Enterprise UI Components', () => {
     expect(onDeleteCase).toHaveBeenCalledWith('c1')
   })
 
+  it('filters case assets by search query and shows explicit empty-result row', () => {
+    const cases: Case[] = [{ id: 'c1', projectId: 'p1', name: 'Case 1' }]
+    const samples: Sample[] = [
+      {
+        id: 's1',
+        caseId: 'c1',
+        displayName: 'skullbreak-000.nrrd',
+        license: 'CC BY-NC-SA 4.0',
+        spatiallyVerified: true,
+        sourceAnatomy: {
+          objectId: 'obj-s1',
+          sampleId: 's1',
+          volumeId: 'vol-s1',
+          spatial: { units: 'mm', sizes: [1, 1, 1], spacings: [1, 1, 1], bboxMm: [1, 1, 1] },
+          volumeHash: 'hash1',
+        },
+      },
+    ]
+    const candidates: Candidate[] = [
+      { objectId: 'cand-1', sampleId: 's1', displayName: 'implant-a', currentRevisionId: 'rev-0' },
+    ]
+
+    render(
+      <CaseTableView
+        cases={cases}
+        samples={samples}
+        candidates={candidates}
+        revisions={[{ id: 'rev-0', candidateId: 'cand-1', order: 0, volumeId: 'v1', pose: [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1], volumeHash: 'h' }]}
+        selectedCaseId="c1"
+        onSelectCase={() => {}}
+        onOpenSampleIn3D={() => {}}
+        onOpenCandidateIn3D={() => {}}
+        onCreateCandidate={() => {}}
+        onImportSample={() => {}}
+        onDeleteCase={() => {}}
+        onDeleteSample={() => {}}
+        onDeleteCandidate={() => {}}
+        onSwitchToCanvas={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('skullbreak-000.nrrd')).toBeTruthy()
+    expect(screen.getByText('implant-a')).toBeTruthy()
+
+    fireEvent.change(screen.getByPlaceholderText(/Filter by keyword/i), {
+      target: { value: 'implant-a' },
+    })
+    expect(screen.queryByText('skullbreak-000.nrrd')).toBeNull()
+    expect(screen.getByText('implant-a')).toBeTruthy()
+
+    fireEvent.change(screen.getByPlaceholderText(/Filter by keyword/i), {
+      target: { value: 'does-not-exist' },
+    })
+    expect(screen.queryByText('implant-a')).toBeNull()
+    expect(screen.getByText(/No assets match your filter/i)).toBeTruthy()
+  })
+
   it('R41: NewCaseDialog replaces window.prompt with accessible modal', () => {
     let createdName = ''
     render(
