@@ -52,3 +52,11 @@ The recovery frontend was promoted through PR #28. Rebase onto that main complet
 
 ## Close
 Existing behavior restoration: the request explicitly scopes code to `backend/ai`, so recovery intent/requirements/preflight/plan/evidence are recorded together here rather than editing root feature or setup documents outside that boundary. Intent/spec approval states are unchanged. Backend composition acceptance passed; frontend integration and Vite cutover remain separate future changes. No human decision is requested by this repair.
+
+## Multi-member gzip repair (2026-11-14)
+
+Owner initially authorized backend-only repair after PR #29 review without publication; subsequent authorization permits a separate commit/push/PR from latest main at 61189d7. No frontend changes, Vite cutover, live storage or merge. This restores the existing complete-body JSON and 10 MiB decoded-size contract, without a new feature/spec acceptance gate.
+
+Preflight/plan: add a failing split-member HTTP regression, consume each member's unused compressed bytes with a fresh gzip decoder, retain one cumulative bounded output budget across receive events, then verify invalid tails, truncation and limit boundaries before Close. Files: `api/body.py`, `tests/integration/api/test_app.py` and this record.
+
+Evidence: all three required regression methods fail against the original decoder; the repaired decoder passes them plus streamed member/header/trailer fragmentation checks. Invalid JSON or malformed/truncated later gzip members return 400 without repository writes; aggregate output above 10 MiB returns 413 without writes; exactly 10 MiB is accepted. Final review added a regression for trailing zero padding (accepted, including fragmented receive events), while nonzero bytes after padding are rejected. The focused API suite has 12 passing tests; the full runner has **141 passing tests**. Disposable real CLI/HTTP startup/restart/write proof passed. Feature checker: 0 errors/warnings. Diff review and whitespace checks passed; no `app/` changes. No dependencies changed.
