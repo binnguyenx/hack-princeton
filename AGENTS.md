@@ -85,7 +85,7 @@ Run every deterministic backend suite from the repo root:
 PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py
 ```
 
-A healthy run reports `Ran 64 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
+A healthy run reports `Ran 83 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
 
 From the repo root, run storage and artifact tests:
 
@@ -138,3 +138,7 @@ A healthy run prints `Ran 11 tests` and `OK`. This validates shared-schema confo
 ## AI app integration
 
 Live authority is app/server/storageSqlite.ts and its /api routes. Python storage/mock service is sandbox-only; never point it at app-model.sqlite. Use AppWorkspaceAdapter for live context and read docs/ai/app-integration.md before graph/tool work. Live AI mutation is not available yet. App tests include a Python-over-HTTP contract test; install backend/ai first. npm run lint currently reports three existing warnings.
+
+## Publication slice status
+
+Python application repository and verified paired backups. Python checks expect83 tests. Read docs/ai/setup.md and the separate migration intent/spec. Existing Express dev behavior remains until the next API slice. Never point sandbox storage at the live app DB; providers/recovery/live AI mutation remain deferred.
