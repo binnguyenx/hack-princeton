@@ -1,14 +1,5 @@
 # Intent: AI workspace assistant
 
-Publication slice 3: only schemas and fixtures, SQLite storage/artifacts, operation service and reconstruction mock are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
-Publication slice 2: only schemas and fixtures, SQLite storage/artifacts are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
-Publication slice 1: only schemas and fixtures are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
 Author: Minh Triet Nguyen · Date: 2026-11-14 · Status: draft
 
 ## Scoped acceptance record

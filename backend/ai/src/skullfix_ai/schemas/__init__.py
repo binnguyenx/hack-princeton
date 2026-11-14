@@ -1,5 +1,6 @@
 """Canonical public imports for SkullFix AI/backend shared schemas."""
 
+from .workspace import AppProjectManifest, AppObjectContext, AppSpatialMeta, AppCandidateRevision
 
 from .artifacts import FixtureArtifactLocation, PublicArtifactReference, Sha256Digest
 from .common import (
@@ -60,6 +61,10 @@ from .spatial import (
 )
 
 __all__ = [
+    "AppProjectManifest",
+    "AppObjectContext",
+    "AppSpatialMeta",
+    "AppCandidateRevision",
     "AIAssistedRequest",
     "AnnotationId",
     "ArtifactId",

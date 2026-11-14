@@ -1,14 +1,5 @@
 # Spec: AI workspace assistant
 
-Publication slice 3: only schemas and fixtures, SQLite storage/artifacts, operation service and reconstruction mock are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
-Publication slice 2: only schemas and fixtures, SQLite storage/artifacts are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
-Publication slice 1: only schemas and fixtures are implemented. Later requirements in this document remain targets for dependent PRs.
-
-
 Intent: [intent.md](intent.md) · Status: draft · Last updated: 2026-11-14
 
 ## Scoped acceptance record
@@ -165,7 +156,10 @@ The first real integration milestone is S1, after an agreed measurement contract
 
 ## Where it lives
 
+- Live app integration contract: `docs/ai/app-integration.md`
 - Live workspace adapter: `backend/ai/src/skullfix_ai/integrations/workspace/`
+- App manifest schemas: `backend/ai/src/skullfix_ai/schemas/workspace.py`
+- Cross-language HTTP proof: `app/tests/aiWorkspaceContract.test.ts`
 
 - Backend: `backend/ai/src/skullfix_ai/`
 - AI docs: `docs/ai/`
