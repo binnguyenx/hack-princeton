@@ -31,7 +31,13 @@ Before a major run: open the matching `SKILL.md` and follow it. Do not improvise
 
 ## Build / test / lint
 
-Not established yet. When a command exists, record it here with what a healthy run looks like. `backend/ai/tests/live/` must not be described as passing.
+From the repo root, the missing-contract unit test:
+
+```
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend/ai/src python3 -B backend/ai/tests/unit/operations/test_missing_contract.py
+```
+
+A healthy run prints `Ran 1 test` and `OK`. What that test does and does not prove is in `docs/ai/setup.md`. No lint command. `backend/ai/tests/live/` must not be described as passing.
 
 ## Conventions agents get wrong
 
