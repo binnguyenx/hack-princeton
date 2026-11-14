@@ -1,6 +1,6 @@
 # AI assignment index
 
-Published in this stack so far: schemas and fixtures.
+Published in this stack so far: schemas and fixtures, SQLite storage/artifacts.
 
 1. Workflow and Bedrock: agent/ and integrations/bedrock/; their component tests.
 2. Tools/context/operations: tools/, operations/, integrations/workspace/ and integrations/geometry/; corresponding component tests.

@@ -1,5 +1,9 @@
 # Publication scope
 
+This branch implements schemas and fixtures, SQLite storage/artifacts. Any scenario below requiring later components remains planned. Original scope/status details are consolidated in the final integration PR.
+
+# Publication scope
+
 This branch implements schemas and fixtures. Any scenario below requiring later components remains planned. Original scope/status details are consolidated in the final integration PR.
 
 # AI/backend acceptance scenarios

@@ -1,5 +1,8 @@
 # Spec: AI workspace assistant
 
+Publication slice 2: only schemas and fixtures, SQLite storage/artifacts are implemented. Later requirements in this document remain targets for dependent PRs.
+
+
 Publication slice 1: only schemas and fixtures are implemented. Later requirements in this document remain targets for dependent PRs.
 
 
