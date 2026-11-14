@@ -216,3 +216,341 @@ Diagnostic run `cranial-pilot-run-1794691340`: epoch 1 Dice 0.0193, loss 0.99613
 Added launcher option `--pilot-lr` so the next standalone experiment can change one variable: try 0.0005 instead of 0.005 while retaining AMP and the same data. This is a hypothesis, not a proven fix; a pilot passing at that rate does not prove held-out accuracy. The same option must be supplied to a subsequent full job to retain that pilot rate.
 
 Diagnostic run `cranial-pilot-run-1794691715` at pilot learning rate 0.0005 completed 200 epochs without the non-finite guard firing, but failed the pilot: Dice peaked at 0.3126 among the logged epochs (70), then fell to 0.0319 at epoch 200. At epoch 200 it predicted 5,171,098 voxels across the three cases versus 83,594 target voxels; loss was 0.984055. Full training did not start. The lower learning rate alone did not solve convergence. The cause remains unconfirmed; preserve this state before further code changes.
+
+last result:
+python ml/cranial/launch_training.py --mode pilot --pilot-lr 0.0005
+sagemaker.config INFO - Not applying SDK defaults from location: /Library/Application Support/sagemaker/config.yaml
+sagemaker.config INFO - Not applying SDK defaults from location: /Users/viennguyen/Library/Application Support/sagemaker/config.yaml
+/Users/viennguyen/hackprinceton/hack-princeton/app/cranial-env/lib/python3.9/site-packages/sagemaker/__init__.py:86: SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2, which is on path of deprecation. v3 is the actively developed major version.
+See https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md for the migration guide. Set SAGEMAKER_SUPPRESS_V2_WARNING=1 to silence this warning.
+  warn_v2_deprecation()
+You are using the SageMaker Python SDK v2, which is on path of deprecation. v3 is the actively developed major version.
+See https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md for the migration guide. Set SAGEMAKER_SUPPRESS_V2_WARNING=1 to silence this warning.
+
+[PILOT] run_id=run_1794691715
+  Instance:     ml.g5.2xlarge
+  Max runtime:  20 minutes
+  Checkpoints:  s3://hack-princeton-s3/cranial/checkpoints/run_1794691715
+  Spot:         False
+/Users/viennguyen/hackprinceton/hack-princeton/app/cranial-env/lib/python3.9/site-packages/sagemaker/estimator.py:588: SageMakerV2DeprecationWarning: PyTorch is part of the SageMaker Python SDK v2, which is on path of deprecation. In v3, use `ModelTrainer` (`from sagemaker.train import ModelTrainer`).
+See https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md for the migration guide. Set SAGEMAKER_SUPPRESS_V2_WARNING=1 to silence this warning.
+  warn_v2_deprecation(
+PyTorch is part of the SageMaker Python SDK v2, which is on path of deprecation. In v3, use `ModelTrainer` (`from sagemaker.train import ModelTrainer`).
+See https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md for the migration guide. Set SAGEMAKER_SUPPRESS_V2_WARNING=1 to silence this warning.
+/Users/viennguyen/hackprinceton/hack-princeton/app/cranial-env/lib/python3.9/site-packages/boto3/compat.py:89: PythonDeprecationWarning: Boto3 will no longer support Python 3.9 starting April 29, 2026. To continue receiving service updates, bug fixes, and security updates please upgrade to Python 3.10 or later. More information can be found here: https://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/
+  warnings.warn(warning, PythonDeprecationWarning)
+
+  Training data:   s3://hack-princeton-s3/cranial/processed/v1/train
+  Validation data: s3://hack-princeton-s3/cranial/processed/v1/val
+
+Submitting job... (this takes ~2 min to provision the instance)
+INFO:sagemaker.image_uris:image_uri is not presented, retrieving image_uri based on instance_type, framework etc.
+INFO:sagemaker:Creating training-job with name: cranial-pilot-run-1794691715
+2026-11-14 21:28:38 Starting - Starting the training job
+2026-11-14 21:28:38 Pending - Training job waiting for capacity.....................
+2026-11-14 21:32:12 Pending - Preparing the instances for training...
+2026-11-14 21:32:40 Downloading - Downloading input data...
+2026-11-14 21:32:55 Downloading - Downloading the training image..............bash: cannot set terminal process group (-1): Inappropriate ioctl for device
+bash: no job control in this shell
+/opt/conda/lib/python3.10/site-packages/paramiko/pkey.py:100: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from this module in 48.0.0.
+  "cipher": algorithms.TripleDES,
+/opt/conda/lib/python3.10/site-packages/paramiko/transport.py:259: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from this module in 48.0.0.
+  "class": algorithms.TripleDES,
+2026-11-14 21:35:30,259 sagemaker-training-toolkit INFO     Imported framework sagemaker_pytorch_container.training
+2026-11-14 21:35:30,281 sagemaker-training-toolkit INFO     No Neurons detected (normal if no neurons installed)
+2026-11-14 21:35:30,290 sagemaker_pytorch_container.training INFO     Block until all host DNS lookups succeed.
+2026-11-14 21:35:30,292 sagemaker_pytorch_container.training INFO     Invoking user training script.
+2026-11-14 21:35:31,839 sagemaker-training-toolkit INFO     Installing dependencies from requirements.txt
+Requirement already satisfied: torch==2.1.0 in /opt/conda/lib/python3.10/site-packages (from -r requirements.txt (line 1)) (2.1.0)
+Collecting monai==1.3.0 (from -r requirements.txt (line 2))
+Downloading monai-1.3.0-202310121228-py3-none-any.whl.metadata (10 kB)
+Collecting SimpleITK==2.3.1 (from -r requirements.txt (line 3))
+Downloading SimpleITK-2.3.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.9 kB)
+Collecting nibabel==5.2.1 (from -r requirements.txt (line 4))
+Downloading nibabel-5.2.1-py3-none-any.whl.metadata (8.8 kB)
+Requirement already satisfied: numpy==1.26.4 in /opt/conda/lib/python3.10/site-packages (from -r requirements.txt (line 5)) (1.26.4)
+Collecting scipy==1.13.0 (from -r requirements.txt (line 6))
+Downloading scipy-1.13.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (60 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.6/60.6 kB 3.5 MB/s eta 0:00:00
+Requirement already satisfied: pandas==2.2.2 in /opt/conda/lib/python3.10/site-packages (from -r requirements.txt (line 7)) (2.2.2)
+Requirement already satisfied: boto3>=1.34.0 in /opt/conda/lib/python3.10/site-packages (from -r requirements.txt (line 8)) (1.34.158)
+Collecting scikit-image==0.22.0 (from -r requirements.txt (line 9))
+Downloading scikit_image-0.22.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (13 kB)
+Collecting matplotlib==3.8.4 (from -r requirements.txt (line 10))
+Downloading matplotlib-3.8.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.8 kB)
+Collecting pyyaml==6.0.1 (from -r requirements.txt (line 11))
+Downloading PyYAML-6.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+Requirement already satisfied: filelock in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.15.4)
+Requirement already satisfied: typing-extensions in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (4.12.2)
+Requirement already satisfied: sympy in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (1.13.0)
+Requirement already satisfied: networkx in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.3)
+Requirement already satisfied: jinja2 in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (3.1.4)
+Requirement already satisfied: fsspec in /opt/conda/lib/python3.10/site-packages (from torch==2.1.0->-r requirements.txt (line 1)) (2024.6.1)
+Requirement already satisfied: packaging>=17 in /opt/conda/lib/python3.10/site-packages (from nibabel==5.2.1->-r requirements.txt (line 4)) (23.1)
+Requirement already satisfied: python-dateutil>=2.8.2 in /opt/conda/lib/python3.10/site-packages (from pandas==2.2.2->-r requirements.txt (line 7)) (2.9.0)
+Requirement already satisfied: pytz>=2020.1 in /opt/conda/lib/python3.10/site-packages (from pandas==2.2.2->-r requirements.txt (line 7)) (2024.1)
+Requirement already satisfied: tzdata>=2022.7 in /opt/conda/lib/python3.10/site-packages (from pandas==2.2.2->-r requirements.txt (line 7)) (2024.1)
+Requirement already satisfied: pillow>=9.0.1 in /opt/conda/lib/python3.10/site-packages (from scikit-image==0.22.0->-r requirements.txt (line 9)) (10.3.0)
+Requirement already satisfied: imageio>=2.27 in /opt/conda/lib/python3.10/site-packages (from scikit-image==0.22.0->-r requirements.txt (line 9)) (2.34.2)
+Collecting tifffile>=2022.8.12 (from scikit-image==0.22.0->-r requirements.txt (line 9))
+Downloading tifffile-2025.5.10-py3-none-any.whl.metadata (31 kB)
+Collecting lazy_loader>=0.3 (from scikit-image==0.22.0->-r requirements.txt (line 9))
+Downloading lazy_loader-0.6-py3-none-any.whl.metadata (6.0 kB)
+Requirement already satisfied: contourpy>=1.0.1 in /opt/conda/lib/python3.10/site-packages (from matplotlib==3.8.4->-r requirements.txt (line 10)) (1.2.1)
+Requirement already satisfied: cycler>=0.10 in /opt/conda/lib/python3.10/site-packages (from matplotlib==3.8.4->-r requirements.txt (line 10)) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /opt/conda/lib/python3.10/site-packages (from matplotlib==3.8.4->-r requirements.txt (line 10)) (4.53.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in /opt/conda/lib/python3.10/site-packages (from matplotlib==3.8.4->-r requirements.txt (line 10)) (1.4.5)
+Requirement already satisfied: pyparsing>=2.3.1 in /opt/conda/lib/python3.10/site-packages (from matplotlib==3.8.4->-r requirements.txt (line 10)) (3.1.2)
+Requirement already satisfied: botocore<1.35.0,>=1.34.158 in /opt/conda/lib/python3.10/site-packages (from boto3>=1.34.0->-r requirements.txt (line 8)) (1.34.158)
+Requirement already satisfied: jmespath<2.0.0,>=0.7.1 in /opt/conda/lib/python3.10/site-packages (from boto3>=1.34.0->-r requirements.txt (line 8)) (1.0.1)
+Requirement already satisfied: s3transfer<0.11.0,>=0.10.0 in /opt/conda/lib/python3.10/site-packages (from boto3>=1.34.0->-r requirements.txt (line 8)) (0.10.2)
+Requirement already satisfied: urllib3!=2.2.0,<3,>=1.25.4 in /opt/conda/lib/python3.10/site-packages (from botocore<1.35.0,>=1.34.158->boto3>=1.34.0->-r requirements.txt (line 8)) (1.26.19)
+Requirement already satisfied: six>=1.5 in /opt/conda/lib/python3.10/site-packages (from python-dateutil>=2.8.2->pandas==2.2.2->-r requirements.txt (line 7)) (1.16.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /opt/conda/lib/python3.10/site-packages (from jinja2->torch==2.1.0->-r requirements.txt (line 1)) (2.1.5)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /opt/conda/lib/python3.10/site-packages (from sympy->torch==2.1.0->-r requirements.txt (line 1)) (1.3.0)
+Downloading monai-1.3.0-202310121228-py3-none-any.whl (1.3 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 34.1 MB/s eta 0:00:00
+Downloading SimpleITK-2.3.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (52.7 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 52.7/52.7 MB 89.2 MB/s eta 0:00:00
+Downloading nibabel-5.2.1-py3-none-any.whl (3.3 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 117.3 MB/s eta 0:00:00
+Downloading scipy-1.13.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (38.6 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 38.6/38.6 MB 89.9 MB/s eta 0:00:00
+Downloading scikit_image-0.22.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (14.7 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.7/14.7 MB 103.6 MB/s eta 0:00:00
+Downloading matplotlib-3.8.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.6 MB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.6/11.6 MB 96.4 MB/s eta 0:00:00
+Downloading PyYAML-6.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (705 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 705.5/705.5 kB 64.3 MB/s eta 0:00:00
+Downloading lazy_loader-0.6-py3-none-any.whl (8.8 kB)
+Downloading tifffile-2025.5.10-py3-none-any.whl (226 kB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 226.5/226.5 kB 25.9 MB/s eta 0:00:00
+Installing collected packages: SimpleITK, tifffile, scipy, pyyaml, nibabel, lazy_loader, scikit-image, matplotlib, monai
+
+2026-11-14 21:35:26 Training - Training image download completed. Training in progress.Attempting uninstall: scipy
+Found existing installation: scipy 1.14.0
+Uninstalling scipy-1.14.0:
+Successfully uninstalled scipy-1.14.0
+Attempting uninstall: pyyaml
+Found existing installation: PyYAML 6.0.2
+Uninstalling PyYAML-6.0.2:
+Successfully uninstalled PyYAML-6.0.2
+Attempting uninstall: matplotlib
+Found existing installation: matplotlib 3.9.1
+Uninstalling matplotlib-3.9.1:
+Successfully uninstalled matplotlib-3.9.1
+Successfully installed SimpleITK-2.3.1 lazy_loader-0.6 matplotlib-3.8.4 monai-1.3.0 nibabel-5.2.1 pyyaml-6.0.1 scikit-image-0.22.0 scipy-1.13.0 tifffile-2025.5.10
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[notice] A new release of pip is available: 24.1.2 -> 26.3
+[notice] To update, run: pip install --upgrade pip
+2026-11-14 21:35:43,557 sagemaker-training-toolkit INFO     Waiting for the process to finish and give a return code.
+2026-11-14 21:35:43,557 sagemaker-training-toolkit INFO     Done waiting for a return code. Received 0 from exiting process.
+2026-11-14 21:35:43,580 sagemaker-training-toolkit INFO     No Neurons detected (normal if no neurons installed)
+2026-11-14 21:35:43,613 sagemaker-training-toolkit INFO     No Neurons detected (normal if no neurons installed)
+2026-11-14 21:35:43,645 sagemaker-training-toolkit INFO     No Neurons detected (normal if no neurons installed)
+2026-11-14 21:35:43,655 sagemaker-training-toolkit INFO     Invoking user script
+Training Env:
+{
+    "additional_framework_parameters": {},
+    "channel_input_dirs": {
+        "training": "/opt/ml/input/data/training",
+        "validation": "/opt/ml/input/data/validation"
+    },
+    "current_host": "algo-1",
+    "current_instance_group": "homogeneousCluster",
+    "current_instance_group_hosts": [
+        "algo-1"
+    ],
+    "current_instance_type": "ml.g5.2xlarge",
+    "distribution_hosts": [],
+    "distribution_instance_groups": [],
+    "framework_module": "sagemaker_pytorch_container.training:main",
+    "hosts": [
+        "algo-1"
+    ],
+    "hyperparameters": {
+        "epochs": 0,
+        "loss": "dice",
+        "no-aug": true,
+        "pilot": true,
+        "pilot-cases": 3,
+        "pilot-epochs": 200,
+        "pilot-lr": 0.0005,
+        "pilot-target-dice": 0.9,
+        "seed": 42
+    },
+    "input_config_dir": "/opt/ml/input/config",
+    "input_data_config": {
+        "training": {
+            "TrainingInputMode": "File",
+            "S3DistributionType": "FullyReplicated",
+            "RecordWrapperType": "None"
+        },
+        "validation": {
+            "TrainingInputMode": "File",
+            "S3DistributionType": "FullyReplicated",
+            "RecordWrapperType": "None"
+        }
+    },
+    "input_dir": "/opt/ml/input",
+    "instance_groups": [
+        "homogeneousCluster"
+    ],
+    "instance_groups_dict": {
+        "homogeneousCluster": {
+            "instance_group_name": "homogeneousCluster",
+            "instance_type": "ml.g5.2xlarge",
+            "hosts": [
+                "algo-1"
+            ]
+        }
+    },
+    "is_hetero": false,
+    "is_master": true,
+    "is_modelparallel_enabled": null,
+    "is_smddpmprun_installed": false,
+    "is_smddprun_installed": true,
+    "job_name": "cranial-pilot-run-1794691715",
+    "log_level": 20,
+    "master_hostname": "algo-1",
+    "model_dir": "/opt/ml/model",
+    "module_dir": "s3://hack-princeton-s3/cranial-pilot-run-1794691715/source/sourcedir.tar.gz",
+    "module_name": "train",
+    "network_interface_name": "eth0",
+    "num_cpus": 8,
+    "num_gpus": 1,
+    "num_neurons": 0,
+    "output_data_dir": "/opt/ml/output/data",
+    "output_dir": "/opt/ml/output",
+    "output_intermediate_dir": "/opt/ml/output/intermediate",
+    "resource_config": {
+        "current_host": "algo-1",
+        "current_instance_type": "ml.g5.2xlarge",
+        "current_group_name": "homogeneousCluster",
+        "hosts": [
+            "algo-1"
+        ],
+        "instance_groups": [
+            {
+                "instance_group_name": "homogeneousCluster",
+                "instance_type": "ml.g5.2xlarge",
+                "hosts": [
+                    "algo-1"
+                ]
+            }
+        ],
+        "network_interface_name": "eth0",
+        "topology": null
+    },
+    "user_entry_point": "train.py"
+}
+Environment variables:
+SM_HOSTS=["algo-1"]
+SM_NETWORK_INTERFACE_NAME=eth0
+SM_HPS={"epochs":0,"loss":"dice","no-aug":true,"pilot":true,"pilot-cases":3,"pilot-epochs":200,"pilot-lr":0.0005,"pilot-target-dice":0.9,"seed":42}
+SM_USER_ENTRY_POINT=train.py
+SM_FRAMEWORK_PARAMS={}
+SM_RESOURCE_CONFIG={"current_group_name":"homogeneousCluster","current_host":"algo-1","current_instance_type":"ml.g5.2xlarge","hosts":["algo-1"],"instance_groups":[{"hosts":["algo-1"],"instance_group_name":"homogeneousCluster","instance_type":"ml.g5.2xlarge"}],"network_interface_name":"eth0","topology":null}
+SM_INPUT_DATA_CONFIG={"training":{"RecordWrapperType":"None","S3DistributionType":"FullyReplicated","TrainingInputMode":"File"},"validation":{"RecordWrapperType":"None","S3DistributionType":"FullyReplicated","TrainingInputMode":"File"}}
+SM_OUTPUT_DATA_DIR=/opt/ml/output/data
+SM_CHANNELS=["training","validation"]
+SM_CURRENT_HOST=algo-1
+SM_CURRENT_INSTANCE_TYPE=ml.g5.2xlarge
+SM_CURRENT_INSTANCE_GROUP=homogeneousCluster
+SM_CURRENT_INSTANCE_GROUP_HOSTS=["algo-1"]
+SM_INSTANCE_GROUPS=["homogeneousCluster"]
+SM_INSTANCE_GROUPS_DICT={"homogeneousCluster":{"hosts":["algo-1"],"instance_group_name":"homogeneousCluster","instance_type":"ml.g5.2xlarge"}}
+SM_DISTRIBUTION_INSTANCE_GROUPS=[]
+SM_IS_HETERO=false
+SM_MODULE_NAME=train
+SM_LOG_LEVEL=20
+SM_FRAMEWORK_MODULE=sagemaker_pytorch_container.training:main
+SM_INPUT_DIR=/opt/ml/input
+SM_INPUT_CONFIG_DIR=/opt/ml/input/config
+SM_OUTPUT_DIR=/opt/ml/output
+SM_NUM_CPUS=8
+SM_NUM_GPUS=1
+SM_NUM_NEURONS=0
+SM_MODEL_DIR=/opt/ml/model
+SM_MODULE_DIR=s3://hack-princeton-s3/cranial-pilot-run-1794691715/source/sourcedir.tar.gz
+SM_TRAINING_ENV={"additional_framework_parameters":{},"channel_input_dirs":{"training":"/opt/ml/input/data/training","validation":"/opt/ml/input/data/validation"},"current_host":"algo-1","current_instance_group":"homogeneousCluster","current_instance_group_hosts":["algo-1"],"current_instance_type":"ml.g5.2xlarge","distribution_hosts":[],"distribution_instance_groups":[],"framework_module":"sagemaker_pytorch_container.training:main","hosts":["algo-1"],"hyperparameters":{"epochs":0,"loss":"dice","no-aug":true,"pilot":true,"pilot-cases":3,"pilot-epochs":200,"pilot-lr":0.0005,"pilot-target-dice":0.9,"seed":42},"input_config_dir":"/opt/ml/input/config","input_data_config":{"training":{"RecordWrapperType":"None","S3DistributionType":"FullyReplicated","TrainingInputMode":"File"},"validation":{"RecordWrapperType":"None","S3DistributionType":"FullyReplicated","TrainingInputMode":"File"}},"input_dir":"/opt/ml/input","instance_groups":["homogeneousCluster"],"instance_groups_dict":{"homogeneousCluster":{"hosts":["algo-1"],"instance_group_name":"homogeneousCluster","instance_type":"ml.g5.2xlarge"}},"is_hetero":false,"is_master":true,"is_modelparallel_enabled":null,"is_smddpmprun_installed":false,"is_smddprun_installed":true,"job_name":"cranial-pilot-run-1794691715","log_level":20,"master_hostname":"algo-1","model_dir":"/opt/ml/model","module_dir":"s3://hack-princeton-s3/cranial-pilot-run-1794691715/source/sourcedir.tar.gz","module_name":"train","network_interface_name":"eth0","num_cpus":8,"num_gpus":1,"num_neurons":0,"output_data_dir":"/opt/ml/output/data","output_dir":"/opt/ml/output","output_intermediate_dir":"/opt/ml/output/intermediate","resource_config":{"current_group_name":"homogeneousCluster","current_host":"algo-1","current_instance_type":"ml.g5.2xlarge","hosts":["algo-1"],"instance_groups":[{"hosts":["algo-1"],"instance_group_name":"homogeneousCluster","instance_type":"ml.g5.2xlarge"}],"network_interface_name":"eth0","topology":null},"user_entry_point":"train.py"}
+SM_USER_ARGS=["--epochs","0","--loss","dice","--no-aug","True","--pilot","True","--pilot-cases","3","--pilot-epochs","200","--pilot-lr","0.0005","--pilot-target-dice","0.9","--seed","42"]
+SM_OUTPUT_INTERMEDIATE_DIR=/opt/ml/output/intermediate
+SM_CHANNEL_TRAINING=/opt/ml/input/data/training
+SM_CHANNEL_VALIDATION=/opt/ml/input/data/validation
+SM_HP_EPOCHS=0
+SM_HP_LOSS=dice
+SM_HP_NO-AUG=true
+SM_HP_PILOT=true
+SM_HP_PILOT-CASES=3
+SM_HP_PILOT-EPOCHS=200
+SM_HP_PILOT-LR=0.0005
+SM_HP_PILOT-TARGET-DICE=0.9
+SM_HP_SEED=42
+PYTHONPATH=/opt/ml/code:/opt/conda/bin:/opt/conda/lib/python310.zip:/opt/conda/lib/python3.10:/opt/conda/lib/python3.10/lib-dynload:/opt/conda/lib/python3.10/site-packages
+Invoking script with the following command:
+/opt/conda/bin/python3.10 train.py --epochs 0 --loss dice --no-aug True --pilot True --pilot-cases 3 --pilot-epochs 200 --pilot-lr 0.0005 --pilot-target-dice 0.9 --seed 42
+2026-11-14 21:35:43,657 sagemaker-training-toolkit INFO     Exceptions not imported for SageMaker Debugger as it is not installed.
+2026-11-14 21:35:43,657 sagemaker-training-toolkit INFO     Exceptions not imported for SageMaker TF as Tensorflow is not installed.
+2026-11-14 21:35:45,157 [INFO] Device: cuda
+2026-11-14 21:35:45,157 [INFO] AMP: True
+2026-11-14 21:35:45,157 [INFO] Config: {
+  "data_dir": "/opt/ml/input/data/training",
+  "val_dir": "/opt/ml/input/data/validation",
+  "model_dir": "/opt/ml/checkpoints",
+  "output_dir": "/opt/ml/output/data",
+  "epochs": 0,
+  "lr": 0.0001,
+  "weight_decay": 1e-05,
+  "batch_size": 1,
+  "seed": 42,
+  "threshold": 0.5,
+  "early_stop_patience": 15,
+  "no_amp": false,
+  "no_aug": true,
+  "loss": "dice",
+  "pilot": true,
+  "pilot_cases": 3,
+  "pilot_epochs": 200,
+  "pilot_lr": 0.0005,
+  "pilot_target_dice": 0.9,
+  "resume": ""
+}
+2026-11-14 21:35:45,552 [INFO] generated new fontManager
+2026-11-14 21:35:47,130 [INFO] Git commit:
+2026-11-14 21:35:47,313 [INFO] Model parameters: 4,805,534
+2026-11-14 21:35:47,362 [INFO] Dataset: 91 pairs in /opt/ml/input/data/training
+2026-11-14 21:35:47,366 [INFO] Dataset: 23 pairs in /opt/ml/input/data/validation
+2026-11-14 21:35:47,369 [INFO] Dataset: 91 pairs in /opt/ml/input/data/training
+2026-11-14 21:35:47,418 [INFO] === PILOT: overfitting 3 cases for ≤200 epochs ===
+2026-11-14 21:35:49,131 [INFO]   Pilot epoch 1/200: dice=0.0066 loss=0.996424 pred_voxels=13680592 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:36:00,688 [INFO]   Pilot epoch 10/200: dice=0.0421 loss=0.994403 pred_voxels=3293628 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:36:13,506 [INFO]   Pilot epoch 20/200: dice=0.0824 loss=0.994006 pred_voxels=1703996 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:36:26,320 [INFO]   Pilot epoch 30/200: dice=0.0730 loss=0.993483 pred_voxels=2296179 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:36:39,141 [INFO]   Pilot epoch 40/200: dice=0.1348 loss=0.993016 pred_voxels=1152779 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:36:51,959 [INFO]   Pilot epoch 50/200: dice=0.2181 loss=0.992929 pred_voxels=668091 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:37:04,790 [INFO]   Pilot epoch 60/200: dice=0.2865 loss=0.992852 pred_voxels=484664 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:37:17,632 [INFO]   Pilot epoch 70/200: dice=0.3126 loss=0.992777 pred_voxels=436734 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:37:30,458 [INFO]   Pilot epoch 80/200: dice=0.3068 loss=0.992699 pred_voxels=448456 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:37:43,280 [INFO]   Pilot epoch 90/200: dice=0.2750 loss=0.992616 pred_voxels=514922 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:37:56,123 [INFO]   Pilot epoch 100/200: dice=0.1565 loss=0.992549 pred_voxels=1052148 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:38:08,958 [INFO]   Pilot epoch 110/200: dice=0.1408 loss=0.992427 pred_voxels=1095355 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:38:21,776 [INFO]   Pilot epoch 120/200: dice=0.1207 loss=0.992271 pred_voxels=1294280 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:38:34,608 [INFO]   Pilot epoch 130/200: dice=0.0825 loss=0.992054 pred_voxels=1945589 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:38:47,457 [INFO]   Pilot epoch 140/200: dice=0.0491 loss=0.992374 pred_voxels=3026315 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:39:00,298 [INFO]   Pilot epoch 150/200: dice=0.0339 loss=0.991402 pred_voxels=4802194 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:39:13,147 [INFO]   Pilot epoch 160/200: dice=0.0326 loss=0.990583 pred_voxels=5008704 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:39:25,977 [INFO]   Pilot epoch 170/200: dice=0.0303 loss=0.989435 pred_voxels=5421176 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:39:38,812 [INFO]   Pilot epoch 180/200: dice=0.0246 loss=0.988865 pred_voxels=6759036 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:39:51,665 [INFO]   Pilot epoch 190/200: dice=0.0284 loss=0.986277 pred_voxels=5803887 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:40:04,553 [INFO]   Pilot epoch 200/200: dice=0.0319 loss=0.984055 pred_voxels=5171098 target_voxels=83594 max_probability=1.000000 amp_scale=65536.0
+2026-11-14 21:40:04,553 [ERROR] Pilot FAILED: Dice=0.0319 < 0.9 after 200 epochs. Check label alignment, loss target, gradient flow, and crop completeness.
+2026-11-14 21:40:04,567 [ERROR] Pilot failed — stopping before full training run. Fix the model/data first.
+2026-11-14 21:40:05,467 sagemaker-training-toolkit INFO     Waiting for the process to finish and give a return code.
+2026-11-14 21:40:05,467 sagemaker-training-toolkit INFO     Done waiting for a return code. Received 2 from exiting process.
+2026-11-14 21:40:05,468 sagemaker-training-toolkit ERROR    Reporting training FAILURE
+2026-11-14 21:40:05,468 sagemaker-training-toolkit ERROR    ExecuteUserScriptError:
+ExitCode 2
+ErrorMessage ""
+Command "/opt/conda/bin/python3.10 train.py --epochs 0 --loss dice --no-aug True --pilot True --pilot-cases 3 --pilot-epochs 200 --pilot-lr 0.0005 --pilot-target-dice 0.9 --seed 42"
+2026-11-14 21:40:05,468 sagemaker-training-toolkit ERROR    Encountered exit_code 1
