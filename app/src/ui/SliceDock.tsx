@@ -1,4 +1,3 @@
-import type { SourceLandmark } from '../domain/types'
 import { ChevronDown, ChevronUp, Link2 } from 'lucide-react'
 import type { Vec3 } from '../geometry/coordinates'
 import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
@@ -9,12 +8,8 @@ import { SliceViewport } from './SliceViewport'
 import { ViewFrame } from './ViewFrame'
 
 type Props = {
-  foreground?: Uint8Array
-  foregroundReason?: string
-  landmarks?: SourceLandmark[]
   collapsed: boolean
   onCollapsedChange: (collapsed: boolean) => void
-  spacings?: [number, number, number]
   voxels?: Uint8Array
   sizes?: VolumeSizes
   crosshair: IjkPoint
@@ -38,10 +33,6 @@ const PLANES: { id: SlicePlaneId; label: string; coordinate: 0 | 1 | 2; prefix: 
 export function SliceDock({
   collapsed,
   onCollapsedChange,
-  foreground,
-  foregroundReason,
-  landmarks,
-  spacings,
   voxels,
   sizes,
   crosshair,
@@ -61,7 +52,11 @@ export function SliceDock({
         <div className="slice-dock__summary">
           <Link2 size={14} />
           <span>Slices: Axial · Sagittal · Coronal</span>
-          <span className="slice-dock__link-state">Linked</span>
+          <FeatureHint {...CANVAS_HINTS.linkedViews} side="top">
+            <span className="slice-dock__link-state" aria-label="Views are linked">
+              Linked
+            </span>
+          </FeatureHint>
         </div>
         <FeatureHint {...CANVAS_HINTS.expandDock} side="top">
           <button
@@ -81,9 +76,11 @@ export function SliceDock({
     <section className="slice-dock" aria-label="Synchronized slice dock">
       <div className="slice-dock__bar">
         <span>Cross-reference slices</span>
-        <span className="slice-dock__link-state">
-          <Link2 size={12} /> Linked
-        </span>
+        <FeatureHint {...CANVAS_HINTS.linkedViews} side="bottom">
+          <span className="slice-dock__link-state" aria-label="Views are linked">
+            <Link2 size={12} aria-hidden /> Linked
+          </span>
+        </FeatureHint>
         <FeatureHint {...CANVAS_HINTS.collapseDock} side="top">
           <button
             type="button"
@@ -111,11 +108,7 @@ export function SliceDock({
               <SliceViewport
                 plane={plane.id}
                 label={plane.label}
-                foreground={foreground}
-                foregroundReason={foregroundReason}
-                landmarks={landmarks}
-                spacings={spacings}
-              voxels={voxels}
+                voxels={voxels}
                 sizes={sizes}
                 crosshair={crosshair}
                 mode={mode}

@@ -15,7 +15,6 @@ import type {
 import { emptyViewState } from '../state/store'
 
 export type ProjectManifest = {
-  landmarks?: EditorState['landmarks']
   formatVersion: 1
   user: User
   project: Project
@@ -39,7 +38,6 @@ export async function saveProjectPackage(
   await mkdir(path.join(dir, 'volumes'), { recursive: true })
   const manifest: ProjectManifest = {
     formatVersion: 1,
-    ...(state.landmarks?.length ? { landmarks: state.landmarks } : {}),
     user: state.user,
     project: state.project,
     cases: state.cases,
@@ -92,7 +90,6 @@ export async function loadProjectPackage(dir: string): Promise<EditorState> {
     })
   }
   return {
-    landmarks: manifest.landmarks ?? [],
     user: manifest.user,
     project: manifest.project,
     cases: manifest.cases,

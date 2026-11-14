@@ -43,13 +43,7 @@ export type SourceAnatomy = {
   volumeHash: string
 }
 
-export type VoxelProvenance = {
-  operation: 'voxel.box' | 'reconstruct.mirror-roi'
-  parameters: { bounds: [number[], number[]]; mode?: 'fill' | 'erase'; plane_i?: number }
-  inputRevisionId: string; sourceVolumeHash: string; changedVoxels: number
-}
 export type CandidateRevision = {
-  provenance?: VoxelProvenance
   id: string
   candidateId: string
   order: number
@@ -127,14 +121,7 @@ export type ViewState = {
 
 export type VolumeStore = Map<string, Uint8Array>
 
-/** A manual annotation on immutable source anatomy, in IJK and patient RAS mm. */
-export type SourceLandmark = {
-  id: string; sampleId: string; sourceObjectId: string; volumeHash: string
-  label: string; ijk: [number, number, number]; ras: [number, number, number]
-}
-
 export type EditorState = {
-  landmarks?: SourceLandmark[]
   user: User
   project: Project
   cases: Case[]

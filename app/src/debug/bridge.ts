@@ -1,19 +1,23 @@
 import { editorStore } from '../state/store'
-import { readState, selectObject, setVisibility, showAllObjects, type OpsContext } from '../ops/session'
-import type { Mat4, OpResult } from '../domain/types'
-import type { CommandId } from '../commands/registry'
-
-const VIEW_COMMANDS = new Set<CommandId>(['view.reset', 'view.focus', 'view.toggleTiltLock', 'view.toggleProjection',
-  'view.standardAnterior', 'view.standardPosterior', 'view.standardLeft', 'view.standardRight',
-  'view.standardSuperior', 'view.standardInferior', 'view.toggleVisibility', 'view.showAll',
-  'tool.select', 'tool.navigate', 'select.clear'])
-let dispatch: ((id: CommandId) => OpResult) | undefined
-export function registerCanvasCommandDispatcher(handler: typeof dispatch): void { dispatch = handler }
-/** Success acknowledges dispatch. readCanvas() supplies subsequent actual render evidence. */
-export function executeCanvasCommand(id: string): OpResult {
-  if (!VIEW_COMMANDS.has(id as CommandId)) return { ok: false, error: 'Unknown or non-view command; use the manual UI for writes' }
-  return dispatch?.(id as CommandId) ?? { ok: false, error: 'Canvas command dispatcher is unavailable' }
-}
+import {
+  closeDocument,
+  createCandidate,
+  createCase,
+  createProject,
+  listProjects,
+  navigateCamera,
+  openDocument,
+  readState,
+  restoreRevision,
+  selectObject,
+  setActiveDocument,
+  setInspectionPlane,
+  setVisibility,
+  transformCandidate,
+  type OpsContext,
+} from '../ops/session'
+import { importPreparedSample } from '../ops/importPrepared'
+import type { Mat4 } from '../domain/types'
 
 export type CanvasRuntimeSnapshot = {
   activeView: 'three-d' | 'axial' | 'sagittal' | 'coronal'
@@ -22,17 +26,9 @@ export type CanvasRuntimeSnapshot = {
     position: [number, number, number]
     target: [number, number, number]
     projection: 'perspective' | 'orthographic'
-    quaternion?: [number, number, number, number]
-    zoom?: number
-    viewHeight?: number
-    viewportHeight?: number
     near: number
     far: number
   }
-  diagnostics?: { loopFps: number; drawCalls: number; triangles: number }
-  ruler?: { millimetres: number; pixels: number; pixelsPerMm: number } | null
-  selectedObjectId: string | null
-  highlightedObjectIds: string[]
   visibleObjectIds: string[]
   objectWorldMatrices: Record<string, Mat4>
   crosshairRas: [number, number, number]
@@ -52,8 +48,6 @@ const INITIAL_CANVAS_RUNTIME: CanvasRuntimeSnapshot = {
     near: 0.1,
     far: 8000,
   },
-  selectedObjectId: null,
-  highlightedObjectIds: [],
   visibleObjectIds: [],
   objectWorldMatrices: {},
   crosshairRas: [0, 0, 0],
@@ -100,14 +94,29 @@ export function readCanvasRuntime(): CanvasRuntimeSnapshot {
   return structuredClone(canvasRuntime)
 }
 
-const browserOps = { readState, selectObject, setVisibility, showAllObjects }
+const browserOps = {
+  readState,
+  listProjects,
+  navigateCamera,
+  setVisibility,
+  setInspectionPlane,
+  selectObject,
+  createProject,
+  createCase,
+  importPreparedSample,
+  createCandidate,
+  openDocument,
+  closeDocument,
+  setActiveDocument,
+  transformCandidate,
+  restoreRevision,
+}
 
 declare global {
   interface Window {
     __hackPrincetonDebug?: {
       readState: () => ReturnType<typeof readState>
       readCanvas: () => CanvasRuntimeSnapshot
-      executeCommand: typeof executeCanvasCommand
       ops: typeof browserOps
       ctx: OpsContext
     }
@@ -122,6 +131,5 @@ export function installDebugBridge(ctx: OpsContext = { store: editorStore }): vo
     ops: browserOps,
     readState: () => readState(ctx),
     readCanvas: readCanvasRuntime,
-    executeCommand: executeCanvasCommand,
   }
 }
