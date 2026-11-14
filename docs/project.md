@@ -39,6 +39,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [Canvas workspace](../features/3d-bone-editor/canvas-workspace/intent.md) | shipped | Unified canvas tools + viewport behavior, GLB-first rendering, object-level picking/highlight and rendered hide/show recovery, numeric rigid placement with preview/atomic expected-revision commits, restored-pointer integrity, portable ZIP Save/Open as a new project copy, and clean-state UI contracts. |
 | [Canvas workspace Slicer relaunch](../features/3d-bone-editor/canvas-workspace-improve/intent.md) | shipped | Cross-reference Workbench: Slicer mouse nav, synchronized Axial/Sagittal/Coronal dock, Window/Level + Place modes, RAS truth, WebGL rebuild recovery. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
+| [ml-model](../features/ml-model/intent.md) | in progress | Training and evaluation pipeline for direct 3D missing-cranial-bone completion on SageMaker. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
 
