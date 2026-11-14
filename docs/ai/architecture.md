@@ -1,13 +1,15 @@
-# Publication slice 1: Python application repository and verified paired backups
+# Publication slice 2: FastAPI compatibility API, Express removal and current UI integration
 
-This branch publishes application repository, frozen Node-created data compatibility, transactional revision/cascade coordination, and paired SQLite/volume backups. Deferred here: FastAPI transport, frontend cutover, graph, providers and live AI mutation. The completed local cutover records and consolidated agent documentation arrive in the final documentation PR; they do not imply that missing code exists in this intermediate branch.
+This branch publishes application repository, frozen Node-created data compatibility, transactional revision/cascade coordination, and paired SQLite/volume backups, FastAPI13 routes, shared HTTP contracts, default dev proxy, built serving and actual Chrome journeys. Deferred here: graph, providers and live AI mutation. The completed local cutover records and consolidated agent documentation arrive in the final documentation PR; they do not imply that missing code exists in this intermediate branch.
 
 Python ApplicationRepository targets the actual seven-table UI model and NRRD files. SQLiteApplicationStorage remains an isolated sandbox and must not open app-model.sqlite. Current baseline contracts are preserved; proposed D1–D5 hardening and pre-model recovery are not inferred accepted. Intent/spec stay separate.
 
 ## Verification
 
-Install Python3.11+ in an isolated environment and run `python3 -m pip install -e backend/ai`.
+Install Python3.11+ in an isolated environment and run `python3 -m pip install -e backend/ai` with the test extra (`backend/ai[test]`) for API tests.
 
-From repo root: `PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py` → 83 tests/OK. No AWS/provider call is required.
+From repo root: `PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py` → 96 tests/OK. No AWS/provider call is required.
 
-The frontend remains current upstream Radix management/Cross-reference Workbench. Application backend authority is the existing Express runtime until the next dependent slice.
+Install app dependencies with cd app && npm ci. Set SKULLFIX_PYTHON to the installed interpreter, then run npm test, npm run build and npm run test:browser from app/. Existing upstream UI tests and both canvas journeys are retained. To start the built app, install backend dependencies into repo .venv, build, then cd app && npm start. Dev proxies /api to FastAPI(default8000); preview is frontend-only. Every test uses disposable roots. Do not run test scenarios on live data.
+
+The frontend remains current upstream Radix management/Cross-reference Workbench. Application backend authority is FastAPI/ApplicationRepository; no separate AI HTTP backend.

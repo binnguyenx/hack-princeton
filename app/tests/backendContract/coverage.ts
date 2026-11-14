@@ -1,0 +1,80 @@
+export const ROUTE_CONTRACT_COVERAGE = [
+  {
+    method: 'GET',
+    path: '/api/projects',
+    requirements: ['R1', 'R2', 'R14'],
+    scenarios: ['project listing/order', 'empty list', 'restart persistence'],
+  },
+  {
+    method: 'POST',
+    path: '/api/projects',
+    requirements: ['R1', 'R2', 'R14', 'R16'],
+    scenarios: ['project creation', 'missing/malformed/invalid/oversized JSON'],
+  },
+  {
+    method: 'GET',
+    path: '/api/projects/:id',
+    requirements: ['R1', 'R2', 'R3', 'R14'],
+    scenarios: ['nested manifest and identity graph', 'missing project', 'restart persistence'],
+  },
+  {
+    method: 'DELETE',
+    path: '/api/projects/:id',
+    requirements: ['R1', 'R10', 'R14'],
+    scenarios: ['project cascade', 'missing-project baseline'],
+  },
+  {
+    method: 'POST',
+    path: '/api/projects/:id/cases',
+    requirements: ['R1', 'R2', 'R3', 'R14', 'R16'],
+    scenarios: ['case creation/count', 'missing project', 'invalid body', 'post-restart write'],
+  },
+  {
+    method: 'DELETE',
+    path: '/api/projects/:id/cases/:caseId',
+    requirements: ['R1', 'R3', 'R10', 'R14'],
+    scenarios: ['case cascade', 'missing case', 'cross-project deletion baseline'],
+  },
+  {
+    method: 'POST',
+    path: '/api/projects/:id/cases/:caseId/samples',
+    requirements: ['R1', 'R3', 'R4', 'R5', 'R6', 'R14', 'R16'],
+    scenarios: ['multipart import', 'fallback/boolean/meta', 'malformed fields', 'wrong owner'],
+  },
+  {
+    method: 'GET',
+    path: '/api/samples/:id/volume',
+    requirements: ['R1', 'R5', 'R14'],
+    scenarios: ['byte/content-type equality', 'missing sample', 'cascade', 'restart persistence'],
+  },
+  {
+    method: 'DELETE',
+    path: '/api/samples/:id',
+    requirements: ['R1', 'R10', 'R14', 'R15'],
+    scenarios: ['sample cascade', 'missing-sample baseline'],
+  },
+  {
+    method: 'POST',
+    path: '/api/samples/:id/candidates',
+    requirements: ['R1', 'R3', 'R7', 'R14'],
+    scenarios: ['initial candidate/revision', 'unverified sample', 'missing sample'],
+  },
+  {
+    method: 'POST',
+    path: '/api/candidates/:id/transform',
+    requirements: ['R1', 'R6', 'R8', 'R9', 'R14', 'R16'],
+    scenarios: ['append transform', 'append after restore', 'invalid shape/elements', 'missing candidate'],
+  },
+  {
+    method: 'POST',
+    path: '/api/candidates/:id/restore',
+    requirements: ['R1', 'R9', 'R14', 'R16'],
+    scenarios: ['restore older revision', 'missing/cross-candidate revision', 'restart persistence'],
+  },
+  {
+    method: 'DELETE',
+    path: '/api/candidates/:id',
+    requirements: ['R1', 'R10', 'R14', 'R15'],
+    scenarios: ['preserve sample/shared volume', 'missing-candidate baseline'],
+  },
+] as const

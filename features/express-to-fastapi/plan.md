@@ -1,8 +1,8 @@
-# Plan: Python application repository and verified paired backups
+# Plan: FastAPI compatibility API, Express removal and current UI integration
 
 Spec: [spec.md](spec.md) · Status: done · Date:2026-11-14
 
-> Historical: records verified publication slice1, not completion of every migration target.
+> Historical: records verified publication slice2, not completion of every migration target.
 
 ## Files that change
 
@@ -10,12 +10,12 @@ The source/test paths in spec.md and stage-specific preflights, runtime dependen
 
 ## Proof
 
-Python runner expects83 passing tests for the available modules. Application tests verify copied Node data, transactions, rollback/cleanup baseline, restart, hashes, metadata, pointers and sandbox separation. Later API/browser/graph proofs are available only when their slices are present.
+Python runner expects96 passing tests for the available modules. Application tests verify copied Node data, transactions, rollback/cleanup baseline, restart, hashes, metadata, pointers and sandbox separation. Later API/browser/graph proofs are available only when their slices are present.
 
-- R1: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R2: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
+- R1: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R2: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R3: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
-- R4: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
+- R4: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R5: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R6: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R7: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
@@ -25,27 +25,27 @@ Python runner expects83 passing tests for the available modules. Application tes
 - R11: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R12: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R13: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
-- R14: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
+- R14: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R15: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
-- R16: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R17: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R18: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R19: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R20: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R21: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
+- R16: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R17: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R18: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R19: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R20: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R21: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R22: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R23: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 - R24: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
-- R25: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R26: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R27: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R28: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R29: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R30: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R31: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R32: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R33: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
-- R34: planned dependent-slice HTTP/browser/cutover proof; not implemented by this slice.
+- R25: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R26: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R27: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R28: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R29: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R30: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R31: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R32: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R33: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
+- R34: available-slice proof above; full end-to-end acceptance is recorded by the dependent slices.
 
 ## Deviations
 
