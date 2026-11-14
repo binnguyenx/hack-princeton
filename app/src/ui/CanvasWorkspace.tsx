@@ -4,11 +4,13 @@ import {
   Contrast,
   MapPin,
   MousePointer2,
+  Sparkles,
 } from 'lucide-react'
 import { CANVAS_HINTS } from './canvasFeatureHints'
 import { FeatureHint, FeatureHintProvider } from './FeatureHint'
 import { SliceDock } from './SliceDock'
 import { ViewFrame } from './ViewFrame'
+import { AiChatPanel } from './AiChatPanel'
 import type { Vec3 } from '../geometry/coordinates'
 import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
 
@@ -42,6 +44,8 @@ type Props = {
   onWindowChange?: (center: number, width: number) => void
   onPlace?: (point: IjkPoint) => void
   children: ReactNode
+  aiChatOpen?: boolean
+  onAiChatOpenChange?: (open: boolean) => void
 }
 
 const MODES = [
@@ -83,15 +87,24 @@ export function CanvasWorkspace({
   onWindowChange = () => {},
   onPlace = () => {},
   children,
+  aiChatOpen,
+  onAiChatOpenChange,
 }: Props) {
   const [sliceDockCollapsed, setSliceDockCollapsed] = useState(false)
   const [maximizedView, setMaximizedView] = useState<'three-d' | SlicePlaneId | null>(
     null,
   )
+  const [internalChatOpen, setInternalChatOpen] = useState(true)
+  const isChatOpen = aiChatOpen !== undefined ? aiChatOpen : internalChatOpen
+  const setChatOpen = onAiChatOpenChange ?? setInternalChatOpen
 
   return (
     <FeatureHintProvider>
-      <div className={`cross-reference-workbench ${selectedObjectId || inspectorVisible ? 'has-inspector' : ''}`}>
+      <div
+        className={`cross-reference-workbench ${
+          selectedObjectId || inspectorVisible ? 'has-inspector' : ''
+        } ${isChatOpen ? 'has-chat' : ''}`}
+      >
         <div className="canvas-context-strip" aria-label="Active mode options">
           <strong>{activeMode === 'window-level' ? 'Window / Level' : activeMode === 'place' ? 'Place' : 'View'}</strong>
           {activeMode === 'view' ? (
@@ -99,9 +112,19 @@ export function CanvasWorkspace({
               {operationLabel ?? 'LMB rotate · MMB pan · RMB drag zoom · Ctrl+LMB roll'}
             </span>
           ) : null}
-          {operationControls ? (
-            <div className="canvas-context-strip__actions">{operationControls}</div>
-          ) : null}
+          <div className="canvas-context-strip__actions">
+            {operationControls}
+            <button
+              type="button"
+              className={`canvas-context-action ${isChatOpen ? 'is-active' : ''}`}
+              aria-label={isChatOpen ? 'Collapse AI assistant' : 'Expand AI assistant'}
+              aria-pressed={isChatOpen}
+              onClick={() => setChatOpen(!isChatOpen)}
+            >
+              <Sparkles size={14} />
+              <span>AI Assistant</span>
+            </button>
+          </div>
           {activeMode === 'window-level' ? (
             <span className="canvas-context-hint">
               Drag to adjust brightness and contrast · Ctrl-drag samples a region
@@ -191,6 +214,27 @@ export function CanvasWorkspace({
             {inspector}
           </aside>
         ) : null}
+
+        {isChatOpen ? (
+          <aside className="canvas-chat-column" aria-label="AI workspace assistant">
+            <AiChatPanel
+              open={isChatOpen}
+              onOpenChange={setChatOpen}
+              contextLabel={documentName}
+            />
+          </aside>
+        ) : (
+          <button
+            type="button"
+            className="canvas-chat-edge-tab"
+            aria-label="Expand AI assistant"
+            onClick={() => setChatOpen(true)}
+            title="Expand AI workspace assistant"
+          >
+            <Sparkles size={14} />
+            <span>AI Assistant</span>
+          </button>
+        )}
 
         <footer className="canvas-workbench-status">
           {status ?? (
