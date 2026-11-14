@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "[ ! -f \".cursor/skills/impeccable/scripts/impeccable\" ] || \".cursor/skills/impeccable/scripts/impeccable\" hook",
+        "matcher": "^Write$",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/feature-close-stop.py",
+        "loop_limit": 2,
+        "timeout": 15
+      }
+    ]
+  }
+}
