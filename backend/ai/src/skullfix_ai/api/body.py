@@ -25,6 +25,7 @@ async def read_json_bytes(request):
         decoder = zstandard.ZstdDecompressor().decompressobj()
     chunks = []
     total = 0
+    gzip_padding = False
 
     def append(data):
         nonlocal total
@@ -39,6 +40,23 @@ async def read_json_bytes(request):
                 continue
             if decoder is None:
                 append(chunk)
+            elif encoding == 'gzip':
+                # A decoder stops at one member; unused_data belongs to the next.
+                # Keep one cumulative output budget across members and HTTP chunks.
+                pending = chunk
+                while pending:
+                    if decoder.eof:
+                        # Permit trailing zero padding, but never hide later data.
+                        if pending.startswith(b'\0'):
+                            if pending.strip(b'\0'):
+                                raise BodyReadError(400)
+                            gzip_padding = True
+                            break
+                        if gzip_padding:
+                            raise BodyReadError(400)
+                        decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+                    append(decoder.decompress(pending, JSON_LIMIT - total + 1))
+                    pending = decoder.unused_data if decoder.eof else decoder.unconsumed_tail
             elif encoding == 'br':
                 append(decoder.process(chunk, output_buffer_limit=JSON_LIMIT - total + 1))
                 while not decoder.can_accept_more_data():

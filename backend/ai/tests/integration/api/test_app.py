@@ -129,6 +129,88 @@ class ApiTransportTest(unittest.TestCase):
         self.assertEqual(400, broken.status_code)
         self.assertIn('text/html', broken.headers['content-type'])
 
+    def test_json_split_across_gzip_members_is_decoded_before_parsing(self):
+        payload = gzip.compress(b'{"name":') + gzip.compress(b'"multi-member project"}')
+        response = self.client.post('/api/projects', content=payload,
+            headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+        self.assertEqual(201, response.status_code, response.text)
+        self.assertEqual(['multi-member project'], self.repo.created)
+
+    def test_invalid_or_truncated_gzip_tail_never_reaches_repository(self):
+        first = gzip.compress(b'{"name":"must not be written"}')
+        tails = [gzip.compress(b'not JSON'), b'not gzip', gzip.compress(b' ')[:-1], b'\x1f']
+        for tail in tails:
+            with self.subTest(tail=tail[:12]):
+                response = self.client.post('/api/projects', content=first + tail,
+                    headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+                self.assertEqual(400, response.status_code, response.text)
+                self.assertIn('text/html', response.headers['content-type'])
+                self.assertEqual([], self.repo.created)
+
+    def test_gzip_zero_padding_is_accepted_but_nonzero_data_after_padding_is_not(self):
+        import asyncio
+        import httpx
+        first, second = gzip.compress(b'{"name":'), gzip.compress(b'"padded"}')
+
+        async def send(parts):
+            async def content():
+                for part in parts:
+                    yield part
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url='http://test') as client:
+                return await client.post('/api/projects', content=content(),
+                    headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+
+        # Padding can start in the same receive event or a later one.
+        for parts in ([first + second + b'\0' * 8], [first, second, b'\0', b'\0' * 7]):
+            response = asyncio.run(send(parts))
+            self.assertEqual(201, response.status_code, response.text)
+        self.assertEqual(['padded', 'padded'], self.repo.created)
+        for parts in ([first + second + b'\0bad'], [first, second, b'\0', b'bad']):
+            response = asyncio.run(send(parts))
+            self.assertEqual(400, response.status_code, response.text)
+            self.assertEqual(['padded', 'padded'], self.repo.created)
+
+    def test_combined_gzip_output_limit_includes_later_members(self):
+        limit = 10 * 1024 * 1024
+        document = b'{"name":"at limit"}'
+        first = gzip.compress(document)
+        # Neither member alone exceeds the budget; their combined output does.
+        oversized = first + gzip.compress(b' ' * (limit - len(document) + 1))
+        rejected = self.client.post('/api/projects', content=oversized,
+            headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+        self.assertEqual(413, rejected.status_code, rejected.text)
+        self.assertIn('text/html', rejected.headers['content-type'])
+        self.assertEqual([], self.repo.created)
+        accepted = self.client.post('/api/projects', content=first + gzip.compress(b' ' * (limit - len(document))),
+            headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+        self.assertEqual(201, accepted.status_code, accepted.text)
+        self.assertEqual(['at limit'], self.repo.created)
+
+    def test_gzip_members_survive_http_chunk_boundaries(self):
+        import asyncio
+        import httpx
+        first, second = gzip.compress(b'{"name":'), gzip.compress(b'"streamed"}')
+        raw = first + second
+
+        async def send_chunks(parts):
+            async def content():
+                for part in parts:
+                    yield part
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url='http://test') as client:
+                return await client.post('/api/projects', content=content(),
+                    headers={'content-type': 'application/json', 'content-encoding': 'gzip'})
+
+        for parts in ([first, second], [raw[i:i + 1] for i in range(len(raw))]):
+            response = asyncio.run(send_chunks(parts))
+            self.assertEqual(201, response.status_code, response.text)
+        self.assertEqual(['streamed', 'streamed'], self.repo.created)
+        for tail, expected in [(gzip.compress(b'not JSON'), 400), (second[:-1], 400),
+                               (gzip.compress(b' ' * (10 * 1024 * 1024)), 413)]:
+            # Later members arrive in a different receive event from the first.
+            response = asyncio.run(send_chunks([gzip.compress(b'{"name":"blocked"}'), tail]))
+            self.assertEqual(expected, response.status_code, response.text)
+            self.assertEqual(['streamed', 'streamed'], self.repo.created)
+
     def test_uploaded_filename_fallback_strips_posix_and_windows_paths(self):
         for filename in ['folder/source.nrrd', r'folder\source.nrrd', r'C:\fakepath\source.nrrd']:
             response = self.client.post('/api/projects/project/cases/case/samples',
