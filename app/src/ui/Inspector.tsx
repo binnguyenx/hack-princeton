@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import {
   Sparkles,
   ChevronRight,
@@ -7,28 +7,19 @@ import {
   Sliders,
 } from 'lucide-react'
 import type { Candidate, EditorState, Sample } from '../domain/types'
-import { ReadOnlyChatPanel } from './ReadOnlyChatPanel'
 
 export type InspectorProps = {
   state: EditorState | null
   activeTool: string
-  activeCaseId?: string | null
   onRestoreRevision: (candidateId: string, revisionId: string) => void
-  voxelControls?: ReactNode
-  annotationControls?: ReactNode
-  constructionControls?: ReactNode
   restoreDisabled?: boolean
 }
 
 export function Inspector({
   state,
   activeTool,
-  activeCaseId = null,
   onRestoreRevision,
   restoreDisabled,
-  voxelControls,
-  annotationControls,
-  constructionControls,
 }: InspectorProps) {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -90,9 +81,6 @@ export function Inspector({
       </div>
 
       <div className="inspector-body">
-        {constructionControls}
-        {annotationControls}
-        {voxelControls}
         {activeDoc ? (
           <>
             <div className="inspector-section">
@@ -116,14 +104,8 @@ export function Inspector({
                 </div>
                 <div className="inspector-meta-grid">
                   <div className="meta-pair">
-                    <span className="meta-label">Document ID</span>
+                    <span className="meta-label">ID</span>
                     <span className="meta-value font-mono">{activeDoc.id.slice(0, 14)}…</span>
-                  </div>
-                  <div className="meta-pair">
-                    <span className="meta-label">Selected object</span>
-                    <span className="meta-value font-mono" title={state.view.selectionObjectId ?? undefined}>
-                      {state.view.selectionObjectId ? `${state.view.selectionObjectId.slice(0, 14)}…` : 'None'}
-                    </span>
                   </div>
                   <div className="meta-pair">
                     <span className="meta-label">Active Tool</span>
@@ -179,7 +161,7 @@ export function Inspector({
                         <div className="revision-badge">R{rev.order}</div>
                         <div className="revision-info">
                           <strong>
-                            {rev.order === 0 ? 'Initial Template' : rev.provenance?.operation === 'voxel.box' ? 'Voxel Box Edit' : rev.provenance?.operation === 'reconstruct.mirror-roi' ? 'Grid Mirror Completion' : 'Transform Pose Applied'}
+                            {rev.order === 0 ? 'Initial Template' : `Transform Pose Applied`}
                           </strong>
                           <span className="revision-hash font-mono">
                             {rev.id.slice(0, 12)}…
@@ -207,8 +189,6 @@ export function Inspector({
                 </div>
               </div>
             ) : null}
-
-            <ReadOnlyChatPanel state={state} activeCaseId={activeCaseId} />
           </>
         ) : (
           <div className="inspector-empty">
