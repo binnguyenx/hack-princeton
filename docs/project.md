@@ -14,7 +14,7 @@ A 3D design workspace for cranial vault reconstruction (cranioplasty): inspect a
 
 ## Architecture at a glance
 
-Greenfield. Expected responsibilities (not yet implemented): canvas/case state, geometry tools, reconstruction generator, AI agent + tool use, evidence retrieval, persistence. Stack and service boundaries are undecided; define them in feature specs as they land.
+Greenfield. Expected responsibilities (not yet implemented): canvas/case state, geometry tools, reconstruction generator, AI agent + tool use, evidence retrieval, persistence. Initial editor stack and UI system: see `PRODUCT.md` and `DESIGN.md`; remaining service boundaries land in feature specs.
 
 Draft product intent (not yet an accepted feature folder): `hackprinceton_intent.md`.
 
@@ -30,6 +30,21 @@ Status values: proposed, in progress, shipped, retired.
 
 1. Promote product direction into accepted feature intents/specs via intent-spec-plan (starting from `hackprinceton_intent.md` as draft input).
 2. Order concrete features once the first intents are accepted.
+
+
+## Design system
+
+Agents building or changing UI / front-end must follow this system (also summarized in `AGENTS.md`):
+
+| File | Role |
+|-|-|
+| [`PRODUCT.md`](../PRODUCT.md) | Product truth and brand commitments |
+| [`DESIGN.md`](../DESIGN.md) | Visual tokens and Do’s/Don’ts (source of truth) |
+| [`design-conventions.md`](design-conventions.md) | 3D editor interaction conventions (R14) |
+| [`.impeccable/design.json`](../.impeccable/design.json) | Shadows, focus, motion sidecar |
+| [`.impeccable/reference/ui-styling-medit-soft.jpg`](../.impeccable/reference/ui-styling-medit-soft.jpg) | Styling feel reference (not layout) |
+
+Stack for the first editor shell is recorded in `PRODUCT.md` (Vite + React + TypeScript + Three.js).
 
 ## Glossary
 
