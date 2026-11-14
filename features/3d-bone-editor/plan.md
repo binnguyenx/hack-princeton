@@ -1,6 +1,6 @@
 # Plan: Initial 3D bone editor
 
-Spec: [spec.md](spec.md) · Status: draft (Close: not done — Proof failed) · Date: 2026-11-14
+Spec: [spec.md](spec.md) · Status: draft · Date: 2026-11-14
 
 ## Approach
 
