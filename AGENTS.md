@@ -73,7 +73,11 @@ Rules:
 
 ## Build / test / lint
 
-Not established yet (greenfield). When commands exist, record them here with what a healthy run looks like.
+```bash
+cd app && npm install && npm run sync:fixtures && npm test && npm run build
+```
+
+Healthy: Vitest reports all tests passed; `npm run build` completes. Dev: `npm run dev` then open the printed URL. Sample inspection: `data/README.md`.
 
 ## Conventions agents get wrong
 

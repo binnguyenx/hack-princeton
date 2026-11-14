@@ -28,7 +28,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 
 | Feature | Status | What it does |
 |-|-|-|
-| [3D bone editor](../features/3d-bone-editor/intent.md) | proposed | Local projects with multiple samples, editable candidates, and recoverable revision history. Intent accepted; spec draft. |
+| [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
 
 Status values: proposed, in progress, shipped, retired.
 
