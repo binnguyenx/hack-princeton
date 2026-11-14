@@ -48,16 +48,34 @@ export type CandidateRevision = {
 export type Candidate = {
   objectId: string
   sampleId: string
+  displayName?: string
   currentRevisionId: string
 }
 
 export type Sample = {
   id: string
   caseId: string
+  displayName?: string
   license: string
   spatiallyVerified: boolean
   sourceAnatomy: SourceAnatomy
   sourceSampleDir?: string
+  /** Relative or package path to committed smooth display mesh (R24). */
+  displayMeshAsset?: string
+}
+
+export type DocumentKind = 'sample' | 'candidate'
+
+export type OpenDocument = {
+  id: string
+  kind: DocumentKind
+}
+
+export type ProjectSummary = {
+  id: string
+  name: string
+  updatedAt: string
+  caseCount: number
 }
 
 export type Case = {
@@ -103,6 +121,9 @@ export type EditorState = {
   view: ViewState
   volumes: VolumeStore
   dirty: boolean
+  /** Taskbar tabs: open samples and candidates (R29). */
+  openDocuments: OpenDocument[]
+  activeDocumentId: string | null
 }
 
 export type OpResult<T = void> =

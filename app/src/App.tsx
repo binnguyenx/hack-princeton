@@ -135,6 +135,8 @@ export default function App() {
       view: manifest.viewState,
       volumes,
       dirty: false,
+      openDocuments: [],
+      activeDocumentId: null,
     })
     await buildMeshFromState()
   }

@@ -223,5 +223,7 @@ export function seedEmptyProject(ctx: OpsContext): void {
     view: emptyViewState(),
     volumes: new Map(),
     dirty: false,
+    openDocuments: [],
+    activeDocumentId: null,
   })
 }

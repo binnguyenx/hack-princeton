@@ -27,6 +27,8 @@ export type ProjectManifest = {
   candidates: Candidate[]
   revisions: CandidateRevision[]
   viewState: ViewState
+  openDocuments?: EditorState['openDocuments']
+  activeDocumentId?: string | null
 }
 
 export async function saveProjectPackage(
@@ -43,6 +45,8 @@ export async function saveProjectPackage(
     candidates: state.candidates,
     revisions: state.revisions,
     viewState: state.view,
+    openDocuments: state.openDocuments,
+    activeDocumentId: state.activeDocumentId,
   }
   await writeFile(path.join(dir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
   for (const [volumeId, bytes] of state.volumes) {
@@ -95,6 +99,8 @@ export async function loadProjectPackage(dir: string): Promise<EditorState> {
     view: manifest.viewState ?? emptyViewState(),
     volumes,
     dirty: false,
+    openDocuments: manifest.openDocuments ?? [],
+    activeDocumentId: manifest.activeDocumentId ?? null,
   }
 }
 
