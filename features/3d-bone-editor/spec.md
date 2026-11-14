@@ -2,96 +2,118 @@
 
 Intent: [intent.md](intent.md) · Status: draft · Last updated: 2026-11-14
 
+Pre-lock wording is recoverable from git (`HEAD` / last committed `features/3d-bone-editor/spec.md` before this working-tree edit), not a side file.
+
 ## Summary
 
-The editor opens one local project at a time. A case contains multiple bone samples, each with protected source anatomy and independently editable candidates whose revisions survive reopening. Users control the workspace through shared operations that developers can call directly and future agent tools can expose.
+The editor opens one local project at a time. A project has a seed owner user and many cases. Each case holds prepared NRRD bone samples with protected source anatomy and independently editable candidates whose revisions survive reopening. Display meshes are derived for the viewport only. Users and developers share the same operations. This phase ships import, inspect, create candidate, rigid transform, revision restore, and portable save/open—not voxel sculpt, annotate, measure, or compare.
 
 ## Requirements
 
+Prior wording: `git show HEAD:features/3d-bone-editor/spec.md`.
+
 - R1. A case can contain at least two samples, and each sample can contain at least two candidates. Every candidate identifies its owning sample.
-- R2. Import preserves the source geometry's units, orientation, and spatial placement. Missing metadata that prevents interpretation must be reported before the sample is treated as spatially verified.
-- R3. Each sample's rendered geometry must agree with independently checked reference dimensions and orientation under the verification method and tolerance selected for its format (Q1).
-- R4. Editing a candidate must leave its source anatomy and sibling candidates unchanged.
-- R5. Camera navigation and visibility changes must leave source and candidate geometry unchanged.
+- R2. Import of prepared NRRD source anatomy preserves units, orientation, and spatial placement. Missing metadata that prevents interpretation must be reported before the sample is treated as spatially verified.
+- R3. Each sample's rendered geometry must agree with independently checked reference dimensions and orientation for NRRD: compare spacing/bbox (and documented orientation) to values in that sample's `metadata.json` within the tolerance recorded there (or the project default once samples are curated).
+- R4. `createCandidate`, `transformCandidate` Apply, and `restoreRevision` on one candidate must leave its source anatomy and sibling candidates unchanged.
+- R5. Camera navigation, visibility changes, and inspection-plane view clips must leave source and candidate geometry unchanged.
 - R6. Every supported control operation must have a documented name, inputs, target, result, and failure behavior. Inspection/view operations and project-data changes must be distinguishable in this interface.
-- R7. UI controls and direct developer calls must invoke the same operations with the same validation, source protection, and edit recovery behavior. The exact mechanical tool list is settled through Q2.
+- R7. UI controls and direct developer calls must invoke the same operations with the same validation, source protection, and edit recovery behavior. Included ops: `navigateCamera`, `setVisibility`, `setInspectionPlane`, `selectObject`, `importSample`, `createCandidate`, `transformCandidate`, `restoreRevision`, `saveProject`, `openProject`, `readState`.
 - R8. Callers can read object identifiers, ownership, active candidate revision, selection, and relevant view state without changing them.
-- R9. A rejected, cancelled, or failed edit must leave the last completed candidate state and recorded history unchanged and report its outcome to the caller.
-- R10. Each candidate has its own recorded revisions. Users can identify their order, inspect earlier geometry, and recover an earlier version without changing another candidate.
-- R11. Local saving and reopening must preserve case/sample/candidate ownership, source data and spatial metadata, recorded revisions, and each candidate's current revision. Included annotations, measurements, and workspace state must also be restored; exact view-state fields are settled through Q3.
+- R9. A rejected, cancelled (including Esc before Apply), or failed edit must leave the last completed candidate state and recorded history unchanged and report its outcome to the caller.
+- R10. Each candidate has its own recorded revisions. A completed Apply of a geometry/pose op creates a revision; in-progress drag does not. Users can identify revision order, inspect earlier geometry, and restore an earlier version without changing another candidate.
+- R11. Local portable save and reopen must preserve user/project/case/sample/candidate ownership, source NRRD data and spatial metadata, recorded revisions, each candidate's current revision, and workspace view state for selection, camera, visibility, and inspection plane.
 - R12. A failed save must not be reported as successful. The editor must retain the unsaved work in the running session and expose the failure.
-- R13. If annotation or measurement tools are included, their records must identify the object they describe. Measurements must identify the geometry revision used; a result from an earlier revision must not appear current after an edit.
-- R14. Before interface implementation, a project-wide Markdown convention file must define layout, visual styles, selection/tool/error states, mouse/trackpad interactions, and the shortcut mapping. The editor must expose included operations through visible controls and distinguish navigation from editing.
-- R15. The project directory must contain actual data files for at least two distinct samples, with source, license, and local path records. Both must pass import and rendering checks. The implementation plan must explicitly include acquisition and storage of these files.
+- R13. (removed) Annotation and measurement tools are out of scope this phase.
+- R14. The editor must follow `DESIGN.md` and `docs/design-conventions.md` for layout, visual styles, selection/tool/error states, mouse/trackpad interactions, and shortcuts. It must expose included operations through visible controls and distinguish navigation from editing.
+- R15. Acquire the SkullFix/SkullBreak training archive into `data/raw/` (gitignored), curate at least two distinct samples into `data/samples/` with source, license, and local path records, and verify both import and render. Download links alone do not satisfy this requirement.
 - R16. The development setup must let a coding agent open the running frontend, exercise controls, capture the 3D viewport, and inspect console errors through browser automation/MCP access.
 - R17. The coding agent can inspect locally stored sample files and their metadata, saved project records, and candidate revision records. It can trace a rendered object's ID back to its source sample or candidate revision.
-- R18. The coding agent can inspect live scene objects by ID, including ownership, geometry representation and dimensions, units, spatial transforms, visibility, selection, and current revision. It can invoke supported operations through the shared interface and read the resulting state without bypassing validation or history handling.
+- R18. The coding agent can inspect live scene objects by ID via `window.__hackPrincetonDebug`, including ownership, geometry representation and dimensions, units, spatial transforms, visibility, selection, and current revision. It can invoke supported operations through the shared interface and read the resulting state without bypassing validation or history handling.
 - R19. The implementation plan must explicitly configure the required development MCP connections and app debug interface, document setup and launch steps, and verify browser, data, and live-object access. Reuse available tools where sufficient; add missing access rather than assuming browser access exposes application data automatically.
+- R20. `(added)` `createCandidate` must reject a sample that is not spatially verified. No candidate or revision is created.
+- R21. `(added)` `openProject` is atomic: if any required volume blob is missing or unreadable, open fails, the error is reported, and any previously open project remains loaded unchanged.
+- R22. `(added)` When the UI opens another project while the current session is dirty, it must offer Save / Discard / Cancel and must not replace in-memory state on Cancel.
 
 ## Success criteria
 
-- S1. Open the two stored samples in one case and create two candidates for one sample. After editing one candidate, compare the source and sibling geometries with their prior states: both are unchanged. Verifies R1, R4, R15.
-- S2. For each stored sample, check physical dimensions, orientation, and placement against the reference defined in Q1. Repeat with missing required metadata and confirm the sample is not presented as verified. Verifies R2–R3.
-- S3. From equivalent starting states, invoke an included edit through the UI and directly through the operation interface. Both yield equivalent geometry and history. Invalid targets, cancellation, and an induced operation failure leave the prior completed state intact. Verifies R6–R9.
-- S4. Navigate the camera and change visibility, then compare geometry before and after. Read state through the developer interface and confirm the object identifiers and view state match the workspace. Verifies R5, R8.
-- S5. Record multiple revisions on one candidate and recover an earlier version. Save, close, and reopen the project; verify relationships, geometry, history, and the current revision. An induced save failure is shown and leaves the in-session work available. Verifies R10–R12.
-- S6. If measurements are included, measure a candidate and then edit it. The prior result remains associated with its original revision and is not displayed as current. Reopen the project and verify those associations remain. Verifies R11, R13.
-- S7. Review every included control against the convention file. Verifies R14.
-- S8. Follow the documented development setup from a fresh session. Have the coding agent load a stored sample, capture the viewport, inspect the console, read the sample's metadata, and resolve a rendered object to its live state and stored data. Invoke a supported candidate edit through the shared interface, inspect its result and revision, then save and inspect the saved record. Retain the tool outputs as evidence. Verifies R16–R19.
+- S1. Open the two stored samples in one case and create two candidates for one sample. After a transform Apply on one candidate, source and sibling geometries match their prior states. Verifies R1, R4, R15.
+- S2. For each stored sample, check spacing/bbox/orientation against `metadata.json` within tolerance. Repeat with missing required metadata and confirm the sample is not presented as verified; `createCandidate` on it fails (R20). Verifies R2–R3, R20.
+- S3. From equivalent starting states, invoke `transformCandidate` Apply through the UI and through the operation interface. Both yield equivalent geometry and history. Invalid targets, Esc cancel before Apply, and an induced operation failure leave the prior completed state intact. Verifies R6–R9.
+- S4. Navigate the camera, change visibility, and move the inspection plane, then compare geometry before and after. Read state through `readState` / `__hackPrincetonDebug` and confirm identifiers and view state match. Verifies R5, R8.
+- S5. Record multiple revisions on one candidate (Applies only), restore an earlier version, save, close, and reopen; verify relationships, geometry, history, current revision, and view fields in R11. An induced save failure is shown and leaves in-session work available. Verifies R10–R12.
+- S6. (removed) Measurements are out of scope; R13 removed.
+- S7. Review every included control against `DESIGN.md` and `docs/design-conventions.md`. Verifies R14.
+- S8. Follow `docs/dev-mcp-setup.md` from a fresh session. Load a stored sample, capture the viewport, inspect the console, read metadata, resolve a rendered object via `__hackPrincetonDebug`, run `createCandidate` + `transformCandidate` through the bridge, save, and inspect the saved record. Retain tool outputs. Verifies R16–R19.
+- S9. `(added)` Attempt `openProject` with a missing blob while another project is open: open fails; prior project still loaded. Verifies R21.
+- S10. `(added)` With dirty unsaved edits, start UI open of another project: Cancel leaves the first project loaded; Discard then open replaces; Save success then open replaces. Verifies R22.
 
 ## Design
 
-The logical records below describe ownership, not a database or file format choice. IDs remain stable across saving and reopening so separate records can refer to the same objects.
+Prepared **binary NRRD volumes** are the authoritative geometry (SkullFix/SkullBreak-style). The app derives display meshes for Three.js; meshes are not independently saved as source of truth. Raw CT → segmentation is out of this feature (offline acquisition only).
+
+Logical records (IDs stable across save/reopen):
 
 | Record | Relationships and required information |
 | --- | --- |
-| Project | ID, case ownership, saved workspace state. One project is open at a time. |
-| Case | ID, project ID, associated samples. Whether a project needs multiple cases remains open. |
-| Sample | ID, case ID, source anatomy, source/license information. A sample may contain several input files. |
-| Source anatomy | Object ID, sample ID, protected geometry/data, units and spatial metadata. |
-| Candidate | Object ID, sample ID, current revision reference. Alternatives have separate candidate IDs. |
-| Candidate revision | Revision ID, candidate ID, order/history relationship, recoverable geometry and spatial state. Checkpoint timing and change metadata remain open. |
-| Annotation, if included | ID, target object, annotation content and spatial attachment. Behavior after geometry changes remains open. |
-| Measurement, if included | ID, target object and revision, measurement definition, value and units or an unavailable reason. |
+| User `(added)` | ID, displayName. Seed `local-dev` for fixtures; no auth UI this phase. |
+| Project | ID, ownerUserId, case ownership, saved workspace state. One project open at a time. |
+| Case | ID, projectId, associated samples. A project may have many cases. |
+| Sample | ID, caseId, source anatomy, source/license, spatiallyVerified flag. |
+| Source anatomy | Object ID, sampleId, protected NRRD geometry, units and spatial metadata. |
+| Candidate | Object ID, sampleId, current revision reference. |
+| Candidate revision | Revision ID, candidateId, order, recoverable volume and/or pose state. Created on each completed Apply of a geometry/pose op (Q7-A). |
+| Annotation / Measurement | Deferred this phase; not required records. |
 
-Annotations and measurements are separate records linked to objects; they may become separate tables if a database is selected. Revision geometry must remain recoverable, but full snapshots versus stored changes is a later storage decision. Display simplification must not silently replace the geometry used for edits or measurements.
+Samples in the same case are **not** assumed spatially aligned. Co-display does not imply registration.
 
-Buttons, gestures, and keybinds call the shared operation interface. Operations validate their target and inputs, perform the change, and report a result or failure. Geometry changes enter candidate history according to the checkpoint policy. View changes update workspace state without becoming geometry edits. The read interface lets callers resolve targets and verify results. Future API/MCP adapters reuse these interfaces.
+Shared `ops/` validate targets, protect source anatomy, and report failures. View ops (camera, visibility, inspection plane) never write candidate history. Edit ops (create candidate, transform Apply, restore revision) do. UI, shortcuts, and `window.__hackPrincetonDebug` call the same ops.
 
-Development debugging needs three connected views: browser behavior, stored data, and live application objects. Browser automation provides interaction and visual/error evidence. Local data access exposes source files and persisted records. An app debug interface exposes live object state and shared operations, using the same IDs as storage. Wire these views into the coding agent's tools during this phase. The exact MCP tools and connection mechanism depend on the chosen runtime; this does not require a separate server for each view.
+Edge rules (locked):
 
-Each sample retains its own spatial metadata. Putting samples in the same case does not establish that they are aligned; simultaneous overlays and alignment behavior require a decision in Q1.
+1. `createCandidate` rejects unverified samples.
+2. `openProject` is atomic: missing/unreadable blob → fail; prior open project unchanged.
+3. UI open while dirty → Save / Discard / Cancel before replacing memory.
+
+Visual / interaction system of record: `DESIGN.md` (hack-princeton) + `docs/design-conventions.md` + `.impeccable/design.json`.
 
 ## Where it lives
 
-- Feature documents: `features/3d-bone-editor/`.
-- Product context and feature index: `hackprinceton_intent.md` and `docs/project.md`.
-- Proposed design convention file: `docs/design-conventions.md` (not created yet).
-- Application, sample-data, test, MCP configuration, and debug-interface locations are not established. The plan must name them after the runtime and format decisions.
+- Feature documents: `features/3d-bone-editor/`
+- Product / design: `PRODUCT.md`, `DESIGN.md`, `docs/design-conventions.md`, `docs/project.md`, `hackprinceton_intent.md`
+- App (planned): `app/` (Vite + React + TypeScript + Three.js)
+- Samples / fixtures (planned): `data/raw/` (full archive, gitignored), `data/samples/` (curated committed NRRDs), `data/fixtures/demo-project/`
+- Ops catalog / MCP setup (planned): `docs/ops-catalog.md`, `docs/dev-mcp-setup.md`
+- Debug bridge (planned): `app/src/debug/bridge.ts` → `window.__hackPrincetonDebug`
 
 ## Decisions
 
-- D1. Keep multiple samples per case and multiple candidates per sample. This separates source examples from alternative designs.
-- D2. Track revisions within each candidate. A new version of one design does not become a different candidate automatically.
-- D3. Protect source anatomy and keep view state separate from geometry. Inspection must not alter the reference used for editing.
-- D4. Share operations across UI and programmatic callers. This keeps validation and recovery behavior consistent when agent tools are added.
-- D5. Store sample files inside the repository's project directory. Download links alone cannot support reproducible local checks.
+- D1. Multiple samples per case and multiple candidates per sample. Why: separate source examples from alternative designs.
+- D2. Revisions live on each candidate; a new version is not automatically a new candidate.
+- D3. Protect source anatomy; view state ≠ geometry.
+- D4. Shared operations for UI and programmatic callers.
+- D5. Curated sample files committed under the repo (`data/samples/`). Download links alone do not satisfy checks.
+- D6. `(added)` Canonical geometry is prepared NRRD; display meshes are derived only. Why: matches SkullFix data and keeps edits/measurements-capable truth on volumes later.
+- D7. `(added)` Project → many Cases; seed User `local-dev` without auth. Why: multi-case product model + multi-dev fixture consistency.
+- D8. `(added)` Portable local project package; manual save/open. Why: simplest R11/R12 story. Autosave/export deferred.
+- D9. `(added)` Included ops this phase: navigateCamera, setVisibility, setInspectionPlane, selectObject, importSample, createCandidate, transformCandidate (Apply), restoreRevision, saveProject, openProject, readState. Deferred: trim, brush, mask, annotate, constrain, measure, compare.
+- D10. `(added)` Revision on each completed Apply; drag is transient until Apply; restore sets current pointer; no branching. Cmd/Ctrl+Z maps to restoreRevision via ops.
+- D11. `(added)` UI system is hack-princeton (`DESIGN.md` + conventions). Product display name undecided—do not hard-code SkullFix in chrome.
+- D12. `(added)` Acquire full SkullFix/SkullBreak training archive into `data/raw/` (gitignored), then curate two project samples into `data/samples/`. Why: reproducible subset without committing the whole dataset.
+- D13. `(added)` Edge rules: reject createCandidate on unverified; atomic open keeps prior project; dirty UI switch uses Save/Discard/Cancel.
 
 ## Flagged concerns
 
-- The format, tool list, tolerances, and runtime are unresolved. R2–R3 and R7 cannot become executable acceptance tests until those decisions are made.
-- “Git-ish” establishes recoverable candidate history, but does not yet decide checkpoint timing, restoration semantics, branching, or merging. No full Git behavior is assumed.
-- Candidate history can retain substantial geometry data. Storage limits and save-failure recovery must be designed against the acquired samples before the plan is accepted.
-- No application or acquired sample data exists in the inspected repository. R15–R16 describe required delivery work, not completed checks.
+- Resolved: Format, tool list, runtime, design conventions—see D6–D13 and `PRODUCT.md` / `DESIGN.md`.
+- Resolved: Checkpoint timing—Apply creates revision (D10). Branching/merging remain out of scope.
+- Resolved: Requirement wording choices applied (R1–R22, S1–S10).
+- Candidate history can retain large volumes; prefer pose deltas for transform revisions where safe; design against acquired samples.
+- No application code or acquired sample NRRDs in-repo yet. R15–R16 remain delivery work.
 
 ## Open questions
 
-1. Which source and file format will supply the two samples: prepared volume, surface mesh, or raw scans? Choose supported variants, metadata handling, reference checks, tolerances, and size limits. Define what relates samples in a case and whether users view them separately or overlay aligned samples.
-2. How does a candidate enter the workspace, and which exact edits, annotations, and measurements are included? Define targets, invalid inputs, cancellation, and units for each tool before implementation.
-3. When are revisions recorded, and what change details do they retain? How do restore and undo/redo interact? Decide branching/merging scope, whether multiple cases are needed, local file versus app-managed storage, save/autosave policy, saved view state, restart recovery, and geometry export needs. Define annotation behavior after edits if annotations are included.
-4. Which visual reference, panel layout, device interactions, and minimal keybinds go into the global conventions? Specify shortcut behavior while typing.
-5. Which runtime, OS/devices, offline requirements, and performance targets must the stack support? Select rendering, geometry, state, and storage tools after Q1–Q2. Verify existing browser automation/MCP access before adding setup.
+1. Concrete R3 numeric tolerance (and per-sample `metadata.json` reference values) once the two curated samples are chosen from the raw archive.
 
 ## Out of scope
 
-Clinical approval, manufacturing readiness, and universal bone reconstruction are excluded by the parent intent. Proposed initial-editor exclusions remain AI generation, model training, in-app chat, evidence retrieval, cloud collaboration, and production-facing external API/MCP control adapters. Development MCP setup and debug access are included in this phase. Raw CT preparation and advanced revision behavior remain open decisions, not assumed capabilities.
+Clinical approval, manufacturing readiness, universal bone reconstruction. This phase also excludes: planar trim, brush, preservation mask, annotate, constrain, measure, compare, in-app raw CT/DICOM segmentation, AI generation, model training, in-app chat, evidence retrieval, cloud collaboration, auth/OAuth, branching/merging, autosave, geometry export, production-facing external API/MCP adapters. Development MCP + `__hackPrincetonDebug` are in scope.

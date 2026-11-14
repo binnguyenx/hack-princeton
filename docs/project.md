@@ -20,11 +20,15 @@ Greenfield. Expected responsibilities (not yet implemented): canvas/case state, 
 
 Draft product intent (not yet an accepted feature folder): `hackprinceton_intent.md`.
 
+## Sample data
+
+Curated SkullBreak cases for manual inspection and later training: [`data/`](../data/README.md) (`samples/` committed; `raw/` zip gitignored). Inspection steps for humans and agents are in that README.
+
 ## Features
 
 | Feature | Status | What it does |
 |-|-|-|
-| [3D bone editor](../features/3d-bone-editor/intent.md) | proposed | Local projects with multiple samples, editable candidates, and recoverable revision history. Intent accepted; spec draft. |
+| [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
 
 Status values: proposed, in progress, shipped, retired.
 

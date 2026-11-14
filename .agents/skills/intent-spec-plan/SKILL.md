@@ -93,7 +93,7 @@ Two kinds of departure, handled differently:
 - The *behavior* departs from the spec → stop and tell the user. Changing what the feature does is a decision, not a detail.
 
 ### 5. Close
-Run the checks in `references/verification.md`. Then bring the docs up to date: spec's "Where it lives", Decisions and "Last updated"; plan status to `done` with the historical banner; the feature's row in the `docs/project.md` index; and `AGENTS.md` (or tool-specific deltas) if something project-wide came up (a command, a convention, a mistake agents repeated). Report what changed.
+Run the checks in `references/verification.md`. Then bring the docs up to date: spec's "Where it lives", Decisions and "Last updated"; plan status to `done` with the historical banner; the feature's row in the `docs/project.md` index; and `AGENTS.md` (or tool-specific deltas) if something project-wide came up (a command, a convention, a mistake agents repeated). Report what changed. On this repo, Cursor's `stop` hook (`.cursor/hooks/feature-close-stop.py`) auto-prompts this step if you stop after major code+feature work without a Close report — do not rely on the hook; Close yourself.
 
 ## Bootstrap
 

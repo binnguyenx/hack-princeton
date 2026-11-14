@@ -1,0 +1,46 @@
+{
+  "sampleId": "skullbreak-001-frontoorbital",
+  "source": "SkullBreak training (AutoImplant 2021 Task 1)",
+  "license": "CC BY-NC-SA 4.0",
+  "sourceArchive": "data/raw/skullbreak_training.zip",
+  "sourceCaseId": "001",
+  "defectType": "frontoorbital",
+  "primaryVolume": "defective_skull.nrrd",
+  "files": {
+    "complete_skull.nrrd": {
+      "sha256": "36e827a63aadc42cd68e1d5f26184713837c333bee897bad17b0068fe941aae0",
+      "byteSize": 490775
+    },
+    "defective_skull.nrrd": {
+      "sha256": "11709f7165e2835419f76b5ab277b7ad48557816054276b8762fe0c70759af5f",
+      "byteSize": 472097
+    },
+    "implant.nrrd": {
+      "sha256": "a9a8d270dfb78ef8732aeeda4cae1658cc576638c423d796bd7eb72f5de1ebaa",
+      "byteSize": 164052
+    }
+  },
+  "spatial": {
+    "units": "mm",
+    "space": "left-posterior-superior",
+    "dimension": 3,
+    "sizes": [
+      512,
+      512,
+      512
+    ],
+    "spacings": [
+      0.4,
+      0.4,
+      0.4
+    ],
+    "bboxMm": [
+      204.8,
+      204.8,
+      204.8
+    ],
+    "orientationNote": "left-posterior-superior"
+  },
+  "r3ToleranceMm": 0.001,
+  "r3ToleranceSpacing": 0.001
+}

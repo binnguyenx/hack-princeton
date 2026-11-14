@@ -1,0 +1,46 @@
+{
+  "sampleId": "skullbreak-000-parietotemporal",
+  "source": "SkullBreak training (AutoImplant 2021 Task 1)",
+  "license": "CC BY-NC-SA 4.0",
+  "sourceArchive": "data/raw/skullbreak_training.zip",
+  "sourceCaseId": "000",
+  "defectType": "parietotemporal",
+  "primaryVolume": "defective_skull.nrrd",
+  "files": {
+    "complete_skull.nrrd": {
+      "sha256": "957a802b79adc942dabb1d9c4f42349856391279cdcc3086619ffb2b0076e15d",
+      "byteSize": 504213
+    },
+    "defective_skull.nrrd": {
+      "sha256": "df145fbe0a610dce296b10cfc647c73012faf01134a7cf6608220d8885df19f8",
+      "byteSize": 493609
+    },
+    "implant.nrrd": {
+      "sha256": "205c92cec975375f7d6a4b92fe73ff5d8f16c7503aef289dc81c290b49ddc732",
+      "byteSize": 154764
+    }
+  },
+  "spatial": {
+    "units": "mm",
+    "space": "left-posterior-superior",
+    "dimension": 3,
+    "sizes": [
+      512,
+      512,
+      512
+    ],
+    "spacings": [
+      0.4,
+      0.4,
+      0.4
+    ],
+    "bboxMm": [
+      204.8,
+      204.8,
+      204.8
+    ],
+    "orientationNote": "left-posterior-superior"
+  },
+  "r3ToleranceMm": 0.001,
+  "r3ToleranceSpacing": 0.001
+}
