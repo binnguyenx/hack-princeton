@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Iterator
 
@@ -193,6 +193,17 @@ class SQLiteApplicationStorage:
 
     def initialize(self) -> None:
         if self._connection is None:
+            # This initializer belongs to the standalone Python mock sandbox.
+            # The UI's Node database has its own schema and migration owner.
+            if self._database_path.name == "app-model.sqlite":
+                raise StorageError("The app database is owned by the TypeScript backend.")
+            if self._database_path.is_file():
+                with closing(sqlite3.connect(self._database_path.as_uri() + "?mode=ro", uri=True)) as existing:
+                    tables = {row[0] for row in existing.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table'"
+                    )}
+                if {"projects", "samples", "volume_assets"} <= tables:
+                    raise StorageError("Refusing to initialize the app database as a Python sandbox.")
             self._database_path.parent.mkdir(parents=True, exist_ok=True)
             self._connection = sqlite3.connect(
                 self._database_path,

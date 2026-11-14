@@ -1,15 +1,3 @@
-# Publication scope
-
-This branch implements schemas and fixtures, SQLite storage/artifacts, operation service and reconstruction mock. Any scenario below requiring later components remains planned. Original scope/status details are consolidated in the final integration PR.
-
-# Publication scope
-
-This branch implements schemas and fixtures, SQLite storage/artifacts. Any scenario below requiring later components remains planned. Original scope/status details are consolidated in the final integration PR.
-
-# Publication scope
-
-This branch implements schemas and fixtures. Any scenario below requiring later components remains planned. Original scope/status details are consolidated in the final integration PR.
-
 # AI/backend acceptance scenarios
 
 Requirements remain in [the feature spec](../../../features/ai-workspace-assistant/spec.md). This index links fixture inputs to expected observable behavior without copying the requirements. The fixture data is documented in [fixtures/README.md](fixtures/README.md).
@@ -216,3 +204,7 @@ Fixture and storage-foundation validation are runnable now. Full operation/API s
 - Review of the two-fingerprint retry lifecycle and interrupted-request recovery rules.
 
 These blockers do not prevent fixture validation or implementation of the accepted common boundaries.
+
+## OS-01 — Synchronous operation-service verification
+
+Run backend/ai/tests/integration/operations/test_operation_service.py. Sixteen tests cover canonical/direct generation convergence, mock provenance and output validation, temporary SQLite persistence/reopen, unchanged sources, a second compatible adapter, active competing connections, duplicate/conflict handling, pre-execution stale termination, unavailable/unsupported direct requests, adapter/source I/O/commit failures, orphan identification, and uncertain commit/result bookkeeping. No API, model, graph, automatic recovery, or real geometry is exercised. AF-01/02/03/04/05/07/11/12/17 have partial operation/storage coverage; their full UI/AI/SSE observations remain planned.

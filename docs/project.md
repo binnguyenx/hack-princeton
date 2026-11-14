@@ -16,7 +16,9 @@ A 3D design workspace for cranial vault reconstruction (cranioplasty): inspect a
 
 ## Architecture at a glance
 
-Greenfield. Expected responsibilities (not yet implemented): canvas/case state, geometry tools, reconstruction generator, AI agent + tool use, evidence retrieval, persistence. Initial editor stack and UI system: see `PRODUCT.md` and `DESIGN.md`; remaining service boundaries land in feature specs.
+Initial editor stack and UI system are described in `PRODUCT.md` and `DESIGN.md`. The AI/backend subproject is `backend/ai/`, described in `docs/ai/` and `features/ai-workspace-assistant/`; it does not define the 3D frontend or geometry algorithms. Remaining service boundaries land in feature specs.
+
+The AI backend owns application state, immutable revisions, and the shared operation-service boundary. Its interfaces do not establish teammate approval of real geometry or browser protocols.
 
 Draft product intent (not yet an accepted feature folder): `hackprinceton_intent.md`.
 
@@ -28,17 +30,19 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 
 | Feature | Status | What it does |
 |-|-|-|
+| [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Accepted backend/state boundaries, structural schemas, authoritative SQLite application storage, and local artifact handling. The synchronous operation service and reconstruction mock are implemented; The live app already has Express CRUD APIs; Python has a read-only app workspace adapter. AI API/graphs/model integrations and live AI mutations remain unimplemented. The retry lifecycle is proposed pending review; real measurement, browser geometry, editing, inspection, and comparison contracts remain unresolved. |
+| [measure-candidate](../features/measure-candidate/intent.md) | proposed | Earlier draft of the measurement milestone. Folded into `ai-workspace-assistant`. Do not implement separately. |
 | [3D bone editor](../features/3d-bone-editor/intent.md) | in progress | Local projects with multiple samples, editable candidates, and recoverable revision history. Spec/plan draft; mechanical shell scaffolding in `app/`. |
 
-| [ai-workspace-assistant](../features/ai-workspace-assistant/intent.md) | in progress | Synchronous sandbox operation service and replaceable reconstruction mock. Future app mutation and model integration remain unavailable. |
-| [measure-candidate](../features/measure-candidate/intent.md) | proposed | Historical draft folded into the assistant. |
-
-Status values: proposed, in progress, shipped, retired.
+Status values: proposed, foundation accepted, in progress, shipped, retired.
 
 ## Build order
 
-1. Promote product direction into accepted feature intents/specs via intent-spec-plan (starting from `hackprinceton_intent.md` as draft input).
-2. Order concrete features once the first intents are accepted.
+1. Keep `hackprinceton_intent.md` as draft product input. Do not treat it as an accepted feature spec.
+2. The AI foundation acceptance is recorded in `features/ai-workspace-assistant/intent.md` and `spec.md`. They remain separate files and overall draft documents because the retry clarification and operation-specific contracts are still open. This index only reflects the recorded scope; it does not accept new requirements.
+3. Do not start a second implementation from `features/measure-candidate/`. That draft is folded into the assistant spec.
+4. The current `plan.md` is the completed operation-service/mock record; completed fixture, schema, and storage plans are archived under the feature's `plans/` directory. Write a separate plan before graph, API, model, or real-adapter coding. Review the proposed retry requirements before including them.
+5. Inside the AI feature, after shared schemas and storage, the synchronous operation service and reconstruction mock are available for the next graph/API slice. The reconstruction mock and real measurement then remain independent. The mock does not wait on mechanical tools or a measurement contract, and it does not complete the first real integration milestone. See `docs/ai/workflow.md`.
 
 
 ## Design system
@@ -63,3 +67,7 @@ Stack for the first editor shell is recorded in `PRODUCT.md` (Vite + React + Typ
 | Reconstruction brief | Intended repair: objectives and case-specific constraints |
 | Proposed design | Editable candidate repair geometry |
 | Review result | Measurements, observations, and change requests tied to a revision |
+
+## Current integration authority
+
+The live UI uses app/server/api.ts and app/server/storageSqlite.ts with Project → Case → Sample → Candidate → Revision and NRRD volumes. Python sandbox state is not app state. See docs/ai/app-integration.md for contract alignment and read-only LangGraph readiness.
