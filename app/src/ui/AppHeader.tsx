@@ -5,7 +5,6 @@ export type AppHeaderProps = {
   projectName?: string
   caseName?: string
   isDirty?: boolean
-  packageDisabledReason?: string
   onSave?: () => void
   onNewCase?: () => void
   onImportSample?: () => void
@@ -18,7 +17,6 @@ export function AppHeader({
   projectName,
   caseName,
   isDirty,
-  packageDisabledReason,
   onSave,
   onNewCase,
   onImportSample,
@@ -64,8 +62,7 @@ export function AppHeader({
             color="gray"
             size="1"
             onClick={onSave}
-            title={packageDisabledReason ?? "Download project package (Ctrl/Cmd+S)"}
-            disabled={Boolean(packageDisabledReason)}
+            title="Save Project (⌘S)"
           >
             <Save size={14} />
             Save
@@ -116,8 +113,7 @@ export function AppHeader({
             color="gray"
             size="1"
             onClick={onOpenPackage}
-            title={packageDisabledReason ?? "Open Portable Project Package"}
-            disabled={Boolean(packageDisabledReason)}
+            title="Open Portable Project Package"
           >
             <FolderOpen size={14} />
             Open Package
