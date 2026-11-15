@@ -12,6 +12,7 @@ import { FeatureHint, FeatureHintProvider } from './FeatureHint'
 import { SliceDock } from './SliceDock'
 import { ViewFrame } from './ViewFrame'
 import { AiChatPanel } from './AiChatPanel'
+import type { ViewportOverlay } from '../api/chat'
 import type { ChatContext } from './AiChatPanel'
 import type { Vec3 } from '../geometry/coordinates'
 import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
@@ -59,6 +60,9 @@ type Props = {
   aiChatOpen?: boolean
   onAiChatOpenChange?: (open: boolean) => void
   chatContext?: ChatContext
+  onWorkspaceChanged?: () => void
+  activeOverlayId?: string | null
+  onOverlayChange?: (overlay: ViewportOverlay | null) => void
   isCandidateActive?: boolean
   activeAnnotationType?: AnnotationType
   onAnnotationTypeChange?: (type: AnnotationType) => void
@@ -147,6 +151,9 @@ export function CanvasWorkspace({
   aiChatOpen,
   onAiChatOpenChange,
   chatContext,
+  onWorkspaceChanged,
+  activeOverlayId,
+  onOverlayChange,
   isCandidateActive = false,
   activeAnnotationType = 'text_note',
   onAnnotationTypeChange,
@@ -527,6 +534,9 @@ export function CanvasWorkspace({
               onOpenChange={setChatOpen}
               contextLabel={documentName}
               chatContext={chatContext}
+              onWorkspaceChanged={onWorkspaceChanged}
+              activeOverlayId={activeOverlayId}
+              onOverlayChange={onOverlayChange}
             />
           </aside>
         ) : (

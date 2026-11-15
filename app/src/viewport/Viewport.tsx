@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import type { ViewportOverlay } from '../api/chat'
+import { buildOverlayObject, disposeOverlayObject, severityColors, voxelFrameOf } from '../geometry/aiOverlay'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { Annotation, Mat4, RasPoint } from '../domain/types'
 import { updateCanvasRuntime } from '../debug/bridge'
@@ -90,6 +92,9 @@ type Props = {
     type: Annotation['type']
     points: Array<[number, number, number]>
   } | null
+  /** Read-only AI geometric finding drawn on the mesh (heat map + primary marker). */
+  aiOverlay?: ViewportOverlay | null
+  onAiOverlayDismiss?: () => void
 }
 
 type Runtime = {
@@ -307,6 +312,8 @@ export function Viewport({
   onPlaceFinish,
   boundingBoxMm,
   draftPreview = null,
+  aiOverlay = null,
+  onAiOverlayDismiss,
 }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<Runtime | null>(null)
@@ -583,6 +590,44 @@ export function Viewport({
       sceneRef.current = null
     }
   }, [rendererNonce])
+
+  // AI overlay: child of the mesh (inherits pose/scale), camera eased onto the primary finding.
+  const aiOverlayFrame = aiOverlay ? voxelFrameOf(mesh) : null
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime || !mesh || !aiOverlay) return
+    const frame = voxelFrameOf(mesh)
+    if (!frame) return
+    const { group, focusLocal } = buildOverlayObject(aiOverlay, frame)
+    mesh.add(group)
+    let animation = 0
+    if (focusLocal) {
+      mesh.updateMatrixWorld(true)
+      const goal = mesh.localToWorld(focusLocal.clone())
+      const startTarget = runtime.controls.target.clone()
+      const startCamera = runtime.camera.position.clone()
+      const delta = goal.sub(startTarget)
+      const apply = (t: number) => {
+        runtime.controls.target.copy(startTarget).addScaledVector(delta, t)
+        runtime.camera.position.copy(startCamera).addScaledVector(delta, t)
+      }
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        apply(1)
+      } else {
+        const started = performance.now()
+        const step = (now: number) => {
+          const t = Math.min(1, (now - started) / 360)
+          apply(1 - (1 - t) ** 3)
+          if (t < 1) animation = requestAnimationFrame(step)
+        }
+        animation = requestAnimationFrame(step)
+      }
+    }
+    return () => {
+      cancelAnimationFrame(animation)
+      disposeOverlayObject(group)
+    }
+  }, [aiOverlay, mesh])
 
   useEffect(() => {
     const runtime = sceneRef.current
@@ -1346,6 +1391,24 @@ export function Viewport({
         </div>
       )}
       {crosshairVisible && <div className="viewport-crosshair" aria-hidden="true" />}
+      {aiOverlay ? (
+        <div className="viewport-ai-legend" role="status" aria-label={`${aiOverlay.title} overlay legend`}>
+          <span className="viewport-ai-legend-title">{aiOverlay.title}</span>
+          {aiOverlayFrame ? (
+            aiOverlay.legend.map((item) => (
+              <span key={item.severity} className="viewport-ai-legend-item">
+                <span className="viewport-ai-legend-swatch" aria-hidden
+                  style={{ background: severityColors()[item.severity] }} />
+                {item.label}
+              </span>
+            ))
+          ) : (
+            <span className="viewport-ai-legend-item">Not available for this mesh</span>
+          )}
+          <button type="button" className="viewport-ai-legend-close" aria-label="Hide overlay"
+            onClick={() => onAiOverlayDismiss?.()}>×</button>
+        </div>
+      ) : null}
       {status ? <div className="viewport-status">{status}</div> : null}
       {contextStatus !== 'ready' && (
         <div className="viewport-context-status" role="status">
