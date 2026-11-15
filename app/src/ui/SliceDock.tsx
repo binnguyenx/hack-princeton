@@ -20,6 +20,8 @@ type Props = {
   onCrosshairChange: (point: IjkPoint) => void
   onWindowChange: (center: number, width: number) => void
   onPlace: (point: IjkPoint) => void
+  placeRequireDblClick?: boolean
+  onPlaceFinish?: () => void
   maximizedPlane: SlicePlaneId | null
   onMaximizedPlaneChange: (plane: SlicePlaneId | null) => void
 }
@@ -43,6 +45,8 @@ export function SliceDock({
   onCrosshairChange,
   onWindowChange,
   onPlace,
+  placeRequireDblClick = false,
+  onPlaceFinish,
   maximizedPlane,
   onMaximizedPlaneChange,
 }: Props) {
@@ -117,6 +121,8 @@ export function SliceDock({
                 onCrosshairChange={onCrosshairChange}
                 onWindowChange={onWindowChange}
                 onPlace={onPlace}
+                placeRequireDblClick={placeRequireDblClick}
+                onPlaceFinish={onPlaceFinish}
               />
             ) : (
               <div className="slice-preview slice-preview--unavailable" role="status">

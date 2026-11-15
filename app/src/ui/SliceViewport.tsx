@@ -12,6 +12,11 @@ import {
   type VolumeSizes,
 } from '../geometry/slices'
 import type { CanvasMode } from './CanvasWorkspace'
+import {
+  classifyPointerGesture,
+  type PointerSample,
+} from '../viewport/canvasGestures'
+import { resolveCanvasPointerOwner } from '../viewport/canvasInteractions'
 import { CANVAS_HINTS } from './canvasFeatureHints'
 import { FeatureHint } from './FeatureHint'
 
@@ -27,6 +32,10 @@ type Props = {
   onCrosshairChange: (point: IjkPoint) => void
   onWindowChange: (center: number, width: number) => void
   onPlace: (point: IjkPoint) => void
+  /** Distance line: place only on double-click (R25). */
+  placeRequireDblClick?: boolean
+  /** Finish curve draft (Enter / double-click). */
+  onPlaceFinish?: () => void
 }
 
 /** Soft monochrome slice studio — air is Base gray; bone darkens toward Ink. */
@@ -49,6 +58,8 @@ export function SliceViewport({
   onCrosshairChange,
   onWindowChange,
   onPlace,
+  placeRequireDblClick = false,
+  onPlaceFinish,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -165,7 +176,11 @@ export function SliceViewport({
     windowWidth,
   ])
 
-  function pointFromEvent(event: React.PointerEvent<HTMLCanvasElement>): IjkPoint {
+  function pointFromEvent(event: {
+    clientX: number
+    clientY: number
+    currentTarget: HTMLCanvasElement
+  }): IjkPoint {
     const bounds = event.currentTarget.getBoundingClientRect()
     const view = viewSizeRef.current
     const uv = mapFittedViewToSliceUv(
@@ -185,8 +200,16 @@ export function SliceViewport({
         ? CANVAS_HINTS.sagittalSlice
         : CANVAS_HINTS.coronalSlice
 
+  const placeDownRef = useRef<PointerSample | null>(null)
+  const lastCurveTapRef = useRef<{ at: number; x: number; y: number } | null>(null)
+  const DBLCLICK_MS = 350
+
   return (
-    <div ref={hostRef} className={`slice-viewport is-${mode}`}>
+    <div
+      ref={hostRef}
+      className={`slice-viewport is-${mode}`}
+      data-canvas-surface="slice"
+    >
       <FeatureHint {...planeHint} side="top">
         <canvas
           ref={canvasRef}
@@ -202,9 +225,18 @@ export function SliceViewport({
               }
               return
             }
+            if (mode === 'place') {
+              placeDownRef.current = {
+                type: 'down',
+                clientX: event.clientX,
+                clientY: event.clientY,
+                timeStamp: event.timeStamp,
+                altKey: event.altKey,
+              }
+              return
+            }
             const point = pointFromEvent(event)
             onCrosshairChange(point)
-            if (mode === 'place') onPlace(point)
           }}
           onPointerMove={(event) => {
             const drag = dragRef.current
@@ -214,11 +246,79 @@ export function SliceViewport({
               Math.max(1, drag.width + (event.clientY - drag.y)),
             )
           }}
-          onPointerUp={() => {
+          onPointerUp={(event) => {
             dragRef.current = null
+            if (mode !== 'place' || !placeDownRef.current) {
+              placeDownRef.current = null
+              return
+            }
+            const down = placeDownRef.current
+            placeDownRef.current = null
+            if (placeRequireDblClick) return
+            const gesture = classifyPointerGesture({
+              down,
+              up: {
+                type: 'up',
+                clientX: event.clientX,
+                clientY: event.clientY,
+                timeStamp: event.timeStamp,
+                altKey: event.altKey,
+              },
+            })
+            if (gesture.kind !== 'tap') return
+            if (
+              resolveCanvasPointerOwner({
+                button: event.button,
+                altKey: event.altKey,
+                ctrlKey: event.ctrlKey,
+                metaKey: event.metaKey,
+                placeActive: true,
+                highlightActive: false,
+                hitHandle: false,
+                hitAnatomy: true,
+                hitAnnotation: false,
+              }) !== 'place'
+            ) return
+            const point = pointFromEvent(event)
+            onCrosshairChange(point)
+            if (onPlaceFinish) {
+              const now = performance.now()
+              if (
+                lastCurveTapRef.current &&
+                now - lastCurveTapRef.current.at < DBLCLICK_MS &&
+                Math.hypot(
+                  event.clientX - lastCurveTapRef.current.x,
+                  event.clientY - lastCurveTapRef.current.y,
+                ) < 4
+              ) {
+                lastCurveTapRef.current = null
+                onPlaceFinish()
+                return
+              }
+              onPlace(point)
+              lastCurveTapRef.current = {
+                at: now,
+                x: event.clientX,
+                y: event.clientY,
+              }
+              return
+            }
+            onPlace(point)
+          }}
+          onDoubleClick={(event) => {
+            if (mode !== 'place') return
+            if (placeRequireDblClick) {
+              const point = pointFromEvent(event)
+              onCrosshairChange(point)
+              onPlace(point)
+              return
+            }
+            if (!onPlaceFinish) return
+            event.preventDefault()
           }}
           onPointerCancel={() => {
             dragRef.current = null
+            placeDownRef.current = null
           }}
         />
       </FeatureHint>

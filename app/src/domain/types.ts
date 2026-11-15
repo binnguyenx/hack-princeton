@@ -121,6 +121,31 @@ export type ViewState = {
 
 export type VolumeStore = Map<string, Uint8Array>
 
+export type AnnotationType =
+  | 'landmark'
+  | 'line'
+  | 'closed_curve'
+  | 'text_note'
+  | 'angle'
+  | 'plane'
+  | 'open_curve'
+  | 'roi'
+  | 'highlight'
+
+export type RasPoint = [number, number, number]
+
+export type Annotation = {
+  id: string
+  revisionId: string
+  type: AnnotationType
+  name: string
+  points: RasPoint[]
+  meta: Record<string, unknown>
+  locked: boolean
+  visible: boolean
+  createdAt: string
+}
+
 export type EditorState = {
   user: User
   project: Project
@@ -128,6 +153,7 @@ export type EditorState = {
   samples: Sample[]
   candidates: Candidate[]
   revisions: CandidateRevision[]
+  annotations: Annotation[]
   view: ViewState
   volumes: VolumeStore
   dirty: boolean

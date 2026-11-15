@@ -1,4 +1,4 @@
-import { ChevronRight, Save, Plus, FileUp, FolderOpen } from 'lucide-react'
+import { ChevronRight, Save, Plus, FileUp } from 'lucide-react'
 import { Badge, Button, Flex } from '@radix-ui/themes'
 
 export type AppHeaderProps = {
@@ -9,7 +9,6 @@ export type AppHeaderProps = {
   onNewCase?: () => void
   onImportSample?: () => void
   onNewProject?: () => void
-  onOpenPackage?: () => void
   onNavigateHome?: () => void
 }
 
@@ -21,7 +20,6 @@ export function AppHeader({
   onNewCase,
   onImportSample,
   onNewProject,
-  onOpenPackage,
   onNavigateHome,
 }: AppHeaderProps) {
   return (
@@ -103,20 +101,6 @@ export function AppHeader({
           >
             <Plus size={14} />
             New Project
-          </Button>
-        ) : null}
-
-        {onOpenPackage ? (
-          <Button
-            type="button"
-            variant="soft"
-            color="gray"
-            size="1"
-            onClick={onOpenPackage}
-            title="Open Portable Project Package"
-          >
-            <FolderOpen size={14} />
-            Open Package
           </Button>
         ) : null}
       </Flex>

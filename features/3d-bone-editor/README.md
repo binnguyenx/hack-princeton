@@ -14,6 +14,7 @@ Each **category** below is its own intent → spec → plan cycle. Accept and Cl
 | Business UI | [`business-ui/`](business-ui/intent.md) | Atlassian-like management surfaces that drive the app model (home, tables, dialogs, nav). |
 | Canvas workspace | [`canvas-workspace/`](canvas-workspace/intent.md) | Unified canvas tools + viewport: inspect/edit ops, restore/apply behavior, smooth GLB-first rendering, and clean-state interaction wiring. |
 | Canvas workspace Slicer relaunch | [`canvas-workspace-improve/`](canvas-workspace-improve/intent.md) | Cross-reference Workbench (Slicer-standard 3D + linked slices). **Tester / API mechanics catalog:** [`canvas-workspace-improve/README.md`](canvas-workspace-improve/README.md). |
+| Mechanical last parts | [`mechanical-last-parts/`](mechanical-last-parts/intent.md) | Annotations, measurement, Place stack, panel, overlays; Selectable / PointSet / OrientedExtent behaviors. |
 
 Retired root files (historical only): `intent.md`, `spec.md`, `plan.md`. Recover full prior text from git history if needed.
 

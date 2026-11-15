@@ -14,3 +14,24 @@ app/public/fixtures/demo-project/volumes/*.nrrd
 
 # Durable local application records and NRRD uploads
 data/storage/
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# ML processed training caches (regenerate via prepare_data)
+data/processed/
+
+# Local Python venvs (app backend + cranial tooling)
+app/cranial-env/
+
+# Python caches
+**/__pycache__/
+*.py[cod]
+
+# OS / editor / agent local state
+.DS_Store
+.playwright-mcp/
+.claude/settings.local.json
+.cursor/hooks/state/

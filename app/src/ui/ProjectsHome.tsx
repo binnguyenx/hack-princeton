@@ -19,7 +19,6 @@ export type ProjectsHomeProps = {
   onCreateProject: (name: string) => void
   onOpenProject: (projectId: string) => void
   onDeleteProject?: (projectId: string) => void
-  onOpenPackage?: () => void
 }
 
 export function ProjectsHome({
@@ -27,7 +26,6 @@ export function ProjectsHome({
   onCreateProject,
   onOpenProject,
   onDeleteProject,
-  onOpenPackage,
 }: ProjectsHomeProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -39,30 +37,16 @@ export function ProjectsHome({
 
   return (
     <section className="projects-home" aria-label="Projects home">
-      <Flex justify="between" align="start" gap="4" mb="4">
-        <Flex align="start" gap="3">
-          <Box className="projects-home__icon-box">
-            <Folder size={18} />
-          </Box>
-          <Box>
-            <Heading size="5">Projects</Heading>
-            <Text color="gray" size="2">
-              Manage reconstruction studies, cases, and prepared anatomy assets.
-            </Text>
-          </Box>
-        </Flex>
-        <Flex gap="2">
-          {onOpenPackage ? (
-            <Button type="button" variant="soft" color="gray" onClick={onOpenPackage}>
-              <FolderOpen size={14} />
-              Open Package
-            </Button>
-          ) : null}
-          <Button type="button" onClick={() => setDialogOpen(true)}>
-            <FolderPlus size={15} />
-            New Project
-          </Button>
-        </Flex>
+      <Flex align="start" gap="3" mb="4">
+        <Box className="projects-home__icon-box">
+          <Folder size={18} />
+        </Box>
+        <Box>
+          <Heading size="5">Projects</Heading>
+          <Text color="gray" size="2">
+            Manage reconstruction studies, cases, and prepared anatomy assets.
+          </Text>
+        </Box>
       </Flex>
 
       {projects.length > 0 ? (
