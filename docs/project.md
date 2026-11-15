@@ -39,7 +39,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [Canvas workspace](../features/3d-bone-editor/canvas-workspace/intent.md) | shipped | Unified canvas tools + viewport behavior, GLB-first rendering, restore/apply integrity, and clean-state UI contracts. |
 | [Canvas workspace Slicer relaunch](../features/3d-bone-editor/canvas-workspace-improve/intent.md) | shipped | Cross-reference Workbench: Slicer mouse nav, synchronized Axial/Sagittal/Coronal dock, Window/Level + Place modes, RAS truth, WebGL rebuild recovery. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
-| [ml-model](../features/ml-model/intent.md) | in progress | Cranial missing-bone U-Net pipeline (prepare/audit/train/predict/evaluate) under `ml/cranial/`. Pipeline Close recorded with open GPU phases; local Proof currently 32 pass / 1 fail (MONAI aug seed); v2 2 mm/128³ default diverges from R4 1 mm/256³ until owner decides. |
+| [ml-model](../features/ml-model/intent.md) | in progress | Cranial missing-bone U-Net pipeline under `ml/cranial/`. First frozen model (`run_1794725904`, v2 2 mm/128³): held-out SkullBreak parietotemporal test mean Dice 0.811, median HD95 2.49 mm, 0/20 failures — R12 met (D11). R15 MUG500+ B not run; v2 vs R4 1 mm/256³ still awaits owner decision. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
 
@@ -51,7 +51,7 @@ Status values: proposed, foundation accepted, in progress, shipped, retired.
 4. Inside the 3D editor: **software-app-model** → **business-ui** → **canvas-workspace** → **business-ui-polish** → **canvas-workspace-improve** (Cross-reference Workbench). Do not reopen the retired umbrella plan under `features/3d-bone-editor/plan.md`.
 5. The current AI `plan.md` is the completed operation-service/mock record; completed fixture, schema, and storage plans are archived under the feature's `plans/` directory. Write a separate plan before graph, API, model, or real-adapter coding. Review the proposed retry requirements before including them.
 6. Inside the AI feature, after shared schemas and storage, the synchronous operation service and reconstruction mock are available for the next graph/API slice. See `docs/ai/workflow.md`.
-7. Cranial ML (`features/ml-model/`): finish a passing full-resolution pilot before full train/evaluate; do not open held-out test scores until freeze. See `ml/cranial/LIVE_INVESTIGATION_LOG.md`.
+7. Cranial ML (`features/ml-model/`): model frozen and held-out test scored once (D11, `ml/cranial/reports/eval_v2/`). Further training/threshold changes make the test set development data. See `ml/cranial/LIVE_INVESTIGATION_LOG.md` §13.
 
 
 ## Design system

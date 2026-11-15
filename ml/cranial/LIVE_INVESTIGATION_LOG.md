@@ -876,3 +876,55 @@ PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full \
 ```
 
 Defaults now add 5 warmup epochs, cosine decay and patience 30. Read `train_dice` next to `val_dice` in `metrics.jsonl` before choosing the next change. Do not freeze unless val Dice is clearly better than the 0.12 of `…7924`. Convergence and held-out quality are **unverified** until this job finishes.
+
+---
+
+## 13. Full run `cranial-full-run-1794725904` — first freeze, held-out targets met — 2026-11-15
+
+### Training (D10 recipe)
+
+`PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full --pilot-lr 0.005 --lr 0.005 --no-amp`
+
+| Setting | Value |
+|---------|-------|
+| Data | processed v2 (2 mm / 128³), 91 train / 23 val, parietotemporal |
+| Pilot | re-passed, best 0.9043 @ ep 89 |
+| Full LR | 0.005, 5 warmup epochs, cosine to 5e-5 |
+| AMP | off |
+| Aug | on, flip axis fixed (x) |
+| Patience | 30 (never triggered) |
+| Runtime | 651 billable seconds (~8 s/epoch) |
+| `best.pt` | epoch 50, **val Dice 0.8398** (training grid), sha256 `f6b59dfb…3260` |
+
+Learning curve: val Dice 0.05 → 0.41 (ep 4) → 0.62 (ep 9) → 0.74 (ep 15) → 0.81 (ep 25) → 0.84 (ep 50). Train Dice (augmented) tracked val closely (0.826 vs 0.840 at ep 50), so there is **no overfitting**; the model was still improving slowly at the 50-epoch cap.
+
+Compared with `…7924` (val 0.12): the two changes were the flip-axis bug fix and the 25× higher LR with warmup/cosine. We did not ablate which one mattered more.
+
+### Freeze
+
+`ml/cranial/manifests/freeze_v2.json`: run `run_1794725904`, checkpoint hash `sha256:f6b59dfb…3260`, threshold 0.5, preprocessing v2, postprocessing `exclude_source_bone` + `reject_empty`, `frozen: true`. Written **before** any held-out scoring.
+
+### Evaluation on the source grid (0.4 mm, `evaluate.py`)
+
+| Split | n | Mean Dice | Median Dice | Min Dice | 95% bootstrap CI (mean) | Median HD95 | Max HD95 | Failures | Mirror Dice / HD95 |
+|-------|--:|----------:|------------:|---------:|------------------------:|------------:|---------:|---------:|-------------------:|
+| val (model selection) | 23 | 0.835 | 0.851 | 0.695 | 0.809–0.858 | 2.04 mm | 4.40 mm | 0 | 0.326 / 111.5 mm |
+| **test (held out, scored once)** | **20** | **0.811** | 0.832 | 0.608 | **0.778–0.840** | **2.49 mm** | 5.20 mm | **0** | 0.229 / 116.9 mm |
+
+R12 provisional targets (mean Dice ≥ 0.80, median HD95 ≤ 5 mm) are **met on test**. Every case is listed in `reports/eval_v2/per_case_test.csv`; nothing was dropped.
+
+Honest caveats:
+
+1. **Dice margin is thin.** 0.811 vs 0.80 target, and the bootstrap CI over 20 cases (0.778–0.840) straddles 0.80. HD95 has a comfortable margin.
+2. **Mapping back to the source grid costs little:** val 0.840 on the 2 mm grid → 0.835 on the 0.4 mm source grid.
+3. **Worst cases.** Test: `eval_007` 0.608 / 5.20 mm, `eval_012` 0.699, `eval_004` 0.723; 4/20 below 0.75. The `eval_007` overlay (`slices/lowest_dice_eval_007.png`) shows the prediction in the right place with the right curvature; disagreement is a band along the bone surface — consistent with 2 mm grid softness, not a wrong-location failure.
+4. **Mirror baseline is a straw man.** It mirrors about the image centre, not the skull midline, and keeps every asymmetric sliver (HD95 > 100 mm). Beating it is not strong evidence; R12 absolute targets are the meaningful comparison.
+5. **Scope.** Synthetic SkullBreak parietotemporal defects only (D2/D3). No other categories, no real defects. R15 MUG500+ B: **not run** (expert meshes not converted).
+6. Test has now been opened. Any change to threshold, training, or code from here makes these 20 cases development data; a new held-out claim would need new data (e.g. MUG500+ B).
+
+### Next options (not started)
+
+- Train longer (val still rising at epoch 50; time budget allows ~6× more epochs).
+- Other SkullBreak categories as stress tests / training data (scope change, needs spec).
+- Refine at 1 mm around the predicted patch to sharpen the surface band seen in the worst cases.
+- R15 MUG500+ B domain-shift table.

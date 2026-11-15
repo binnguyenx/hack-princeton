@@ -68,8 +68,8 @@ Raw SkullBreak Archives (S3 / Studio /tmp)
 - [x] Phase 4: Held-out evaluation suite with baseline comparators implemented.
 - [x] Phase 5: Data preparation / processed cache available (manifest audit 134/134; processed `v1` on S3 used by SageMaker jobs).
 - [x] Phase 6: GPU pilot reaches Dice ≥ 0.90 on 3 training cases (R7 / S3). Passed on **v2** in `cranial-pilot-run-1794717579` (best 0.9043 @ ep 89). Recipe locked as spec **D7** / investigation log §9.
-- [ ] Phase 7: Full 50-epoch training and freeze `best.pt`. First attempt `…7924` with full `lr=0.0002` → best val ≈ **0.12** (D9) — do not freeze. Retry with `--lr 0.005 --no-amp` after the D10 training-loop fixes (flip axis, warmup + cosine LR, patience 30, train Dice logging).
-- [ ] Phase 8: `evaluate.py` on held-out test + published summary (blocked on a freeze-worthy Phase 7).
+- [x] Phase 7: Full 50-epoch training and freeze `best.pt`. `…7924` (lr 0.0002) → val 0.12, not frozen (D9). `…5904` with D10 fixes and `--lr 0.005 --no-amp` → val 0.840 at epoch 50, frozen as `manifests/freeze_v2.json` (D11).
+- [x] Phase 8: `evaluate.py` on held-out test + published summary. `reports/eval_v2/`: test mean Dice 0.811, median HD95 2.49 mm, 0/20 failures; R12 met (D11). R15 MUG500+ B: not run.
 
 ## Proof
 
@@ -104,6 +104,7 @@ Raw SkullBreak Archives (S3 / Studio /tmp)
 6. **Extra files not in the original plan sketch:** `LIVE_INVESTIGATION_LOG.md`, `LEARNING_FAILURE_POSTMORTEM.md`, `WORKFLOW.md`, `README.md`, `load_skullbreak_s3.py`, `upload_processed.py`, research note under `features/ml-model/`, audit PNGs/JSON under `reports/`. Kept as operational/investigation artifacts.
 7. **R15 MUG500+ B evaluation** not run; allowed “not run” outcome remains available.
 8. **D10 training-loop fixes (2026-11-15):** flip augmentation axis corrected (z → x), warmup + cosine LR schedule, full-run patience 30, per-epoch train Dice / LR logging. Launcher `--early-stop-patience` / `--warmup-epochs` pass through; launcher itself is not unit-tested (needs `sagemaker`).
+9. **Artifacts committed to git (2026-11-15, teammate commit `05491f9`):** `ml/cranial/checkpoints/best.pt` (58 MB binary) and a stale `ml/freeze_candidate.json` from failed run `…7924` (val 0.12) at `ml/` root. Not in the original plan; needs an owner decision (keep, move to S3-only / Git LFS, or delete the stale file).
 8. **Local CPU pytest does not prove CUDA/AMP convergence.** Env: `app/cranial-env/` with optional `PYTHONPATH=/tmp/cranial-verify-deps` for NumPy 1.26.4 when the env’s NumPy 2.x breaks MONAI 1.3.0.
 9. **Processed cache for the accepted first train path is v2 (2 mm isotropic, 128³)** per D7. Spec R4 still states ~1 mm / 256³ (v1); amend R4 to match D7 or document v1 as a deferred higher-res revisit.
 10. **Local Proof regression at Close:** `test_real_augmentation_preserves_pair_alignment` fails in `app/cranial-env/` with MONAI 1.3.0 `OverflowError` when building `RandAffined`. Other local unit tests pass; aug-on full training is not locally proven.
