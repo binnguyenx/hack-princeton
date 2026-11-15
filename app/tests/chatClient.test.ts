@@ -17,7 +17,7 @@ describe('chatClient', () => {
   it('posts the active workspace context to the same-origin FastAPI chat route', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({
-        mode: 'fake-read-only',
+        mode: 'bedrock-read-only',
         request_id: request.request_id,
         conversation_id: request.conversation_id,
         outcome: { status: 'completed', explanation: 'Read authoritative metadata.' },

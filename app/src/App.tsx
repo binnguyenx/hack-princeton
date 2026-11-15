@@ -5,6 +5,8 @@ import { installDebugBridge, updateCanvasRuntime } from './debug/bridge'
 import { volumeToDisplayMesh } from './geometry/derivedMesh'
 import { loadDisplayMeshAsset } from './geometry/displayMesh'
 import { applyPoseToObject } from './geometry/pose'
+import { tagVoxelFrame } from './geometry/aiOverlay'
+import { useAiOverlay } from './ai/useAiOverlay'
 import { decodeNrrdVoxels } from './geometry/nrrdVoxels'
 import { ijkToRas, rasToIjk, type Vec3 } from './geometry/coordinates'
 import {
@@ -485,6 +487,7 @@ export default function App() {
         try {
           const glb = await loadDisplayMeshAsset(displayMeshAsset)
           if (!isCurrentBuild()) return
+          if (spatial) tagVoxelFrame(glb, { kind: 'grid-mm', spacing: spatial.spacings as [number, number, number] })
           setMesh(glb)
           setViewportStatus(null)
           return
@@ -519,6 +522,7 @@ export default function App() {
           const glb = await loadDisplayMeshAsset(displayMeshAsset)
           if (!isCurrentBuild()) return
           if (pose) applyPoseToObject(glb, pose)
+          if (spatial) tagVoxelFrame(glb, { kind: 'grid-mm', spacing: spatial.spacings as [number, number, number] })
           setMesh(glb)
           setViewportStatus(null)
           return
@@ -1661,6 +1665,10 @@ export default function App() {
         revisionId: chatRevisionId,
       }
     : undefined
+  // AI viewport overlay is scoped to the exact selection; switching case/object/revision clears it.
+  const [aiOverlay, setAiOverlay] = useAiOverlay(
+    [chatContext?.projectId, chatContext?.caseId, chatContext?.objectId, chatContext?.revisionId ?? ''].join('|'),
+  )
   const activeRevisionAnnotations: Annotation[] = (() => {
     if (!activeCandidate) return []
     const revId = activeCandidate.currentRevisionId
@@ -1870,6 +1878,9 @@ export default function App() {
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}
                   chatContext={chatContext}
+                  onWorkspaceChanged={() => { if (activeProjectId) void loadProject(activeProjectId) }}
+                  activeOverlayId={aiOverlay?.overlay_id ?? null}
+                  onOverlayChange={setAiOverlay}
                   projection={projection}
                   voxels={activeSliceVolume?.voxels}
                   volumeSizes={activeSliceVolume?.sizes}
@@ -2064,6 +2075,8 @@ export default function App() {
                   )}
                 >
                   <Viewport
+                    aiOverlay={aiOverlay}
+                    onAiOverlayDismiss={() => setAiOverlay(null)}
                     objectId={activeDocument?.id}
                     selectedAnnotationId={selectedAnnotationId}
                     onSelectAnnotation={setSelectedAnnotationId}

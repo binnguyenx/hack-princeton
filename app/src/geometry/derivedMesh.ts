@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js'
 import type { SpatialMeta } from '../domain/types'
 import { decodeNrrdVoxels } from './nrrdVoxels'
+import { tagVoxelFrame } from './aiOverlay'
 
 /**
  * Display mesh via downsampled binary voxels → simple Marching-cubes-ish
@@ -65,5 +66,6 @@ export function volumeToDisplayMesh(
 
   const [spx, spy, spz] = spatial.spacings
   mc.scale.set((sx * spx) / 2, (sy * spy) / 2, (sz * spz) / 2)
+  tagVoxelFrame(mc, { kind: 'normalized-grid', sizes: [sx, sy, sz], resolution })
   return mc
 }

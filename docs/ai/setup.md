@@ -278,3 +278,14 @@ PYTHONPATH=backend/ai/src .venv/bin/python -B -m skullfix_ai.api --storage-root 
 ```
 
 The first log line prints `Chat provider: gemini|fake`. Terminal 2: `cd app && HACK_STORAGE_ROOT=... npm run dev -- --port 5174` (same-origin forwarding), optionally with `VITE_LANGGRAPH_API_URL=http://127.0.0.1:8000` to call FastAPI directly over CORS. Chat memory is in-process (`InMemorySaver`) and resets on server restart; the client re-seeds bounded history on the first turn after restart.
+
+## Agent eval harness (2026-11-15)
+
+```sh
+# Offline (default): replayed model turns, real stream route + preflight + graph + tools; ~1 s, no network
+PYTHONPATH=backend/ai/src .venv/bin/python -m pytest backend/ai/tests/eval_harness -q
+# Live benchmark (uses GOOGLE_API_KEY/GEMINI_API_KEY from backend/ai/.env); compare models with --gemini-model
+PYTHONPATH=backend/ai/src .venv/bin/python -m pytest backend/ai/tests/eval_harness -q --live-gemini --gemini-model gemini-2.5-flash
+```
+
+Add scenarios to `backend/ai/tests/eval_harness/golden_cases.json` (`selection`, `message`, `replay`, `expect`). `tool_status` is graded only when the tool ran, so live models may skip a check the capability preflight marked unavailable.

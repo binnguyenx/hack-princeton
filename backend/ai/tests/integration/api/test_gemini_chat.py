@@ -2,6 +2,7 @@
 
 No provider or network: the scripted model stands in for ChatGoogleGenerativeAI.
 """
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -35,8 +36,8 @@ class ScriptedChatModel(BaseChatModel):
         return ChatResult(generations=[ChatGeneration(message=self.responses.pop(0))])
 
 
-def call(name, call_id='c1'):
-    return AIMessage('', tool_calls=[{'name': name, 'args': {}, 'id': call_id, 'type': 'tool_call'}])
+def call(name, call_id='c1', **args):
+    return AIMessage('', tool_calls=[{'name': name, 'args': args, 'id': call_id, 'type': 'tool_call'}])
 
 
 class GeminiChatTest(unittest.TestCase):
@@ -70,7 +71,11 @@ class GeminiChatTest(unittest.TestCase):
         self.assertIn('tool:describe_selection', outcome['steps'])
         self.assertEqual(outcome['observation']['scope'], 'application-read')
         self.assertEqual(outcome['context']['selected_object_id'], self.payload['object_id'])
-        self.assertEqual(sorted(self.model.bound), ['describe_selection', 'list_candidate_revisions', 'list_case_objects'])
+        self.assertEqual(sorted(self.model.bound), ['calculate_voxel_volume', 'describe_selection', 'evaluate_fixation_safety',
+                                                    'evaluate_implant_fit_metrics', 'list_candidate_revisions',
+                                                    'list_case_objects', 'measure_defect_rim_thickness',
+                                                    'measure_implant_rim_fit', 'measure_workspace_volumes',
+                                                    'search_clinical_knowledge'])
         tool_result = [m for m in self.model.seen[1] if isinstance(m, ToolMessage)][0]
         self.assertIn(self.payload['object_id'], tool_result.content)
         self.assertEqual(self.repo.read_project_manifest(self.project['id']), before)
@@ -116,8 +121,94 @@ class GeminiChatTest(unittest.TestCase):
                                                                      'Access-Control-Request-Headers': 'content-type'})
             self.assertEqual(response.headers.get('access-control-allow-origin') == origin, allowed, origin)
 
+    def test_knowledge_hit_is_cited_without_fallback_disclaimer(self):
+        self.model.responses += [call('search_clinical_knowledge', query='PMMA exothermic thermal injury'),
+                                 AIMessage('Per the biomaterial evidence summary, in-situ PMMA can exceed 80 °C.')]
+        outcome = self.post(message='Is PMMA safe to mould in situ?')['outcome']
+        tool_result = [m for m in self.model.seen[1] if isinstance(m, ToolMessage)][0]
+        self.assertIn('"status": "FOUND"', tool_result.content)
+        self.assertIn('biomaterials_selection.md § PMMA', tool_result.content)
+        self.assertNotIn('Outside verified workspace protocols', outcome['explanation'])
+
+    def test_knowledge_miss_forces_fallback_disclaimer(self):
+        self.model.responses += [call('search_clinical_knowledge', query='glioblastoma temozolomide dosing'),
+                                 AIMessage('Temozolomide dosing is typically weight based.')]
+        text = self.post(message='What is the temozolomide dose?')['outcome']['explanation']
+        tool_result = [m for m in self.model.seen[1] if isinstance(m, ToolMessage)][0]
+        self.assertIn('NOT_FOUND', tool_result.content)
+        self.assertTrue(text.startswith('**Outside verified workspace protocols:**'), text)
+
+    def test_deterministic_calc_result_and_tool_names_are_abstracted(self):
+        self.model.responses += [
+            call('evaluate_fixation_safety', bone_thickness_mm=1.6, sinus_clearance_mm=7.0, screw_length_mm=4.0),
+            AIMessage('I ran `evaluate_fixation_safety()` and search_clinical_knowledge: FAIL, bone 0.4 mm below policy.')]
+        outcome = self.post(message='Bone is 1.6 mm, sinus 7 mm away, 4 mm screw. Safe?')['outcome']
+        tool_result = [m for m in self.model.seen[1] if isinstance(m, ToolMessage)][0]
+        self.assertIn('"status": "FAIL"', tool_result.content)
+        self.assertIn('"margin_mm": -0.4', tool_result.content)
+        text = outcome['explanation']
+        for name in ('evaluate_fixation_safety', 'search_clinical_knowledge'):
+            self.assertNotIn(name, text)
+        self.assertIn('the fixation safety check', text)
+        self.assertIn('tool:evaluate_fixation_safety', outcome['steps'])
+
+    def stream(self, **changes):
+        response = self.client.post('/api/ai/chat/stream', json={**self.payload, **changes})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertTrue(response.headers['content-type'].startswith('application/x-ndjson'))
+        return [json.loads(line) for line in response.text.splitlines() if line.strip()]
+
+    def test_stream_shows_reasoning_and_plain_language_steps_before_the_result(self):
+        before = self.repo.read_project_manifest(self.project['id'])
+        thinking = AIMessage(content=[{'type': 'thinking', 'thinking': 'I should call search_clinical_knowledge first.'}],
+                             tool_calls=[{'name': 'search_clinical_knowledge', 'args': {'query': 'sinus clearance'},
+                                          'id': 'k1', 'type': 'tool_call'}])
+        self.model.responses += [thinking, AIMessage('Keep fixation at least 5 mm from the sinus (policy default).')]
+        events = self.stream(message='How close can screws be to the sagittal sinus?')
+        types = [event['type'] for event in events]
+        self.assertEqual(types[0], 'metadata')
+        self.assertEqual(types[-1], 'result')
+        self.assertTrue(all(kind == 'thinking' for kind in types[1:-1]))
+        thoughts = [event for event in events if event['type'] == 'thinking']
+        reasoning = [event['text'] for event in thoughts if event['kind'] == 'reasoning']
+        self.assertEqual(reasoning, ['I should call the clinical knowledge base first.'])
+        steps = [(event['id'], event['text']) for event in thoughts if event['kind'] == 'step']
+        self.assertEqual(steps[0][0], 'step-preflight')
+        self.assertIn('Checked what this selection supports', steps[0][1])
+        self.assertEqual(steps[1], ('step-k1', 'Searching the clinical knowledge base…'))
+        self.assertEqual(steps[2][0], 'step-k1')
+        self.assertIn('found Venous and air sinus clearance', steps[2][1])
+        for event in thoughts:
+            self.assertNotIn('search_clinical_knowledge', event['text'])
+            self.assertNotIn('{', event['text'])
+        result = events[-1]
+        self.assertEqual((result['mode'], result['request_id'], result['conversation_id']), ('gemini-read-only', 'r1', 'conv-1'))
+        self.assertEqual(result['outcome']['status'], 'completed')
+        self.assertEqual(result['outcome']['explanation'], 'Keep fixation at least 5 mm from the sinus (policy default).')
+        self.assertEqual(self.repo.read_project_manifest(self.project['id']), before)
+
+    def test_stream_and_json_routes_share_the_outcome_and_memory(self):
+        self.model.responses += [AIMessage('First.'), AIMessage('Second.')]
+        self.assertEqual(self.stream()[-1]['outcome']['explanation'], 'First.')
+        self.post(request_id='r2', message='And?')
+        self.assertEqual([m.content for m in self.model.seen[1] if isinstance(m, HumanMessage)], ['What is the grid size?', 'And?'])
+
+    def test_stream_stale_context_and_validation_errors(self):
+        candidate = self.repo.create_candidate(self.sample['id'])
+        self.repo.commit_transform(candidate['candidateId'], [1,0,0,5,0,1,0,0,0,0,1,0,0,0,0,1])
+        events = self.stream(object_id=candidate['candidateId'], expected_revision_id=candidate['revisionId'])
+        self.assertEqual([event['type'] for event in events], ['metadata', 'result'])
+        self.assertEqual(events[-1]['outcome']['code'], 'stale-revision')
+        self.assertEqual(self.model.seen, [])
+        self.assertEqual(self.client.post('/api/ai/chat/stream', json={**self.payload, 'message': ' '}).status_code, 422)
+
+    def test_stream_model_failure_ends_with_unavailable_result(self):
+        client = TestClient(create_app(self.repo.root, chat_agent=GeminiChatAgent(lambda: (_ for _ in ()).throw(RuntimeError('k'))))); self.addCleanup(client.close)
+        lines = [json.loads(line) for line in client.post('/api/ai/chat/stream', json=self.payload).text.splitlines()]
+        self.assertEqual(lines[-1]['outcome']['code'], 'model-unavailable')
+
     def test_default_model_is_gemini_flash(self):
-        self.assertEqual(GEMINI_MODEL, 'gemini-3-flash-preview')
+        self.assertEqual(GEMINI_MODEL, 'gemini-3.1-flash-lite')
 
 
 if __name__ == '__main__': unittest.main()
