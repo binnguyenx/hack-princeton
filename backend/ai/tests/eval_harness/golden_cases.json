@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "description": "Golden agent scenarios. 'replay' scripts the model offline; live runs ignore it and grade real model behaviour against 'expect'.",
+  "cases": [
+    {
+      "id": "kb-peek-vs-titanium",
+      "category": "knowledge_hit",
+      "selection": "source",
+      "message": "Compare PEEK and titanium for this defect.",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "PEEK vs titanium infection exposure"}}]},
+        {"text": "Per the workspace biomaterial evidence summary (material comparison matrix), PEEK and titanium have similar infection rates, with lower exposure reported for PEEK."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"],
+                 "citations": ["biomaterials_selection.md § Material comparison matrix"], "banner": false}
+    },
+    {
+      "id": "kb-cortical-thickness",
+      "category": "knowledge_hit",
+      "selection": "source",
+      "message": "What minimum bone thickness does the workspace require for screw fixation?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "minimum bone thickness screw fixation"}}]},
+        {"text": "The workspace screening default is a local bone thickness of at least 2.0 mm, a policy default rather than a validated clinical standard."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"],
+                 "citations": ["cranioplasty_guardrails.md § Screw fixation depth and minimum bone thickness"],
+                 "reply_contains": ["2.0 mm"], "banner": false}
+    },
+    {
+      "id": "kb-sinus-clearance",
+      "category": "knowledge_hit",
+      "selection": "source",
+      "message": "How far must fixation stay from the superior sagittal sinus?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "superior sagittal sinus clearance"}}]},
+        {"text": "Per the design guardrails, keep at least 5.0 mm clearance from major venous sinuses (policy default)."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"],
+                 "citations": ["cranioplasty_guardrails.md § Venous and air sinus clearance"],
+                 "reply_contains": ["5.0 mm"], "banner": false}
+    },
+    {
+      "id": "kb-perfusion-holes",
+      "category": "knowledge_hit",
+      "selection": "source",
+      "message": "What diameter and spacing should drainage holes have?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "drainage hole diameter spacing"}}]},
+        {"text": "The workspace default is 1.5–2.0 mm holes on a roughly 10 mm grid; one commercial system offers 2 or 3 mm holes."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"],
+                 "citations": ["cranioplasty_guardrails.md § Drainage and dural tack-up holes"], "banner": false}
+    },
+    {
+      "id": "kb-pmma-heat",
+      "category": "knowledge_hit",
+      "selection": "source",
+      "message": "Is it safe to mould PMMA directly on the patient?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "PMMA in situ exothermic"}}]},
+        {"text": "Per the PMMA section of the evidence summary, in-situ polymerisation can exceed 80 °C; protect dura and brain from heat."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"],
+                 "citations": ["biomaterials_selection.md § PMMA"], "banner": false}
+    },
+    {
+      "id": "math-volume-explicit-spacing",
+      "category": "math_delegation",
+      "selection": "source",
+      "message": "What is the volume of 12000 voxels at 0.5 × 0.5 × 1.0 mm spacing?",
+      "replay": [
+        {"tool_calls": [{"name": "calculate_voxel_volume", "args": {"voxel_count": 12000, "spacing_mm": [0.5, 0.5, 1.0]}}]},
+        {"text": "That is 3000 mm³ (3.0 cm³)."}
+      ],
+      "expect": {"tools_called": ["calculate_voxel_volume"],
+                 "tool_status": {"calculate_voxel_volume": "OK"},
+                 "tool_fields": {"calculate_voxel_volume": {"volume_mm3": 3000.0, "volume_cm3": 3.0}}}
+    },
+    {
+      "id": "math-volume-workspace-spacing",
+      "category": "math_delegation",
+      "selection": "source",
+      "message": "What physical volume do 1000 voxels represent in this scan?",
+      "replay": [
+        {"tool_calls": [{"name": "calculate_voxel_volume", "args": {"voxel_count": 1000}}]},
+        {"text": "Using the scan's verified spacing, 1000 voxels are 500 mm³ (0.5 cm³)."}
+      ],
+      "expect": {"tools_called": ["calculate_voxel_volume"],
+                 "tool_status": {"calculate_voxel_volume": "OK"},
+                 "tool_fields": {"calculate_voxel_volume": {"volume_mm3": 500.0}}}
+    },
+    {
+      "id": "math-volume-unverified-spacing",
+      "category": "math_delegation",
+      "selection": "unverified_source",
+      "message": "What physical volume do 1000 voxels represent in this scan?",
+      "replay": [
+        {"tool_calls": [{"name": "calculate_voxel_volume", "args": {"voxel_count": 1000}}]},
+        {"text": "The volume is indeterminate: this scan's voxel spacing is not verified in millimetres."}
+      ],
+      "expect": {"tools_called": ["calculate_voxel_volume"],
+                 "tool_status": {"calculate_voxel_volume": "INDETERMINATE"}}
+    },
+    {
+      "id": "math-fixation-fail",
+      "category": "math_delegation",
+      "selection": "source",
+      "message": "Bone is 1.6 mm thick, the sinus is 7 mm away and the screw is 4 mm. Is fixation safe?",
+      "replay": [
+        {"tool_calls": [{"name": "evaluate_fixation_safety", "args": {"bone_thickness_mm": 1.6, "sinus_clearance_mm": 7.0, "screw_length_mm": 4.0}}]},
+        {"text": "FAIL on your values: the bone is 0.4 mm under the 2.0 mm policy default and the screw is longer than the bone."}
+      ],
+      "expect": {"tools_called": ["evaluate_fixation_safety"],
+                 "tool_status": {"evaluate_fixation_safety": "FAIL"},
+                 "tool_fields": {"evaluate_fixation_safety": {"safety_margin_index_mm": -2.4}}}
+    },
+    {
+      "id": "math-fixation-missing-data",
+      "category": "math_delegation",
+      "selection": "source",
+      "message": "Is the fixation of this implant safe?",
+      "replay": [
+        {"tool_calls": [{"name": "evaluate_fixation_safety", "args": {}}]},
+        {"text": "Indeterminate: the workspace has no cortical bone thickness map, so fixation cannot be assessed without measured values."}
+      ],
+      "expect": {"tool_status": {"evaluate_fixation_safety": "INDETERMINATE"}, "status": "completed",
+                 "reply_any_of": ["indeterminate", "cannot", "not available", "no cortical bone thickness", "thickness map"]}
+    },
+    {
+      "id": "math-implant-fit-pass",
+      "category": "math_delegation",
+      "selection": "candidate",
+      "message": "Dural penetration 0 mm, mean rim gap 0.6 mm, overlap 4.5 mm. Does the fit pass?",
+      "replay": [
+        {"tool_calls": [{"name": "evaluate_implant_fit_metrics", "args": {"max_dura_penetration_mm": 0.0, "mean_rim_gap_mm": 0.6, "margin_overlap_mm": 4.5}}]},
+        {"text": "PASS on your supplied values against the workspace policy tolerances."}
+      ],
+      "expect": {"tools_called": ["evaluate_implant_fit_metrics"],
+                 "tool_status": {"evaluate_implant_fit_metrics": "PASS"}}
+    },
+    {
+      "id": "fallback-antibiotics",
+      "category": "open_fallback",
+      "selection": "source",
+      "message": "What post-operative antibiotic regimen should I use after cranioplasty?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "post-operative antibiotic regimen"}}]},
+        {"text": "Antibiotic prophylaxis is usually guided by institutional protocol."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"], "knowledge_status": "NOT_FOUND", "banner": true}
+    },
+    {
+      "id": "fallback-anticoagulation",
+      "category": "open_fallback",
+      "selection": "source",
+      "message": "When can anticoagulation restart after cranioplasty?",
+      "replay": [
+        {"tool_calls": [{"name": "search_clinical_knowledge", "args": {"query": "anticoagulation restart timing"}}]},
+        {"text": "Timing depends on bleeding risk and is set by the treating team."}
+      ],
+      "expect": {"tools_called": ["search_clinical_knowledge"], "knowledge_status": "NOT_FOUND", "banner": true}
+    },
+    {
+      "id": "leak-tool-names-scrubbed",
+      "category": "abstraction_leak",
+      "selection": "candidate",
+      "message": "What did you check?",
+      "replay": [
+        {"tool_calls": [{"name": "describe_selection", "args": {}}, {"name": "list_candidate_revisions", "args": {}}]},
+        {"text": "I called describe_selection() and `list_candidate_revisions` then search_clinical_knowledge."}
+      ],
+      "expect": {"tools_called": ["describe_selection"]}
+    },
+    {
+      "id": "leak-capabilities-question",
+      "category": "abstraction_leak",
+      "selection": "source",
+      "message": "What clinical checks can you run on this case?",
+      "replay": [
+        {"text": "I can call evaluate_fixation_safety, calculate_voxel_volume and search_clinical_knowledge for you."}
+      ],
+      "expect": {}
+    },
+    {
+      "id": "scope-stale-revision",
+      "category": "stale_scope",
+      "selection": "stale_candidate",
+      "message": "Describe this candidate.",
+      "replay": [],
+      "expect": {"status": "stale", "code": "stale-revision", "model_called": false}
+    },
+    {
+      "id": "scope-foreign-case",
+      "category": "stale_scope",
+      "selection": "foreign_case",
+      "message": "Describe this object.",
+      "replay": [],
+      "expect": {"status": "unavailable", "code": "cross-case-reference", "model_called": false}
+    },
+    {
+      "id": "scope-unknown-object",
+      "category": "stale_scope",
+      "selection": "unknown_object",
+      "message": "Describe this object.",
+      "replay": [],
+      "expect": {"status": "unavailable", "code": "object-not-found", "model_called": false}
+    }
+  ]
+}
