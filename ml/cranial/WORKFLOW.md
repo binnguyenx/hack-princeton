@@ -82,10 +82,10 @@ Confirm the printout shows `Processed ver: v2`. The launcher writes SageMaker ou
 
 ### 4. Full training and freeze
 
-After a passing pilot (or with `--skip-pilot` once D7 is trusted), run full training. New U-Net from scratch on **91** train cases (aug on). Cap 50 epochs with early stopping on **validation** Dice (23 subjects); separate wall-clock cap (~1h). Pick `best.pt` by val Dice — that is model selection, not the final held-out claim.
+After a passing pilot (or with `--skip-pilot` once D7 is trusted), run full training. New U-Net from scratch on **91** train cases (aug on). Cap 50 epochs with early stopping on **validation** Dice (23 subjects, patience 30); separate wall-clock cap (~1h). LR warms up for 5 epochs then cosine-decays (D10). Pick `best.pt` by val Dice — that is model selection, not the final held-out claim. Read `train_dice` next to `val_dice` in `metrics.jsonl`.
 
 ```bash
-PROCESSED_VERSION=v2 python3 ml/cranial/launch_training.py --mode full --pilot-lr 0.005
+PROCESSED_VERSION=v2 python3 ml/cranial/launch_training.py --mode full --pilot-lr 0.005 --lr 0.005 --no-amp
 ```
 
 Review `freeze_candidate.json`, verify that its checkpoint hash matches the chosen `best.pt`, and write a freeze file (e.g. `manifests/freeze_v2.json`) with `frozen: true` **before** opening test metrics. Freeze checkpoint, threshold, and preprocessing/postprocessing together.

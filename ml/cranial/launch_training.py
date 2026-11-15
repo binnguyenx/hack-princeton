@@ -146,6 +146,10 @@ def main() -> None:
         help="Disable AMP for the full training loop (needed with lr≈0.005; pilot AMP stays separate)",
     )
     parser.add_argument("--skip-pilot", action="store_true", help="Skip the pilot overfit check in full mode")
+    parser.add_argument("--early-stop-patience", type=int, default=30,
+                        help="Full-run early stop on val Dice (default 30; 15 stopped …7924 after an epoch-5 peak)")
+    parser.add_argument("--warmup-epochs", type=int, default=5,
+                        help="Full-run linear LR warmup epochs before cosine decay")
     args = parser.parse_args()
 
     assert_config()
@@ -191,7 +195,8 @@ def main() -> None:
             "batch-size": 1,
             "seed": 42,
             "threshold": 0.5,
-            "early-stop-patience": 15,
+            "early-stop-patience": args.early_stop_patience,
+            "warmup-epochs": args.warmup_epochs,
             "loss": "dice",
             # Run pilot overfit check first, then continue to full training
             "pilot": run_pilot_check,
@@ -207,7 +212,8 @@ def main() -> None:
         max_run = MAX_RUN_FULL
         print(f"\n[FULL TRAINING] run_id={run_id}")
         print(f"  Instance:     {INSTANCE_TYPE}  (~$1.52/hr)")
-        print(f"  Epochs:       {n_epochs} (early stop patience=15)")
+        print(f"  Epochs:       {n_epochs} (early stop patience={args.early_stop_patience})")
+        print(f"  LR:           {args.lr} (warmup {args.warmup_epochs} epochs, cosine to 1%)")
         print(f"  Pilot check:  {run_pilot_check}")
         print(f"  no-amp:       {args.no_amp}")
         print(f"  Max runtime:  {max_run // 3600} hours")

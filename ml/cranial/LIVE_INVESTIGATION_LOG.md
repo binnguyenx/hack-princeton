@@ -825,3 +825,54 @@ Artifacts downloaded to repo as `ml/best.pt` + `ml/freeze_candidate.json` (check
 ### Transparency one-liner
 
 Pilot 0.90 = “the pen works.” Full val 0.12 = “the real exam failed,” most likely because we took the exam with a much smaller pen stroke (`lr=0.0002`) than the stroke that passed the fuse (`0.005`), not because 91 skulls make learning impossible.
+
+---
+
+## 12. Training-loop fixes before the D9 retry — 2026-11-15
+
+### Finding: the flip augmentation turned skulls upside down
+
+`SkullDataset` returns tensors shaped `[C, z, y, x]` (SimpleITK array order). The training augmentation used `RandFlipd(spatial_axis=0)`, which is the first **spatial** axis = **z (superior–inferior)**. So about half of all training samples during full train were upside-down skulls. Validation and test are never flipped. The mirror baseline in `evaluate.py` mirrors image X (array axis 2) — the left-right axis the augmentation was supposed to use.
+
+This fits the pattern we kept seeing:
+
+| Run | Augmentation | Result |
+|-----|--------------|--------|
+| Pilot `…7579` | off | best Dice 0.90 on 3 cases (memorization works) |
+| Full `…7924` | **on (z-flip bug)** | best val Dice 0.12 @ epoch 5, then slid |
+
+The z-flip is not the only possible cause (full LR was also 25× lower than the pilot's, see §11), but it is a real bug, and it would hurt even a well-tuned LR. Both are fixed or changeable before the next paid run.
+
+### Changes (spec D10)
+
+1. **Flip axis:** `spatial_axis=2` (x, left–right). Parietotemporal defects flipped left–right stay realistic: the defect simply moves to the other side.
+2. **LR schedule:** new `lr_for_epoch()` — linear warmup for `--warmup-epochs` (default 5), then cosine decay from `--lr` down to 1% of it on the last epoch. It is a pure function of the epoch index, so `latest.pt` resume lands on the same LR without saving scheduler state. Applies to full train only; the pilot (D7) is unchanged.
+3. **Early-stop patience:** default 30 (was 15) in `train.py` and the launcher. 23 val subjects give noisy val Dice; patience 15 stopped `…7924` right after an epoch-5 peak.
+4. **Diagnostics:** every epoch now logs `lr` and **`train_dice`** (hard Dice on the augmented training batches) in the log line and `metrics.jsonl`. This is the number we were missing to decide whether to blame data volume:
+   - train Dice high, val Dice low → generalization problem → more data (all 5 SkullBreak categories) / regularization.
+   - train Dice low too → still an optimization/target problem → consider predicting the complete skull (D1 alternative).
+5. Launcher: `--early-stop-patience` and `--warmup-epochs` flags, passed through as hyperparameters.
+
+### Verification (local, CPU)
+
+New regression tests in `ml/cranial/tests/test_pipeline.py`:
+
+- `test_augmentation_mirrors_only_left_right_never_upside_down` — blob in a corner; over 20 augmented samples its z and y centre never cross the midline, and the x centre does sometimes. Failed before the fix (`z centre 76.7`), passes after.
+- `test_lr_schedule_warms_up_then_cosine_decays_to_floor`, `test_lr_schedule_without_warmup_starts_at_base` — hand-worked values (base 0.005: epoch 0 → 0.001, epoch 4 → 0.005, cosine midpoint → 0.002525, last → 0.00005).
+- `test_full_training_defaults_tolerate_noisy_validation` — patience 30, warmup 5.
+- `test_train_epoch_reports_hard_dice_on_training_cases` — perfect logits → train Dice 1.0, empty → 0.0.
+
+Result: `39 passed` (was 33). A 3-epoch CPU smoke run of `train.main()` on synthetic 32³ data logged `lr=2.50e-03 → 5.00e-03 → 5.00e-05` and `train_dice` per epoch in `metrics.jsonl`.
+
+Local tests ran on torch 2.15 / MONAI 1.6 in a throwaway Python 3.13 environment (no torch 2.1 wheel for 3.13); SageMaker still uses the pinned versions in `requirements.txt`. `launch_training.py` was only compile-checked, because it imports `sagemaker`.
+
+Known local-only quirk (pre-existing, not changed): on macOS, `train.py` with `num_workers>0` fails with `cannot pickle 'module' object` because the dataset stores the SimpleITK module and macOS starts worker processes with spawn. SageMaker (Linux, fork) is unaffected.
+
+### Next paid job
+
+```sh
+PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full \
+  --pilot-lr 0.005 --lr 0.005 --no-amp
+```
+
+Defaults now add 5 warmup epochs, cosine decay and patience 30. Read `train_dice` next to `val_dice` in `metrics.jsonl` before choosing the next change. Do not freeze unless val Dice is clearly better than the 0.12 of `…7924`. Convergence and held-out quality are **unverified** until this job finishes.

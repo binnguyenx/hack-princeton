@@ -19,6 +19,7 @@ import argparse
 import hashlib
 import json
 import logging
+import math
 import os
 import random
 import subprocess
@@ -130,9 +131,11 @@ class SkullDataset(Dataset):
                 mode=("nearest", "nearest"),          # binary masks → nearest
                 padding_mode="zeros",
             ),
+            # Tensors are [C, z, y, x]; left-right (sagittal mirror) is x = spatial axis 2.
+            # spatial_axis=0 flipped skulls upside down, which never occurs at val/test.
             RandFlipd(
                 keys=["defect", "implant"],
-                spatial_axis=0,
+                spatial_axis=2,
                 prob=0.5,
             ),
         ])
@@ -234,6 +237,27 @@ def build_loss(loss_type: str = "dice"):
 # Metrics
 # ---------------------------------------------------------------------------
 
+def lr_for_epoch(
+    epoch: int,
+    base_lr: float,
+    warmup_epochs: int,
+    total_epochs: int,
+    min_lr_ratio: float = 0.01,
+) -> float:
+    """Linear warmup to base_lr, then cosine decay to min_lr_ratio * base_lr.
+
+    A pure function of the epoch index so resuming from latest.pt lands on the
+    same learning rate without storing scheduler state.
+    """
+    if warmup_epochs > 0 and epoch < warmup_epochs:
+        return base_lr * (epoch + 1) / warmup_epochs
+    min_lr = base_lr * min_lr_ratio
+    start = max(warmup_epochs - 1, 0)
+    span = max(total_epochs - 1 - start, 1)
+    progress = min(max((epoch - start) / span, 0.0), 1.0)
+    return min_lr + (base_lr - min_lr) * 0.5 * (1.0 + math.cos(math.pi * progress))
+
+
 @torch.no_grad()
 def compute_implant_dice(
     logits: torch.Tensor,
@@ -318,6 +342,7 @@ def train_one_epoch(
 ) -> Dict[str, float]:
     model.train()
     total_loss = 0.0
+    dice_sum = 0.0
     n_steps = 0
     step_times = []
 
@@ -339,10 +364,13 @@ def train_one_epoch(
         step_time = time.time() - t0
         step_times.append(step_time)
         total_loss += loss.item()
+        # Hard Dice on the (augmented) training batch, from the logits already computed.
+        dice_sum += compute_implant_dice(logits.detach().float(), implant)
         n_steps += 1
 
     return {
         "train_loss": total_loss / max(n_steps, 1),
+        "train_dice": dice_sum / max(n_steps, 1),
         "mean_step_time_s": float(np.mean(step_times)),
         "peak_gpu_mb": torch.cuda.max_memory_allocated(device) / 1e6 if device.type == "cuda" else 0,
     }
@@ -551,7 +579,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--batch-size",    type=int,   default=1)
     p.add_argument("--seed",          type=int,   default=42)
     p.add_argument("--threshold",     type=float, default=0.5)
-    p.add_argument("--early-stop-patience", type=int, default=15)
+    p.add_argument("--early-stop-patience", type=int, default=30,
+                   help="Val Dice on 23 subjects is noisy; 15 stopped run …7924 right after an epoch-5 peak")
+    p.add_argument("--warmup-epochs", type=int, default=5,
+                   help="Linear LR warmup epochs before cosine decay (0 = start at --lr)")
     p.add_argument("--no-amp", nargs="?", const=True, default=False, type=parse_bool,
                    help="Disable mixed precision (SageMaker passes true/false)")
     p.add_argument("--no-aug",        nargs="?", const=True, default=False, type=parse_bool,
@@ -678,6 +709,9 @@ def main() -> None:
             log.info("Training time budget reached; retaining saved checkpoints")
             break
         t_epoch = time.time()
+        epoch_lr = lr_for_epoch(epoch, args.lr, args.warmup_epochs, args.epochs)
+        for group in optimizer.param_groups:
+            group["lr"] = epoch_lr
 
         train_metrics = train_one_epoch(
             model, train_loader, optimizer, loss_fn, scaler, device, use_amp
@@ -690,6 +724,7 @@ def main() -> None:
         row = {
             "epoch": epoch,
             "epoch_time_s": round(epoch_time, 1),
+            "lr": epoch_lr,
             **train_metrics,
             **val_metrics,
         }
@@ -698,7 +733,9 @@ def main() -> None:
 
         log.info(
             f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"lr={epoch_lr:.2e} | "
             f"train_loss={train_metrics['train_loss']:.4f} | "
+            f"train_dice={train_metrics['train_dice']:.4f} | "
             f"val_loss={val_metrics['val_loss']:.4f} | "
             f"val_dice={val_dice:.4f} | "
             f"step={train_metrics['mean_step_time_s']:.2f}s | "

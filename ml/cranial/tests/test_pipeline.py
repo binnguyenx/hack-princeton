@@ -259,3 +259,95 @@ def test_real_augmentation_preserves_pair_alignment(tmp_path):
     for _ in range(3):
         sample = dataset[0]
         torch.testing.assert_close(sample['defect'], sample['implant'])
+
+
+def write_corner_pair(directory, size=96):
+    """Blob in the low-z, low-y, low-x corner so any axis flip moves its centre of mass."""
+    import json
+    from dataclasses import asdict
+    directory.mkdir(parents=True, exist_ok=True)
+    a = np.zeros((size, size, size), dtype=np.uint8)
+    # Centre 20 of 96: the worst allowed affine (8 vox shift, ~8.5 deg, 10% scale)
+    # keeps it below 48; any axis flip puts it near 76.
+    a[16:24, 16:24, 16:24] = 1
+    img = sitk.GetImageFromArray(a)
+    cfg = {'preprocessing': {'target_spacing': [1., 1., 1.],
+           'target_shape': [size, size, size], 'convert_to_ras': False}}
+    defect, implant, meta = preprocess_pair(img, img, cfg)
+    for kind, out in [('defect', defect), ('implant', implant)]:
+        sitk.WriteImage(out, str(directory / f'case_{kind}.nrrd'))
+    (directory / 'case_meta.json').write_text(json.dumps(asdict(meta)))
+
+
+def test_augmentation_mirrors_only_left_right_never_upside_down(tmp_path):
+    """Arrays are [z, y, x]; the sagittal mirror (evaluate.py baseline) is x.
+    Flipping z or y would show the model skulls that never occur at val/test."""
+    from monai.utils import set_determinism
+    from train import SkullDataset
+    set_determinism(seed=0)
+    write_corner_pair(tmp_path)
+    dataset = SkullDataset(str(tmp_path), augment=True)
+    half = 48
+    x_flipped = 0
+    for _ in range(20):
+        vol = dataset[0]['defect'][0].numpy()
+        z, y, x = np.argwhere(vol > 0).mean(axis=0)
+        assert z < half, f'superior-inferior flip: z centre {z:.1f}'
+        assert y < half, f'anterior-posterior flip: y centre {y:.1f}'
+        x_flipped += x > half
+    set_determinism(seed=None)
+    assert 0 < x_flipped < 20, f'left-right flip should happen sometimes, got {x_flipped}/20'
+
+
+def test_lr_schedule_warms_up_then_cosine_decays_to_floor():
+    """Worked example: base 0.005, 5 warmup epochs (0-4), 45 epochs, floor 1% of base.
+    Cosine runs from epoch 4 (base) to epoch 44 (floor), so epoch 24 is its midpoint."""
+    from train import lr_for_epoch
+    lr = lambda e: lr_for_epoch(e, base_lr=0.005, warmup_epochs=5, total_epochs=45)
+    assert lr(0) == pytest.approx(0.001)        # 1/5 of base: no full-size first step
+    assert lr(4) == pytest.approx(0.005)        # warmup ends at base
+    assert lr(24) == pytest.approx(0.002525)    # (0.005 + 0.00005) / 2
+    assert lr(44) == pytest.approx(0.00005)     # last epoch sits on the floor
+    after_warmup = [lr(e) for e in range(4, 45)]
+    assert all(a >= b for a, b in zip(after_warmup, after_warmup[1:]))
+
+
+def test_lr_schedule_without_warmup_starts_at_base():
+    from train import lr_for_epoch
+    assert lr_for_epoch(0, base_lr=0.002, warmup_epochs=0, total_epochs=10) == pytest.approx(0.002)
+
+
+def test_full_training_defaults_tolerate_noisy_validation(monkeypatch):
+    """23 val subjects make val Dice noisy; run …7924 peaked at epoch 5 and stopped
+    under patience 15. Defaults now give the schedule room to work."""
+    from train import parse_args
+    monkeypatch.setattr(sys, 'argv', ['train.py'])
+    args = parse_args()
+    assert args.early_stop_patience == 30
+    assert args.warmup_epochs == 5
+
+
+class _FixedLogits(torch.nn.Module):
+    """Returns +10 where the input is bone (perfect copy) or -10 everywhere (empty)."""
+    def __init__(self, copy_input):
+        super().__init__()
+        self.copy_input = copy_input
+        self.w = torch.nn.Parameter(torch.zeros(()))
+
+    def forward(self, x):
+        base = (x * 2 - 1) * 10 if self.copy_input else torch.full_like(x, -10.0)
+        return base + self.w * 0
+
+
+@pytest.mark.parametrize('copy_input, expected', [(True, 1.0), (False, 0.0)])
+def test_train_epoch_reports_hard_dice_on_training_cases(copy_input, expected):
+    """Train-set Dice separates 'cannot learn' from 'learns but does not generalize'."""
+    from train import train_one_epoch, build_loss
+    implant = torch.zeros(1, 1, 8, 8, 8)
+    implant[:, :, 2:5, 2:5, 2:5] = 1
+    loader = [{'defect': implant, 'implant': implant}] * 2
+    model = _FixedLogits(copy_input)
+    opt = torch.optim.SGD(model.parameters(), lr=0.0)
+    scaler = torch.cuda.amp.GradScaler(enabled=False)
+    metrics = train_one_epoch(model, loader, opt, build_loss(), scaler, torch.device('cpu'), False)
+    assert metrics['train_dice'] == pytest.approx(expected, abs=1e-4)
