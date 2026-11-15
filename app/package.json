@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run sync:fixtures && npm run sync:samples && vite",
+    "dev:stack": "../scripts/dev.sh",
     "build": "npm run sync:fixtures && npm run sync:samples && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "npm run sync:fixtures && npm run sync:samples && vite preview",
