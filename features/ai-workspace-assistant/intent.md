@@ -87,3 +87,11 @@ This work owns the AI request path, the common operation service, progress and t
 2026-11-14 — The owner accepted the seven T1C decision-sheet items for the foreground-volume measurement **contract** only. Canonical wording is in `docs/ai/contracts.md` and R70–R79 / S51–S58. The plan file `plans/t1c-measurement-contract.md` is the decision record, not a competing spec. This does not authorize T2 implementation, bind sandbox `measure.candidate`, or change read-only AI/chat. Overall status remains draft.
 
 2026-11-14 — After T1C fold-in, the owner separately authorized T2 live mechanical implementation within that measurement scope: `ForegroundVolumeService` over ApplicationRepository, measurement POST/GET routes, additive live persistence, and accepted NRRD/idempotency/error semantics. Does not bind LangGraph `measure.candidate`, change Chat UI, enable AI mutations, call AWS/Bedrock, or implement unrelated geometry. Overall status remains draft.
+
+## Recovery chat integration (2026-11-14)
+
+Owner authorizes connecting the restored Assistant panel to the existing FastAPI metadata-only graph, with scoped conversation context and regressions. Preserve shell styles, studio, slices and the Vite SQLite CRUD plugin. No Bedrock, geometry execution, AI live writes, commit or push.
+
+## Final review repair authorization — 2026-11-14
+
+Owner authorizes repairing PR #31 test isolation, document/chat context alignment and repeated follow-up intent. Keep recovery styles/viewport/global selection and the Vite SQLite apiPlugin intact. Use only disposable storage for verification. The initial build excluded publication; the owner subsequently authorizes reviewed commit/push to PR #31. No merge, provider, AI writes or live runtime changes.

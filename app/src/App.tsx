@@ -1,3 +1,4 @@
+import { buildChatContext } from './ai/chatContext'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiClient } from './api/client'
 import type { Object3D } from 'three'
@@ -1033,6 +1034,7 @@ export default function App() {
                 <MenuBar commands={commands} onRun={runCommand} />
                 <CanvasWorkspace
                   documentName={activeDocumentName}
+                  chatContext={buildChatContext(state)}
                   activeMode={canvasMode}
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}

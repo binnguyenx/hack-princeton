@@ -10,6 +10,7 @@ import { FeatureHint, FeatureHintProvider } from './FeatureHint'
 import { SliceDock } from './SliceDock'
 import { ViewFrame } from './ViewFrame'
 import { AiChatPanel } from './AiChatPanel'
+import type { ChatContext } from '../ai/chatContext'
 import type { Vec3 } from '../geometry/coordinates'
 import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
 
@@ -37,6 +38,7 @@ type Props = {
   onWindowChange?: (center: number, width: number) => void
   onPlace?: (point: IjkPoint) => void
   children: ReactNode
+  chatContext?: ChatContext | null
   aiChatOpen?: boolean
   onAiChatOpenChange?: (open: boolean) => void
 }
@@ -74,6 +76,7 @@ export function CanvasWorkspace({
   onWindowChange = () => {},
   onPlace = () => {},
   children,
+  chatContext,
   aiChatOpen,
   onAiChatOpenChange,
 }: Props) {
@@ -203,6 +206,7 @@ export function CanvasWorkspace({
               open={isChatOpen}
               onOpenChange={setChatOpen}
               contextLabel={documentName}
+              chatContext={chatContext}
             />
           </aside>
         ) : (

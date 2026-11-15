@@ -1,16 +1,28 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AiChatPanel } from '../../src/ui/AiChatPanel'
 import { CanvasWorkspace } from '../../src/ui/CanvasWorkspace'
 
-afterEach(() => cleanup())
+const context = { project_id: 'project', case_id: 'case', object_id: 'source', expected_revision_id: null }
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body)
+    return new Response(JSON.stringify({ request_id: request.request_id, conversation_id: request.conversation_id,
+      mode: 'fake-read-only', outcome: { status: 'completed',
+        context: { project_id: request.project_id, case_id: request.case_id, selected_object_id: request.object_id, revision_id: request.expected_revision_id },
+        observation: { scope: 'application-read' },
+        explanation: request.message.includes('Recommend') ? 'Read-only chat cannot recommend implant constraints.' : 'Stored grid metadata: 2 × 3 × 4 voxels.' } }))
+  }))
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
-describe('AiChatPanel frontend & mock service', () => {
+describe('AiChatPanel read-only FastAPI integration', () => {
   it('renders the chat panel with header, status, and input', async () => {
     const onOpenChange = vi.fn()
     render(
       <AiChatPanel
+        chatContext={context}
         open={true}
         onOpenChange={onOpenChange}
         contextLabel="Case 1 · Defect SkullBreak"
@@ -37,6 +49,7 @@ describe('AiChatPanel frontend & mock service', () => {
     const onOpenChange = vi.fn()
     render(
       <AiChatPanel
+        chatContext={context}
         open={true}
         onOpenChange={onOpenChange}
         contextLabel="Case 1"
@@ -48,9 +61,10 @@ describe('AiChatPanel frontend & mock service', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('sends user message and receives streamed mock response', async () => {
+  it('sends user message and receives backend response', async () => {
     render(
       <AiChatPanel
+        chatContext={context}
         open={true}
         onOpenChange={() => {}}
         contextLabel="Case 1"
@@ -73,7 +87,7 @@ describe('AiChatPanel frontend & mock service', () => {
     // Streamed mock response should arrive
     await waitFor(
       () => {
-        expect(screen.getByText(/Defect area:/i)).toBeTruthy()
+        expect(screen.getByText(/Stored grid metadata:/i)).toBeTruthy()
       },
       { timeout: 3000 },
     )
@@ -82,6 +96,7 @@ describe('AiChatPanel frontend & mock service', () => {
   it('clicking a prompt chip sends the prompt immediately', async () => {
     render(
       <AiChatPanel
+        chatContext={context}
         open={true}
         onOpenChange={() => {}}
         contextLabel="Case 1"
@@ -98,7 +113,7 @@ describe('AiChatPanel frontend & mock service', () => {
     // User message should appear in feed and response should arrive
     await waitFor(
       () => {
-        expect(screen.getByText(/PEEK/i)).toBeTruthy()
+        expect(screen.getByText(/cannot recommend implant constraints/i)).toBeTruthy()
       },
       { timeout: 3000 },
     )
@@ -138,5 +153,37 @@ describe('CanvasWorkspace AI chat column integration', () => {
 
     // AI column is opened again
     expect(screen.getByRole('region', { name: 'AI Workspace Assistant' })).toBeTruthy()
+  })
+})
+
+describe('chat conversation scope guards', () => {
+  it('disables sending without a real selection', async () => {
+    render(<AiChatPanel open onOpenChange={() => {}} />)
+    await waitFor(() => expect(screen.getByText(/cranial reconstruction assistant/i)).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Message for AI assistant'), {target:{value:'hello'}})
+    expect((screen.getByLabelText('Send message to AI assistant') as HTMLButtonElement).disabled).toBe(true)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+  it.each(['reset','context change'] as const)('suppresses late replies after %s and starts a fresh conversation', async kind => {
+    let resolve!: (response: Response) => void
+    let captured: Record<string, unknown> = {}
+    const mock = vi.fn((_url, options) => {
+      captured = JSON.parse(options.body)
+      return new Promise<Response>(done => { resolve = done })
+    })
+    vi.stubGlobal('fetch',mock)
+    const view = render(<AiChatPanel open chatContext={context} onOpenChange={() => {}} />)
+    await waitFor(() => expect(screen.getByText(/cranial reconstruction assistant/i)).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Message for AI assistant'), {target:{value:'Inspect skull'}})
+    fireEvent.click(screen.getByLabelText('Send message to AI assistant'))
+    await waitFor(() => expect(mock).toHaveBeenCalledOnce())
+    if (kind === 'reset') fireEvent.click(screen.getByLabelText('Reset conversation'))
+    else view.rerender(<AiChatPanel open chatContext={{...context,object_id:'another-source'}} onOpenChange={() => {}} />)
+    expect(mock.mock.calls[0][1].signal.aborted).toBe(true)
+    resolve(new Response(JSON.stringify({request_id:captured.request_id,conversation_id:captured.conversation_id,mode:'fake-read-only',
+      outcome:{status:'completed',explanation:'LATE OLD REPLY',context:{...context,selected_object_id:'source',revision_id:null},observation:{scope:'application-read'}}})))
+    await waitFor(() => expect(screen.getByText(/cranial reconstruction assistant/i)).toBeTruthy())
+    expect(screen.queryByText('LATE OLD REPLY')).toBeNull()
+    expect(screen.queryByText('Inspect skull')).toBeNull()
   })
 })
