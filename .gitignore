@@ -35,3 +35,7 @@ app/cranial-env/
 .playwright-mcp/
 .claude/settings.local.json
 .cursor/hooks/state/
+
+# Model weights live in S3 (cranial/checkpoints/run_*/), not git
+ml/cranial/checkpoints/*.pt
+ml/*.pt

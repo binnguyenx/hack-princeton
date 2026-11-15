@@ -42,7 +42,8 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
 | [Mechanical last parts](../features/3d-bone-editor/mechanical-last-parts/intent.md) | shipped | Revision-scoped annotations/measurement (Place stack, panel, overlays); behavior classes for select/RMB, angle place, plane/ROI gizmos. |
 | [Canvas interaction contracts](../features/canvas-interaction-contracts/intent.md) | shipped | A shared ownership contract for canvas navigation, placement, selection, and direct manipulation; future agents call supported semantic tool APIs rather than simulating canvas input. |
-| [ml-model](../features/ml-model/intent.md) | in progress | Training and evaluation pipeline for direct 3D missing-cranial-bone completion on SageMaker. |
+| [ml-model](../features/ml-model/intent.md) | in progress | Cranial missing-bone U-Net pipeline under `ml/cranial/`. First frozen model (`run_1794725904`, v2 2 mm/128³): held-out SkullBreak parietotemporal test mean Dice 0.811, median HD95 2.49 mm, 0/20 failures — R12 met (D11). R15 MUG500+ B not run; v2 vs R4 1 mm/256³ still awaits owner decision. |
+| [cranial-reconstruction-candidate](../features/cranial-reconstruction-candidate/intent.md) | in progress | Serve the frozen cranial model on SageMaker async inference so a user (Generate fix button) or the agent (staged proposal) can create a predicted implant candidate with fix statistics and ML provenance. Spec accepted; plan draft. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
 
@@ -55,6 +56,8 @@ Status values: proposed, foundation accepted, in progress, shipped, retired.
 5. Completed AI foundation plans remain under the feature's plans/ directory. The scoped fake-model graph is recorded in plans/langgraph-fake-model.md; provider, checkpoint, recovery and real-operation changes require their own preflight/plan and any outstanding acceptance.
 6. Direct mechanical and AI mutation contracts remain separate from the read-only graph and isolated reconstruction mock. The mock is not real geometry and does not complete the measurement milestone.
 7. The Express-to-FastAPI migration, disposable S13, local live cutover and Express removal are recorded in features/express-to-fastapi/. FastAPI is the application authority; the old runtime/backups are retained outside the repo. Preserve current UI contracts, acknowledged data and rollback requirements. Current main's management/canvas implementation remains the frontend source of truth.
+8. Cranial ML (`features/ml-model/`): model frozen and held-out test scored once (D11, `ml/cranial/reports/eval_v2/`). Further training/threshold changes make the test set development data. See `ml/cranial/LIVE_INVESTIGATION_LOG.md` §13.
+9. Cranial reconstruction candidate (`features/cranial-reconstruction-candidate/`): serves the D11 model; built on FastAPI `main`.
 
 
 
