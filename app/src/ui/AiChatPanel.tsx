@@ -17,12 +17,14 @@ import {
   Send,
   Sparkles,
 } from 'lucide-react'
-import { langGraphClient, type ChatMessage } from '../ai/langGraphClient'
+import { langGraphClient, type ChatMessage, type ChatTurn } from '../ai/langGraphClient'
+import { chatContextKey, type ChatContext } from '../ai/chatContext'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   contextLabel?: string
+  chatContext?: ChatContext | null
 }
 
 const QUICK_PROMPTS = [
@@ -32,132 +34,76 @@ const QUICK_PROMPTS = [
   'Draft reconstruction brief',
 ]
 
-export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+export function AiChatPanel(props: Props) {
+  return <ChatSession key={chatContextKey(props.chatContext)} {...props} />
+}
+
+function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
+  const [messages, setMessages] = useState<(ChatMessage & { failed?: boolean })[]>([])
   const [input, setInput] = useState('')
   const [threadId, setThreadId] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const abortRef = useRef(false)
+  const flight = useRef(0)
+  const busy = useRef(false)
+  const controller = useRef<AbortController | null>(null)
 
-  // Initialize conversation thread on mount or open
   useEffect(() => {
     if (!open || threadId) return
-    langGraphClient
-      .createThread()
-      .then((id) => {
-        setThreadId(id)
-        setMessages([
-          {
-            id: 'welcome',
-            role: 'ai',
-            content: `Hello! I'm your cranial reconstruction assistant${
-              contextLabel ? ` analyzing **${contextLabel}**` : ''
-            }.\n\nI can compute defect metrics, verify candidate margins, and prepare reconstruction constraints. How can I assist?`,
-            createdAt: new Date().toISOString(),
-          },
-        ])
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not start AI session'))
-  }, [open, threadId, contextLabel])
+    let cancelled = false
+    langGraphClient.createThread().then(id => {
+      if (cancelled) return
+      setThreadId(id)
+      setMessages([{ id: 'welcome', role: 'ai',
+        content: "Hello! I'm your cranial reconstruction assistant. This chat uses a fake model to read selected-object metadata. Geometry measurements, reconstruction and AI writes are unavailable.",
+        createdAt: new Date().toISOString() }])
+    }).catch(error => { if (!cancelled) setError(String(error)) })
+    return () => { cancelled = true }
+  }, [open, threadId])
 
-  // Scroll to bottom as messages stream
+  useEffect(() => () => { flight.current += 1; controller.current?.abort() }, [])
+  useEffect(() => { scrollRef.current?.scrollTo?.({ top: scrollRef.current.scrollHeight }) }, [messages])
   useEffect(() => {
-    if (!scrollRef.current) return
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages, isStreaming])
-
-  // Focus textarea when opened
-  useEffect(() => {
-    if (open) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 150)
-      return () => clearTimeout(timer)
-    }
+    if (!open) return
+    const timer = setTimeout(() => inputRef.current?.focus(), 150)
+    return () => clearTimeout(timer)
   }, [open])
 
-  const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
-
-  const handleSendText = useCallback(
-    async (textToSend: string) => {
-      const text = textToSend.trim()
-      if (!text || isStreaming || !threadId) return
-      setInput('')
-      setError(null)
-
-      const humanMsg: ChatMessage = {
-        id: uid(),
-        role: 'human',
-        content: text,
-        createdAt: new Date().toISOString(),
-      }
-
-      const aiMsgId = uid()
-      const aiMsg: ChatMessage = {
-        id: aiMsgId,
-        role: 'ai',
-        content: '',
-        streaming: true,
-        createdAt: new Date().toISOString(),
-      }
-
-      setMessages((prev) => [...prev, humanMsg, aiMsg])
-      setIsStreaming(true)
-      abortRef.current = false
-
-      const history = messages
-        .filter((m) => m.id !== 'welcome')
-        .map((m) => ({
-          role: m.role === 'human' ? 'human' : 'assistant',
-          content: m.content,
-        }))
-
-      try {
-        for await (const event of langGraphClient.streamResponse(threadId, history, text)) {
-          if (abortRef.current) break
-
-          if (event.event === 'messages') {
-            const chunks = Array.isArray(event.data) ? event.data : [event.data]
-            const latest = chunks.at(-1)
-            if (latest && typeof latest.content === 'string') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === aiMsgId ? { ...m, content: latest.content, streaming: true } : m,
-                ),
-              )
-            }
-          }
-
-          if (event.event === 'end') {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === aiMsgId ? { ...m, streaming: false } : m)),
-            )
-          }
-
-          if (event.event === 'error') {
-            throw new Error(
-              typeof event.data === 'object' && event.data !== null && 'message' in event.data
-                ? String((event.data as { message: string }).message)
-                : 'Agent execution failed',
-            )
-          }
+  const handleSendText = useCallback(async (textToSend: string) => {
+    const text = textToSend.trim()
+    if (!text || text.length > 4000 || busy.current || !threadId || !chatContext) return
+    busy.current = true
+    const token = ++flight.current
+    const abort = new AbortController()
+    controller.current = abort
+    const humanId = crypto.randomUUID(), aiId = crypto.randomUUID()
+    setInput(''); setError(null); setIsStreaming(true)
+    setMessages(previous => [...previous,
+      { id: humanId, role: 'human', content: text, createdAt: new Date().toISOString() },
+      { id: aiId, role: 'ai', content: '', streaming: true, createdAt: new Date().toISOString() }])
+    const history: ChatTurn[] = messages.filter(message => message.id !== 'welcome' && !message.failed && !message.streaming)
+      .map(message => ({ role: message.role === 'human' ? 'human' : 'assistant', content: message.content }))
+    try {
+      for await (const event of langGraphClient.streamResponse(threadId, history, text, chatContext, abort.signal)) {
+        if (token !== flight.current || abort.signal.aborted) return
+        if (event.event === 'messages') {
+          const content = event.data.at(-1)?.content
+          if (content) setMessages(previous => previous.map(message => message.id === aiId ? { ...message, content, streaming: true } : message))
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error communicating with agent')
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === aiMsgId
-              ? { ...m, content: '[Failed to receive agent response]', streaming: false }
-              : m,
-          ),
-        )
-      } finally {
-        setIsStreaming(false)
+        if (event.event === 'end') setMessages(previous => previous.map(message => message.id === aiId ? { ...message, streaming: false } : message))
       }
-    },
-    [isStreaming, threadId, messages],
-  )
+    } catch (error) {
+      if (token !== flight.current || abort.signal.aborted) return
+      setError(error instanceof Error ? error.message : 'Read-only chat unavailable.')
+      setMessages(previous => previous.map(message => message.id === aiId
+        ? { ...message, content: '[Failed to receive agent response]', failed: true, streaming: false }
+        : message.id === humanId ? { ...message, failed: true } : message))
+    } finally {
+      if (token === flight.current) { busy.current = false; setIsStreaming(false); controller.current = null }
+    }
+  }, [threadId, chatContext, messages])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -167,7 +113,11 @@ export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
   }
 
   const handleReset = () => {
-    if (isStreaming) abortRef.current = true
+    flight.current += 1
+    controller.current?.abort()
+    controller.current = null
+    busy.current = false
+    setIsStreaming(false)
     setMessages([])
     setThreadId(null)
     setError(null)
@@ -187,7 +137,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
             }`}
             title={
               langGraphClient.isMock
-                ? 'Mock LangGraph agent service active'
+                ? 'Connected to FastAPI with a read-only fake model'
                 : 'Connected to live LangGraph API'
             }
           >
@@ -261,7 +211,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
             key={prompt}
             type="button"
             className="ai-chat-chip"
-            disabled={isStreaming || !threadId}
+            disabled={isStreaming || !threadId || !chatContext}
             onClick={() => void handleSendText(prompt)}
           >
             {prompt}
@@ -269,6 +219,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
         ))}
       </div>
 
+      {!chatContext && <div className="ai-chat-status-msg" role="status">Open a source or candidate to provide chat context.</div>}
       {/* Input controls */}
       <div className="ai-chat-input-box">
         <textarea
@@ -279,14 +230,15 @@ export function AiChatPanel({ open, onOpenChange, contextLabel }: Props) {
           onKeyDown={handleKeyDown}
           placeholder="Ask about defect anatomy, metrics, candidate constraints…"
           rows={2}
-          disabled={isStreaming || !threadId}
+          maxLength={4000}
+          disabled={isStreaming || !threadId || !chatContext}
           aria-label="Message for AI assistant"
         />
         <button
           type="button"
           className="ai-chat-send-btn"
           aria-label="Send message to AI assistant"
-          disabled={!input.trim() || isStreaming || !threadId}
+          disabled={!input.trim() || isStreaming || !threadId || !chatContext}
           onClick={() => void handleSendText(input)}
         >
           <Send size={14} />

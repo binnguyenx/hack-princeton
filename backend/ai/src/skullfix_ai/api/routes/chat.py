@@ -1,7 +1,9 @@
 """Fake-model metadata reads only; no application or sandbox mutation binding."""
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from pydantic import Field, ValidationError
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from skullfix_ai.agent.read_only_reply import read_only_reply
 from starlette.concurrency import run_in_threadpool
 
 from skullfix_ai.agent.context import GraphRequest, RepositoryManifestReader
@@ -9,6 +11,19 @@ from skullfix_ai.agent.workflow import FakeToolModel, WorkspaceGraph
 from skullfix_ai.integrations.workspace import AppWorkspaceAdapter
 from skullfix_ai.tools import ToolRegistry
 from skullfix_ai.tools.inspection import metadata_tool
+
+
+class ChatTurn(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    role: Literal['human', 'assistant']
+    content: str = Field(min_length=1, max_length=4000)
+
+    @field_validator('content')
+    @classmethod
+    def nonblank(cls, value):
+        if not value.strip():
+            raise ValueError('Use nonblank text')
+        return value
 
 
 class ChatRequest(GraphRequest):
@@ -19,12 +34,23 @@ class ChatRequest(GraphRequest):
     object_id: str = Field(min_length=1, max_length=256)
     expected_revision_id: str | None = Field(default=None, min_length=1, max_length=256)
     message: str = Field(min_length=1, max_length=4000)
+    history: list[ChatTurn] = Field(default_factory=list, max_length=24)
+
+    @field_validator('message', 'request_id', 'conversation_id', 'project_id', 'case_id', 'object_id', 'expected_revision_id')
+    @classmethod
+    def nonblank(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError('Use nonblank text')
+        return value
 
 
 def _read(repository, payload):
     graph = WorkspaceGraph(AppWorkspaceAdapter(RepositoryManifestReader(repository)),
                            FakeToolModel(), ToolRegistry([metadata_tool()]))
-    return graph.invoke(payload).model_dump(mode='json')
+    result = graph.invoke(payload)
+    if result.status == 'completed' and result.context is not None:
+        result.explanation = read_only_reply(payload.message, payload.history, result.context)
+    return result.model_dump(mode='json')
 
 
 def create_chat_router():

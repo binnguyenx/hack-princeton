@@ -234,3 +234,33 @@ Package-specific proof:10 HTTP/repository tests,6 client/asset/dialog tests and2
 ## Live foreground-volume measurement (T2)
 
 POST /api/candidates/{id}/measurements runs `ForegroundVolumeService` over ApplicationRepository with accepted NRRD/grid/hash/idempotency semantics. GET /api/candidates/{id}/revisions/{revision_id}/measurements returns revision-scoped successful rows only. Additive tables: `measurement_request_reservations`, `candidate_measurement_results`. No geometry revision or volume-byte mutation. Sandbox OperationService and LangGraph remain unbound for `measure.candidate`. Proof: `backend/ai/tests/integration/api/test_measurements.py` (15 tests, disposable roots).
+
+## Restored Assistant panel → read-only FastAPI chat (2026-11-14)
+
+The restored UI now uses JSON `/api/ai/chat`, not LangGraph Server `/threads` or frontend canned clinical replies. The badge remains Mock because the backend uses a deterministic fake model. It can describe selected-object metadata and assemble a read-only brief; it cannot calculate defect measurements, recommend clinical constraints, reconstruct, call Bedrock or write application data. Conversation history is bounded and client-local; there is no persisted chat checkpoint or SSE service in this slice.
+
+Development preserves the Vite SQLite `apiPlugin` for all CRUD. The additional `read-only-ai-chat` middleware runs before it and forwards **only the exact `/api/ai/chat` path** to `HACK_AI_ORIGIN` (default `http://127.0.0.1:8000`). Backend outage returns 502; it never falls back to canned success. Preview is still frontend-only. Built assets may be tested with FastAPI's existing `--frontend-dir`; this does not authorize a routing cutover.
+
+Start both processes with the **same absolute storage root** containing your existing Node application database and volumes. In terminal 1, from the repository root:
+
+```sh
+export HACK_STORAGE_ROOT="/absolute/path/to/your/application-store"
+PYTHONPATH=backend/ai/src .venv/bin/python -B -m skullfix_ai.api --storage-root "$HACK_STORAGE_ROOT" --host 127.0.0.1 --port 8000
+```
+
+In terminal 2, set that same `HACK_STORAGE_ROOT`, then:
+
+```sh
+HACK_AI_ORIGIN=http://127.0.0.1:8000 npm --prefix app run dev
+```
+
+Restart existing processes to load this code/configuration; do not run a second writer against another implicit root. Open a source or candidate in the studio to enable chat. Source document IDs resolve to canonical source object IDs; candidates use their current pointer, including a restored older revision. Changing project/object/revision or resetting aborts the pending request and starts a fresh conversation. A stale response is surfaced as an error; reload context explicitly rather than retrying automatically.
+
+Disposable browser regression (after building for the optional built variant):
+
+```sh
+export HACK_CHAT_TEST_ROOT="$(mktemp -d /private/tmp/hp-chat-e2e-XXXXXX)"
+SKULLFIX_PYTHON="$PWD/.venv/bin/python" HACK_CHAT_BROWSER_CHANNEL=chrome app/node_modules/.bin/playwright test --config app/e2e/read-only-chat.config.ts
+```
+
+Use installed Chrome as above, or omit the channel when Playwright Chromium is installed. To repeat against built assets, use a new disposable root and add `HACK_CHAT_BUILT=1`. Servers use isolated ports 18573/18583 and refuse reuse; results remain under the disposable root. Tests never select live storage. No new dependency or schema migration is required.

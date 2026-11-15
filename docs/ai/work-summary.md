@@ -111,3 +111,13 @@ Verification (actual this Close):
 - Full `backend/ai/tests/run_checks.py`: **157 tests OK** (includes router inventory update for the two measurement routes).
 - Feature checker and `git diff --check` recorded in `plans/t2-foreground-volume.md`.
 - No commit/push.
+
+## Restored chat integration — 2026-11-14
+
+Owner-authorized R90–R95 connects the recovered Assistant column to same-origin FastAPI JSON chat. Typed canonical source/candidate context and bounded history replace frontend keyword replies. Fake model explanations use graph-verified metadata only; unsupported geometry/clinical requests are disclosed, with no Bedrock or AI writes. Reset/context change/unmount abort pending fetches and discard late results; failed turns do not become future history.
+
+Development adds an exact AI-only forwarding middleware before the unchanged Vite SQLite apiPlugin. CRUD, CSS, studio viewport, slice rendering and pre-existing sample edits are preserved. No live server/storage root was selected for verification and no live cutover command was run. Setup documents explicit shared storage roots and isolated browser proof. No commit or push.
+
+Verification: 139 Python tests and 104 app tests pass; type/build passes; lint has existing warnings and no errors. Actual Chrome browser through Vite→FastAPI passes the two screenshot prompts, history identity and no-write manifest checks with disposable storage. The same browser journey also passes against built assets served by an isolated FastAPI process. No live routing was changed. Scoped plan/preflight record Close evidence.
+
+Publication follow-up: owner authorized a separate reviewed chat PR after verification. The isolated publication branch starts from main 61189d7 and contains only the 24 scoped integration/test/doc files. Source workspace/sample changes are excluded. No merge or live cutover is authorized.
