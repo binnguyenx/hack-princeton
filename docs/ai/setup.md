@@ -272,3 +272,27 @@ Chat now follows the active source/candidate document. Retained viewport selecti
 `npm --prefix app run test:browser` intentionally excludes the mutating chat spec. Run that spec only with `app/e2e/read-only-chat.config.ts` and a fresh `mktemp -d /private/tmp/hp-chat-e2e-XXXXXX` root, as shown above. The dedicated config rejects noncanonical roots and symlink/hardlink storage escapes; the spec rechecks its explicit disposable profile and actual base URL before any test HTTP request. Reusing a live server or setting a temporary-root variable under an unrelated config does not satisfy the guard. A regression runs an alternate profile against an in-memory HTTP trap and confirms zero requests arrive.
 
 These repairs do not update any running app; the owner subsequently authorized publication to PR #31 after review, without merge. No live storage was used for verification, and the Vite SQLite apiPlugin, CRUD implementation, recovery CSS, viewport and slices remain unchanged.
+
+## Optional Gemini read-only chat (R96–R99)
+
+The chat route defaults to `SKULLFIX_AI_CHAT_MODEL=fake`. To enable Gemini, copy `backend/ai/.env.example` to ignored `backend/ai/.env.local`, set `SKULLFIX_AI_CHAT_MODEL=gemini`, `GEMINI_API_KEY` and an explicit account-enabled `SKULLFIX_AI_GEMINI_MODEL` (without `models/`). Source that file into the **backend process** before running the existing `python -m skullfix_ai.api --storage-root ...` command. The application does not automatically load dotenv files. Do not use `VITE_*` keys or shell tracing. No new Python dependency is needed; the adapter uses standard-library HTTPS against Google's fixed generateContent origin with the key in a header.
+
+Each turn performs at most two provider calls: a structured registry proposal, then a conversational explanation of the validated metadata observation. Each call has a 10-second socket timeout, a one-MiB response limit and no retry; the existing Vite AI forwarding timeout remains 30 seconds. This is socket-level timeout protection, not cancellation of a provider request already running when the user resets. Reset still aborts browser delivery and suppresses late replies.
+
+Only `workspace.describe_selection` is registered. No geometry, measurement, placement, generation or live-write tool is enabled. Gemini may answer or ask a clarification; numeric metadata and identifiers are rendered by the server from selected observation keys. Numeric model prose and unknown keys fail explicitly. This reduces fabricated numbers but does not certify natural-language claims. Gemini errors never fall back to fake. The response reports `mode=llm-read-only`, `model={provider:gemini,id:...}` and `capability_policy=metadata-read-only`; the existing badge shows Gemini after a verified response.
+
+History is bounded to 24 turns of 4000 characters and exists only in React memory and the current backend invocation. Reset/context changes clear it and create a new local conversation ID; reload loses it. There is no database transcript, checkpoint, localStorage, IndexedDB or provider conversation resource. Google may apply its own API data-retention policy; application statelessness is not a claim about provider retention.
+
+Verification uses provider HTTP doubles and disposable application roots. The dedicated browser profile explicitly forces fake mode and clears its provider key. Screenshot OCR initially produced an invalid credential (HTTP 401). The exact key supplied as text authenticated successfully. A synthetic disposable smoke completed all five LangGraph steps with Gemini `gemini-3.5-flash-lite`, with every storage file hash unchanged. `gemini-3.8-flash` timed out at the configured limit during an earlier smoke. No live application runtime was switched. Do not commit secrets. Official wire references: [generateContent](https://ai.google.dev/api/generate-content) and [structured JSON output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output).
+
+
+Local env startup (run from the checkout containing this change, never print/source with `set -x`):
+
+```sh
+set -a
+. backend/ai/.env.local
+set +a
+PYTHONPATH=backend/ai/src .venv/bin/python -B -m skullfix_ai.api --storage-root /private/tmp/your-disposable-root --host 127.0.0.1 --port 8001
+```
+
+The private file uses mode 0600 and is ignored. Its model is explicitly `gemini-3.5-flash-lite`, verified by a successful real generation with synthetic metadata. Change the model locally if the account enables another one. The Developer API path does not require project ID/number or service-account credentials. Existing Bedrock/tracing placeholders in `.env.example` are preserved and are not used by this adapter. No default dotenv auto-loading or live-runtime switch is introduced.

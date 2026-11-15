@@ -119,6 +119,8 @@ class WorkspaceGraph:
         try:
             proposal = self._model.propose(state["request"].message, state["context"].model_copy(deep=True), self._registry.catalog())
             return _step(state, "propose", proposal=ToolCall.model_validate(proposal))
+        except ToolBoundaryError as error:
+            return _failure(state, "propose", error.code, error.message, error.status)
         except ValidationError:
             return _failure(state, "propose", "tool-proposal-invalid", "Model did not propose a typed tool call.")
         except Exception:
@@ -164,6 +166,16 @@ class WorkspaceGraph:
         if state.get("code"):
             explanation = f"Request {state.get('status', 'failed')}: {state['code']}. {state['message']}"
         elif state["observation"].scope == "application-read":
+            model_explain = getattr(self._model, "explain", None)
+            if callable(model_explain):
+                try:
+                    explanation = model_explain(state["request"].message, state["context"].model_copy(deep=True),
+                                                state["observation"].model_copy(deep=True))
+                    return _step(state, "explain", explanation=explanation)
+                except ToolBoundaryError as error:
+                    return _failure(state, "explain", error.code, error.message, error.status) | {"explanation": error.message}
+                except Exception:
+                    return _failure(state, "explain", "model-failed", "Model explanation could not be obtained.") | {"explanation": "Model explanation could not be obtained."}
             metadata = state["observation"].metadata
             revision = metadata.get("revision_id")
             explanation = f"Read authoritative metadata for selected object {metadata['selected_object_id']}."

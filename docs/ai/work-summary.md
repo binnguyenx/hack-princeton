@@ -129,3 +129,18 @@ Owner-authorized fixes cover all three final findings: default runner exclusion 
 Final repair verification: 144 backend tests, 110 app tests and 6 positive browser journeys (3 dev + 3 built) pass. The unsafe alternate-runner regression also proves zero HTTP requests before rejection. Type/build/strict guard checks pass; lint has only existing warnings. Tests used disposable storage exclusively. See scoped plan Close evidence. Changes were local/uncommitted at implementation Close; reviewed publication is authorized in the follow-up below.
 
 Publication follow-up: owner authorizes review/commit/push of the three repairs to PR #31; merging and live runtime updates remain unauthorized. The regression for an unsafe alternate runner also uses a nonexistent browser executable, proving rejection happens before browser launch or HTTP requests.
+
+## Gemini read-only chat — 2026-11-14
+
+Implemented in isolated `feat/llm-read-only-chat` checkout over origin/main plus an uncommitted PR #31 dependency overlay. No commit, push, merge, live process restart or live-storage access. English prompt: `features/ai-workspace-assistant/prompts/gemini-read-only-chat.md`; separate intent/spec R96–R99, plan and preflight record the scope.
+
+- Added replaceable stateless Gemini generateContent adapter with structured registry proposals and explanations from validated application-read observations. Only metadata tool is bound; all geometry and AI writes remain unavailable.
+- Backend-only private `.env.local` is mode 0600 and ignored. Existing env template settings are preserved; Gemini entries are additive. No key is in frontend, source/test artifacts, provider URLs or response envelopes.
+- Fake is explicit default, Gemini is opt-in. Provider identity/read policy are checked by the client; recovered panel badge changes after verified response without CSS/layout changes. History remains bounded React memory, reset/remount clears it and late responses are suppressed. No transcript/checkpoint/provider conversation persistence.
+- Provider errors, complete JSON output, one-MiB response limit, ten-second socket timeouts and no retries are tested. Unknown tools/arguments, fabricated numeric prose, unknown fact references, stale context and restored pointers have regressions. Qualitative model prose is probabilistic; no clinical correctness claim.
+- Verification: 151 Python tests; 115 app tests; TypeScript/build pass; lint has existing warnings and no errors; dev 3/3 and built 3/3 dedicated disposable browser journeys. Feature checker and diff/protected-file/secret audits are recorded in the scoped plan.
+- Real access: image OCR initially failed authentication; the exact text key authenticated. `gemini-3.8-flash` hit timeout. `gemini-3.5-flash-lite` completed load_context → propose → validate → execute → explain on synthetic disposable data, with all storage hashes unchanged. Private env selects that verified model. No live app switch occurred.
+
+
+### Gemini publication review
+Owner authorized a separate Gemini PR after review, without merge or live-runtime switch. PR #31 remains open, so publication is stacked on that branch and excludes its existing wiring diff. Fixed missing Gemini configuration/provider error-code reporting in the frontend, with two new regressions (117 app tests total). Private env and API key are excluded; original Vite CRUD plugin and recovery styling remain unchanged. The application currently listening on port 8000 still runs the main-workspace fake model; chat reset does not change server code or provider settings.

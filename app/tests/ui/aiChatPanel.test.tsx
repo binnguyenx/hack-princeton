@@ -31,7 +31,7 @@ describe('AiChatPanel read-only FastAPI integration', () => {
 
     expect(screen.getByRole('region', { name: 'AI Workspace Assistant' })).toBeTruthy()
     expect(screen.getByText('AI Assistant')).toBeTruthy()
-    expect(screen.getByText('Mock')).toBeTruthy()
+    expect(screen.getByText('Read-only')).toBeTruthy()
     expect(screen.getByText('Case 1 · Defect SkullBreak')).toBeTruthy()
     expect(screen.getByPlaceholderText(/Ask about defect anatomy/i)).toBeTruthy()
 
@@ -186,4 +186,35 @@ describe('chat conversation scope guards', () => {
     expect(screen.queryByText('LATE OLD REPLY')).toBeNull()
     expect(screen.queryByText('Inspect skull')).toBeNull()
   })
+})
+
+
+it('shows Gemini after a verified response, then reset discards provider and successful history', async () => {
+  const requests: Record<string, unknown>[] = []
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body); requests.push(request)
+    return new Response(JSON.stringify({request_id:request.request_id,conversation_id:request.conversation_id,
+      mode:'llm-read-only',capability_policy:'metadata-read-only',model:{provider:'gemini',id:'gemini-test'},
+      outcome:{status:'completed',explanation:'We can inspect stored metadata. Which aspect interests you?',
+        context:{...context,selected_object_id:'source',revision_id:null},observation:{scope:'application-read'}}}))
+  }))
+  const view = render(<AiChatPanel open chatContext={context} onOpenChange={() => {}} />)
+  const send = async (value: string) => {
+    await waitFor(() => expect((screen.getByLabelText('Message for AI assistant') as HTMLTextAreaElement).disabled).toBe(false))
+    fireEvent.change(screen.getByLabelText('Message for AI assistant'),{target:{value}})
+    fireEvent.click(screen.getByLabelText('Send message to AI assistant'))
+    await waitFor(() => expect(screen.getByText('Gemini · Read-only')).toBeTruthy())
+  }
+  await send('Inspect skull')
+  await send('continue')
+  expect(requests[1].history).toEqual([{role:'human',content:'Inspect skull'},
+    {role:'assistant',content:'We can inspect stored metadata. Which aspect interests you?'}])
+  fireEvent.click(screen.getByLabelText('Reset conversation'))
+  expect(screen.getByText('Read-only')).toBeTruthy()
+  await send('Start fresh')
+  expect(requests[2].history).toEqual([])
+  expect(requests[2].conversation_id).not.toBe(requests[0].conversation_id)
+  view.unmount()
+  render(<AiChatPanel open chatContext={context} onOpenChange={() => {}} />)
+  expect(screen.queryByText('Start fresh')).toBeNull()
 })

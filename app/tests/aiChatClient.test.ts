@@ -39,3 +39,47 @@ it('rejects another selection or mutation envelope instead of rendering it', asy
   }))
   await expect((async () => { for await (const _ of langGraphClient.streamResponse('session', [], 'hello', context)) {} })()).rejects.toThrow('context mismatch')
 })
+
+it('accepts Gemini only with the explicit read-only policy and reports actual provider identity', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body)
+    return new Response(JSON.stringify({ request_id:request.request_id, conversation_id:request.conversation_id,
+      mode:'llm-read-only', capability_policy:'metadata-read-only',model:{provider:'gemini',id:'gemini-test'},
+      outcome:{status:'completed',explanation:'Which aspect of the skull would you like to inspect?',
+        context:{...context,selected_object_id:'source',revision_id:null},observation:{scope:'application-read'}} }))
+  }))
+  const events = []
+  for await (const event of langGraphClient.streamResponse('session', [], 'continue', context)) events.push(event)
+  expect(events[0]).toMatchObject({event:'metadata',data:{provider:'gemini',model_id:'gemini-test'}})
+})
+
+
+it.each(['missing-policy','mutation-policy','wrong-provider'])('rejects unapproved LLM envelope: %s', async kind => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body)
+    return new Response(JSON.stringify({request_id:request.request_id,conversation_id:request.conversation_id,
+      mode:'llm-read-only',capability_policy:kind === 'missing-policy' ? undefined : kind === 'mutation-policy' ? 'write' : 'metadata-read-only',
+      model:{provider:kind === 'wrong-provider' ? 'unknown' : 'gemini',id:'gemini-test'},
+      outcome:{status:'completed',explanation:'Untrusted',context:{...context,selected_object_id:'source',revision_id:null},
+        observation:{scope:'application-read'}}}))
+  }))
+  await expect((async () => { for await (const _ of langGraphClient.streamResponse('session', [], 'hello', context)) {} })()).rejects.toThrow('provider policy')
+})
+
+it('surfaces backend model configuration errors instead of misdiagnosing storage', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({code:'model-config-invalid',
+    error:'Gemini requires backend environment configuration.'}),{status:503})))
+  await expect((async () => { for await (const _ of langGraphClient.streamResponse('session', [], 'hello', context)) {} })())
+    .rejects.toThrow('model-config-invalid')
+})
+
+it('retains provider error codes when explanation generation fails', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body)
+    return new Response(JSON.stringify({request_id:request.request_id,conversation_id:request.conversation_id,
+      mode:'llm-read-only',capability_policy:'metadata-read-only',model:{provider:'gemini',id:'gemini-test'},
+      outcome:{status:'unavailable',code:'model-rate-limited',explanation:'Gemini request failed.'}}))
+  }))
+  await expect((async () => { for await (const _ of langGraphClient.streamResponse('session', [], 'hello', context)) {} })())
+    .rejects.toThrow('model-rate-limited')
+})
