@@ -264,6 +264,30 @@ class ApplicationRepositoryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Volume not found"):
             self.repo.read_volume("unused", "../../private")
 
+    def test_search_project_samples_filters_by_display_name_and_case_name(self):
+        p = self.repo.create_project("Search")
+        parietal = self.repo.add_case(p["id"], "Parietal Case")
+        temporal = self.repo.add_case(p["id"], "Temporal Case")
+        s1 = self.repo.add_sample(p["id"], parietal["id"], "skullbreak-000-complete", True, META, DATA)
+        s2 = self.repo.add_sample(p["id"], temporal["id"], "other-sample", True, META, DATA)
+
+        all_rows = self.repo.search_project_samples(p["id"], "")
+        self.assertEqual({r["id"] for r in all_rows}, {s1["id"], s2["id"]})
+        self.assertTrue(all({"id", "displayName", "caseId", "caseName"} <= set(r) for r in all_rows))
+
+        by_display = self.repo.search_project_samples(p["id"], "skullbreak")
+        self.assertEqual([r["id"] for r in by_display], [s1["id"]])
+        self.assertEqual(by_display[0]["caseName"], "Parietal Case")
+
+        by_case = self.repo.search_project_samples(p["id"], "temporal")
+        self.assertEqual([r["id"] for r in by_case], [s2["id"]])
+
+        none = self.repo.search_project_samples(p["id"], "zzzz-no-match")
+        self.assertEqual(none, [])
+
+        with self.assertRaisesRegex(ValueError, "not found"):
+            self.repo.search_project_samples("missing-project", "")
+
 
 if __name__ == "__main__":
     unittest.main()

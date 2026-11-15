@@ -21,6 +21,7 @@ EXPECTED = {
     ('GET', '/api/candidates/{id}/revisions/{revision_id}/measurements'),
     ('GET', '/api/projects'), ('POST', '/api/projects'),
     ('GET', '/api/projects/{id}'), ('DELETE', '/api/projects/{id}'),
+    ('GET', '/api/projects/{id}/samples'),
     ('POST', '/api/projects/{id}/cases'),
     ('DELETE', '/api/projects/{id}/cases/{case_id}'),
     ('POST', '/api/projects/{id}/cases/{case_id}/samples'),

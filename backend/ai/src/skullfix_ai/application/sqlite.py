@@ -191,6 +191,36 @@ class ApplicationRepository:
         with self._db() as db:
             return self._project_manifest(db, project_id)
 
+    def search_project_samples(self, project_id, q=""):
+        """Return sample rows for a project, optionally filtered by display/case name."""
+        needle = (q or "").strip().lower()
+        with self._db() as db:
+            self._project(db, project_id)
+            rows = db.execute(
+                """
+                SELECT s.id AS id, s.display_name AS display_name,
+                       s.case_id AS case_id, c.name AS case_name
+                FROM samples s
+                JOIN cases c ON c.id = s.case_id
+                WHERE c.project_id = ?
+                ORDER BY s.id
+                """,
+                (project_id,),
+            ).fetchall()
+            results = []
+            for r in rows:
+                display = r["display_name"] or ""
+                case_name = r["case_name"] or ""
+                if needle and needle not in display.lower() and needle not in case_name.lower():
+                    continue
+                results.append({
+                    "id": r["id"],
+                    "displayName": display,
+                    "caseId": r["case_id"],
+                    "caseName": case_name,
+                })
+            return results
+
     def read_project_manifest(self, project_id):
         """Read one consistent snapshot without bootstrapping or writing application data."""
         database = self.root / "app-model.sqlite"
