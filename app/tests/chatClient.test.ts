@@ -37,3 +37,21 @@ describe('chatClient', () => {
     expect(response.limitations).toEqual(['No geometry operation was performed.'])
   })
 })
+
+describe('chatClient Gemini mode', () => {
+  it('accepts gemini-read-only and honours VITE_LANGGRAPH_API_URL', async () => {
+    vi.stubEnv('VITE_LANGGRAPH_API_URL', 'http://127.0.0.1:8000/')
+    vi.resetModules()
+    const { chatClient: configured, CHAT_ENDPOINT } = await import('../src/api/chat')
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      mode: 'gemini-read-only', request_id: request.request_id, conversation_id: request.conversation_id,
+      outcome: { status: 'completed', explanation: 'Grid is 2 × 3 × 4.' }, limitations: [],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const response = await configured.send(request)
+    expect(CHAT_ENDPOINT).toBe('http://127.0.0.1:8000/api/ai/chat')
+    expect(fetchMock.mock.calls[0][0]).toBe('http://127.0.0.1:8000/api/ai/chat')
+    expect(response.mode).toBe('gemini-read-only')
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+})

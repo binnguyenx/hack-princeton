@@ -89,3 +89,7 @@ This work owns the AI request path, the common operation service, progress and t
 2026-11-14 — After T1C fold-in, the owner separately authorized T2 live mechanical implementation within that measurement scope: `ForegroundVolumeService` over ApplicationRepository, measurement POST/GET routes, additive live persistence, and accepted NRRD/idempotency/error semantics. Does not bind LangGraph `measure.candidate`, change Chat UI, enable AI mutations, call AWS/Bedrock, or implement unrelated geometry. Overall status remains draft.
 
 2026-11-14 — The owner authorized wiring the existing AI panel to the existing same-origin FastAPI read-only chat transport. The panel must not use a separate LangGraph HTTP server or local invented clinical responses. This does not add persisted history, SSE, a provider, measurements, geometry generation, or AI mutation. Overall status remains draft.
+
+## Recovery chat integration (2026-11-14)
+
+Owner authorizes connecting the restored Assistant panel to the existing FastAPI metadata-only graph, with scoped conversation context and regressions. Preserve shell styles, studio, slices and the Vite SQLite CRUD plugin. No Bedrock, geometry execution, AI live writes, commit or push.

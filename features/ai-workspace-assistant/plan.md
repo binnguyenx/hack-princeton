@@ -20,6 +20,13 @@ Keep the existing app Express API and SQLite store authoritative. Add a read-onl
 
 ## Proof
 
+- R90: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+- R91: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+- R92: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+- R93: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+- R94: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+- R95: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
+
 - R64: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
 - R65: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.
 - R66: read-only chat follow-up in plans/read-only-chat.md; test_chat.py, chatClient.test.ts and chat.e2e.ts.

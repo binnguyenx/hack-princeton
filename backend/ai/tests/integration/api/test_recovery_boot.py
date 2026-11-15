@@ -25,7 +25,7 @@ class RecoveryBootTest(unittest.TestCase):
                 self.assertEqual(missing.status_code, 404)
                 self.assertEqual(missing.headers['content-type'], 'application/json')
 
-    def test_chat_reads_current_context_without_mutation_even_for_write_language(self):
+    def test_chat_requires_gemini_agent_and_does_not_mutate_without_one(self):
         from skullfix_ai.api.app import create_app
         from skullfix_ai.application import ApplicationRepository
         with tempfile.TemporaryDirectory() as temporary:
@@ -43,12 +43,8 @@ class RecoveryBootTest(unittest.TestCase):
                     'project_id': project['id'], 'case_id': case['id'],
                     'object_id': candidate['candidateId'], 'expected_revision_id': candidate['revisionId'],
                     'message': 'Apply placement and generate a candidate'})
-                self.assertEqual(response.status_code, 200, response.text)
-                body = response.json()
-                self.assertEqual(body['mode'], 'fake-read-only')
-                self.assertEqual(body['outcome']['status'], 'completed', body)
-                self.assertEqual(body['outcome']['observation']['scope'], 'application-read')
-                self.assertEqual(body['outcome']['context']['revision_id'], candidate['revisionId'])
+                self.assertEqual(response.status_code, 503, response.text)
+                self.assertEqual(response.json()['code'], 'chat-provider-required')
             self.assertEqual(repository.read_project_manifest(project['id']), before)
 
 
