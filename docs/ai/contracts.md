@@ -361,3 +361,34 @@ The UI accepts delta translation X/Y/Z in mm and extrinsic rotation X→Y→Z in
 ## Portable manual package boundary (2026-11-14)
 
 Save/Open adds POST /api/projects/{id}/package (validated presentation JSON → ZIP), POST /api/packages/import (bounded raw ZIP →201 {projectId,presentation}), and GET /api/candidates/{id}/revisions/{revision_id}/volume (owned immutable bytes). Total application method/path pairs:18. Existing13 compatibility contracts plus chat/placement remain intact. Import is a manual create-copy transaction with fresh identities, SHA-256 verification, current Restore pointer and volume alias preservation. Browser hydration uses the newly committed authoritative manifest, then validated/remapped presentation. Post-commit UI failure reports the copy exists and never retries the import. See canvas-workspace R76–R85 and setup.md for precise archive/view/crash limits. No package mutation is registered with the read-only graph.
+
+## Proposed contract: model fix generation and fix report (cranial-reconstruction-candidate, 2026-11-15)
+
+Status: **proposed, not agreed.** Owner approval is needed before the agent may present fix-report numbers as agreed measurements (assistant spec R7). The HTTP routes and UI are implemented. Spec: `features/cranial-reconstruction-candidate/spec.md`.
+
+Routes (FastAPI, live application storage):
+- `POST /api/samples/{id}/reconstructions` with `{project_id, case_id}`. Returns 202 `{runId}`. It returns 503 `model-endpoint-unconfigured` when `CRANIAL_ENDPOINT_NAME` / `CRANIAL_INFERENCE_BUCKET` are unset, and 422 `unsupported-input` for an unverified, empty or non-binary skull. A second run on a skull with one active returns 409.
+- `GET /api/reconstructions/{runId}` returns `{status: running|succeeded|failed, stage, elapsedS, result?, error?}`. Runs are in memory and lost on restart.
+- `POST /api/candidates/{id}/fix-adjustment` with `{project_id, case_id, expected_revision_id, threshold?, region?}`. Threshold is 0.1–0.9. Region is two IJK corners. It re-cuts from the stored probability volume and does not call the endpoint.
+- `GET /api/candidates/{id}/fix-report?project_id&case_id` returns `{fix: {label, metrics[]}, mlRecord}`.
+
+Commit:
+- Generate creates a new candidate "Predicted fix". Revision 0 is the source copy. Revision 1 is source ∪ implant on the source grid.
+- `revision_operations` provenance has exactly these keys: `operation='reconstruct.model'`, `model`, `checkpointHash`, `freezeRunId`, `threshold`, `thresholdIsDefault`, `region`, `inputRevisionId`, `sourceVolumeHash`, `implantVoxels`, `inferenceSeconds`, `totalSeconds`.
+- `fix_assets` links the candidate to its uint8 probability volume.
+- These outputs are rejected and nothing is committed: an empty, non-binary or wrong-grid implant, or one overlapping source bone.
+
+Fix report metrics. Each has a unit and a method; `status: not-available` with a reason replaces a number instead of estimating one:
+
+| key | unit | method |
+|-|-|-|
+| volume | mL | fix voxel count × voxel volume |
+| outer_surface_area | mm² | voxel faces of the fix facing empty space (faces against bone excluded) |
+| bounding_box | mm | extent of fix voxels per grid axis |
+| mean_thickness, min_thickness | mm | 2 × distance to empty space at medial voxels of skull ∪ fix within one voxel of the fix; grid edge counts as empty |
+| bone_contact | % | share of fix surface voxels sharing a face with source bone |
+| largest_rim_gap | mm | **not available**: no defect-rim definition for model fixes yet |
+| side | patient side | fix centroid vs skull centroid on the RAS left-right axis |
+| centroid | mm (RAS) | mean fix voxel position in patient coordinates |
+
+Limitation: geometry measured from a model proposal, not a clinical assessment. The model was trained on synthetic parietotemporal defects only.

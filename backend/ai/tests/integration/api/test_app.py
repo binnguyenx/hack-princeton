@@ -12,6 +12,8 @@ from skullfix_ai.api.app import create_app
 
 EXPECTED = {
     ('POST', '/api/candidates/{id}/voxel-operation'),
+    ('POST', '/api/samples/{id}/reconstructions'), ('GET', '/api/reconstructions/{run_id}'),
+    ('POST', '/api/candidates/{id}/fix-adjustment'), ('GET', '/api/candidates/{id}/fix-report'),
     ('GET', '/api/samples/{id}/landmarks'), ('POST', '/api/samples/{id}/landmarks'),
     ('DELETE', '/api/samples/{id}/landmarks/{landmark_id}'),
     ('GET', '/api/revisions/{revision_id}/annotations'),

@@ -254,6 +254,8 @@ class GeminiChatAgent:
         if geometry is not None:
             from skullfix_ai.tools.geometry_tools import build_geometry_tools
             tools += build_geometry_tools(geometry)
+            from skullfix_ai.tools.fix_tools import build_fix_read_tools
+            tools += build_fix_read_tools(geometry.repository, context)
         if sink is not None:
             tools += [factory(sink, context) for factory in self._proposal_tool_factories]
         llm = self._chat_model().bind_tools(tools)

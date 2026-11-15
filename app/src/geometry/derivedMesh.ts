@@ -11,21 +11,29 @@ import { tagVoxelFrame } from './aiOverlay'
 export function volumeToDisplayMesh(
   volumeBytes: Uint8Array,
   spatial: SpatialMeta,
-  options?: { resolution?: number },
+  options?: { resolution?: number; color?: number },
+): THREE.Mesh {
+  return voxelsToDisplayMesh(decodeNrrdVoxels(volumeBytes).voxels, spatial, options)
+}
+
+/** Same surface as volumeToDisplayMesh, from already-decoded voxels (one grid → one mesh frame). */
+export function voxelsToDisplayMesh(
+  voxels: Uint8Array,
+  spatial: SpatialMeta,
+  options?: { resolution?: number; color?: number },
 ): THREE.Mesh {
   if (!spatial?.sizes || spatial.sizes.length < 3) {
     throw new Error('spatial.sizes required (got ' + JSON.stringify(spatial) + ')')
   }
   const resolution = options?.resolution ?? 96
   const [sx, sy, sz] = spatial.sizes
-  const { voxels } = decodeNrrdVoxels(volumeBytes)
   const expected = sx * sy * sz
   if (voxels.length < expected) {
     throw new Error(`Voxel buffer short: ${voxels.length} < ${expected}`)
   }
 
   const material = new THREE.MeshStandardMaterial({
-    color: 0xd4d6e4,
+    color: options?.color ?? 0xd4d6e4,
     roughness: 0.72,
     metalness: 0.02,
     flatShading: false,

@@ -3,8 +3,10 @@
 A tool may only *stage* a proposal through a per-turn ProposalSink. Staging never touches the
 application database, volumes or revisions. A proposal is bound to the selection it was made
 for, including ``base_revision_id``. Only an explicit human Accept (a separate HTTP route, never
-a tool) commits it, through the existing manual PlacementService, which re-checks that the base
-revision is still current. Store memory is per process and is lost on restart.
+a tool) commits it, through the existing manual service for its kind (PlacementService for
+``rigid_pose``, ModelReconstructionService for ``model_fix``), which re-checks that the base
+revision is still current. A ``model_fix`` generate proposal is bound to the skull (sample) and has
+no candidate or base revision until it is accepted. Store memory is per process and is lost on restart.
 """
 
 from __future__ import annotations
@@ -19,7 +21,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from skullfix_ai.schemas.workspace import AppObjectContext
 
-ProposalKind = Literal["rigid_pose"]
+ProposalKind = Literal["rigid_pose", "model_fix"]
+FIX_ACTIONS = ("generate", "threshold", "region")
 ProposalStatus = Literal["pending", "accepted", "discarded", "stale", "expired"]
 PROPOSAL_TTL_SECONDS = 30 * 60
 MAX_PROPOSALS = 256
@@ -39,12 +42,14 @@ class StagedProposal(BaseModel):
     summary: str = Field(min_length=1, max_length=500)
     project_id: str
     case_id: str
-    candidate_id: str
-    base_revision_id: str
+    candidate_id: str | None
+    base_revision_id: str | None
     conversation_id: str
     payload: dict
     created_at: float
     resolved_revision_id: str | None = None
+    sample_id: str | None = None
+    resolved_run_id: str | None = None
 
     def public(self) -> dict:
         return self.model_dump(mode="json")
@@ -59,6 +64,25 @@ def _rigid_pose(payload: dict) -> list[float]:
     if not is_rigid_pose(pose):
         raise StagingError("proposal-invalid", "Proposed pose is not a rigid transform.", 422)
     return [float(v) for v in pose]
+
+
+def _model_fix(payload: dict) -> dict:
+    action = payload.get("action") if isinstance(payload, dict) else None
+    if action not in FIX_ACTIONS:
+        raise StagingError("proposal-invalid", "A model_fix proposal needs action generate, threshold or region.", 422)
+    from pydantic import ValidationError
+    from skullfix_ai.application.model_reconstruction import AdjustCommand
+    clean = {"action": action}
+    if action != "generate":
+        change = {key: payload.get(key) for key in ("threshold", "region") if payload.get(key) is not None}
+        if not change:
+            raise StagingError("proposal-invalid", f"A {action} proposal needs a {action} value.", 422)
+        try:
+            AdjustCommand.model_validate({"project_id": "p", "case_id": "c", "expected_revision_id": "r", **change})
+        except ValidationError as error:
+            raise StagingError("proposal-invalid", "Threshold must be 0.1–0.9 and a region two IJK corners.", 422) from error
+        clean.update(change)
+    return clean
 
 
 class ProposalStore:
@@ -76,14 +100,20 @@ class ProposalStore:
 
     def stage(self, context: AppObjectContext, *, conversation_id: str, kind: ProposalKind, summary: str,
               payload: dict) -> StagedProposal:
-        if context.candidate_id is None or context.revision_id is None:
-            raise StagingError("proposal-needs-candidate", "Proposals require a selected implant candidate.", 422)
-        if kind != "rigid_pose":
+        if kind == "rigid_pose":
+            clean = {"pose": _rigid_pose(payload)}
+        elif kind == "model_fix":
+            clean = _model_fix(payload)
+        else:
             raise StagingError("proposal-unsupported", "Unsupported proposal kind.", 422)
-        clean = {"pose": _rigid_pose(payload)}
+        generate = kind == "model_fix" and clean["action"] == "generate"
+        if not generate and (context.candidate_id is None or context.revision_id is None):
+            raise StagingError("proposal-needs-candidate", "Proposals require a selected implant candidate.", 422)
         proposal = StagedProposal(proposal_id=str(uuid.uuid4()), kind=kind, summary=summary.strip()[:500] or "Proposal",
                                   project_id=context.project_id, case_id=context.case_id,
-                                  candidate_id=context.candidate_id, base_revision_id=context.revision_id,
+                                  candidate_id=None if generate else context.candidate_id,
+                                  base_revision_id=None if generate else context.revision_id,
+                                  sample_id=context.sample_id if kind == "model_fix" else None,
                                   conversation_id=conversation_id, payload=clean, created_at=self._clock())
         with self._lock:
             if len(self._items) >= MAX_PROPOSALS:
@@ -108,9 +138,9 @@ class ProposalStore:
                 proposal.status = "discarded"
             return proposal.model_copy(deep=True)
 
-    def accept(self, proposal_id: str, repository, *, project_id: str, case_id: str, candidate_id: str,
-               base_revision_id: str) -> StagedProposal:
-        """Human-confirmed commit via PlacementService; caller must echo the proposal identity."""
+    def accept(self, proposal_id: str, repository, *, project_id: str, case_id: str, candidate_id: str | None,
+               base_revision_id: str | None, fix_service=None) -> StagedProposal:
+        """Human-confirmed commit through the manual service for the kind; caller must echo the proposal identity."""
         from skullfix_ai.application.placement import PlacementCommand, PlacementError, PlacementService
         with self._lock:
             proposal = self._items.get(proposal_id)
@@ -121,6 +151,9 @@ class ProposalStore:
             if (project_id, case_id, candidate_id, base_revision_id) != (
                     proposal.project_id, proposal.case_id, proposal.candidate_id, proposal.base_revision_id):
                 raise StagingError("proposal-identity-mismatch", "Confirmation does not match the staged proposal.")
+            if proposal.kind == "model_fix":
+                self._accept_model_fix(proposal, fix_service)
+                return proposal.model_copy(deep=True)
             command = PlacementCommand(project_id=proposal.project_id, case_id=proposal.case_id,
                                        expected_revision_id=proposal.base_revision_id, pose=proposal.payload["pose"])
             try:
@@ -132,6 +165,29 @@ class ProposalStore:
             proposal.status = "accepted"
             proposal.resolved_revision_id = result.get("revisionId") if isinstance(result, dict) else None
             return proposal.model_copy(deep=True)
+
+
+    @staticmethod
+    def _accept_model_fix(proposal: StagedProposal, fix_service) -> None:
+        """Runs the same reconstruct.model operation as the canvas button. Called with the store lock held."""
+        from skullfix_ai.application.model_reconstruction import AdjustCommand, ReconstructionError, StartCommand
+        if fix_service is None:
+            raise StagingError("model-endpoint-unconfigured", "The cranial model endpoint is not configured.", 503)
+        try:
+            if proposal.payload["action"] == "generate":
+                proposal.resolved_run_id = fix_service.start(
+                    proposal.sample_id, StartCommand(project_id=proposal.project_id, case_id=proposal.case_id))
+            else:
+                change = {k: v for k, v in proposal.payload.items() if k != "action"}
+                result = fix_service.adjust(proposal.candidate_id, AdjustCommand(
+                    project_id=proposal.project_id, case_id=proposal.case_id,
+                    expected_revision_id=proposal.base_revision_id, **change))
+                proposal.resolved_revision_id = result["revisionId"]
+        except ReconstructionError as error:
+            if error.code == "revision-changed":
+                proposal.status = "stale"
+            raise StagingError(error.code, error.message, error.status) from error
+        proposal.status = "accepted"
 
 
 class ProposalSink:

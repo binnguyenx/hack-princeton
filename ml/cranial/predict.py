@@ -171,13 +171,25 @@ def invert_to_source_grid(
     inv_params: dict,
     threshold: float = 0.5,
 ) -> sitk.Image:
+    """Binary candidate on the source grid: probabilities mapped back, then thresholded."""
+    source_prob_img = invert_probability_to_source_grid(prob_arr, inv_params)
+    binary_arr = (sitk.GetArrayFromImage(source_prob_img) >= threshold).astype(np.uint8)
+    candidate_img = sitk.GetImageFromArray(binary_arr)
+    candidate_img.CopyInformation(source_prob_img)
+    return candidate_img
+
+
+def invert_probability_to_source_grid(
+    prob_arr: np.ndarray,
+    inv_params: dict,
+) -> sitk.Image:
     """
     Map the 256³ prediction scores back to original source patient coordinates:
       1. Crop away zero-padding to return to resampled bounding size.
       2. Construct SimpleITK image with intermediate resampled spatial info.
       3. Resample continuously (linear) onto original source spacing and orientation.
       4. If LPS/RAS conversion was performed, invert it.
-      5. Apply threshold to produce binary candidate mask.
+    Thresholding happens in invert_to_source_grid.
     """
     pad_offset = inv_params["pad_offset"]  # [ox, oy, oz] in (x, y, z)
     res_size   = inv_params["resampled_size"]
@@ -207,15 +219,7 @@ def invert_to_source_grid(
     resampler.SetInterpolator(sitk.sitkLinear)
     resampler.SetDefaultPixelValue(0.0)
 
-    source_prob_img = resampler.Execute(intermediate_img)
-    source_prob_arr = sitk.GetArrayFromImage(source_prob_img)
-
-    # Threshold to binary candidate
-    binary_arr = (source_prob_arr >= threshold).astype(np.uint8)
-
-    candidate_img = sitk.GetImageFromArray(binary_arr)
-    candidate_img.CopyInformation(source_prob_img)
-    return candidate_img
+    return resampler.Execute(intermediate_img)
 
 
 def clean_candidate(
@@ -260,10 +264,12 @@ def predict_single(
     threshold: float = 0.5,
     convert_to_ras: bool = False,
     preprocessing: Optional[dict] = None,
-) -> Tuple[sitk.Image, dict]:
+    return_probability: bool = False,
+):
     """
     End-to-end inference for one defective skull NRRD:
       Defect NRRD -> Preprocess -> U-Net -> Invert Grid -> Clean -> Candidate NRRD
+    Returns (candidate, metadata), plus the source-grid probability image when return_probability.
     """
     defect_img = sitk.ReadImage(str(defect_path))
 
@@ -281,7 +287,10 @@ def predict_single(
     prob_arr = run_forward(model, tensor, device)
 
     # Invert to source space
-    raw_cand_img = invert_to_source_grid(prob_arr, inv_params, threshold=threshold)
+    source_prob_img = invert_probability_to_source_grid(prob_arr, inv_params)
+    raw_arr = (sitk.GetArrayFromImage(source_prob_img) >= threshold).astype(np.uint8)
+    raw_cand_img = sitk.GetImageFromArray(raw_arr)
+    raw_cand_img.CopyInformation(source_prob_img)
 
     # Post-process
     clean_cand_img, clean_meta = clean_candidate(raw_cand_img, defect_img)
@@ -295,6 +304,8 @@ def predict_single(
         "preprocessing": preprocessing,
         **clean_meta,
     }
+    if return_probability:
+        return clean_cand_img, metadata, source_prob_img
     return clean_cand_img, metadata
 
 
