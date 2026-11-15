@@ -1,0 +1,19 @@
+{
+  "total_cases": 134,
+  "accepted": 134,
+  "rejected": 0,
+  "cases_by_partition": {
+    "test": 20,
+    "train": 91,
+    "val": 23
+  },
+  "subjects_by_partition": {
+    "test": 20,
+    "train": 91,
+    "val": 23
+  },
+  "by_category": {
+    "parietotemporal": 134
+  },
+  "rejected_cases": []
+}

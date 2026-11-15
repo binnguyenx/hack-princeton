@@ -11,18 +11,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 360322,
-        "implant_voxels": 16663,
-        "implant_volume_mm3": 16663.0,
-        "defect_density": 0.0214768648147583,
+        "defect_voxels": 45674,
+        "implant_voxels": 2084,
+        "implant_volume_mm3": 16672.0,
+        "defect_density": 0.02177906036376953,
         "orig_shape": [
           512,
           512,
@@ -32,6 +32,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -43,18 +53,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 344898,
-        "implant_voxels": 25025,
-        "implant_volume_mm3": 25025.0,
-        "defect_density": 0.020557522773742676,
+        "defect_voxels": 43675,
+        "implant_voxels": 3117,
+        "implant_volume_mm3": 24936.0,
+        "defect_density": 0.020825862884521484,
         "orig_shape": [
           512,
           512,
@@ -64,6 +74,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -75,18 +95,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 352931,
-        "implant_voxels": 41906,
-        "implant_volume_mm3": 41906.0,
-        "defect_density": 0.02103632688522339,
+        "defect_voxels": 44744,
+        "implant_voxels": 5249,
+        "implant_volume_mm3": 41992.0,
+        "defect_density": 0.021335601806640625,
         "orig_shape": [
           512,
           512,
@@ -96,6 +116,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -107,18 +137,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 397738,
-        "implant_voxels": 42183,
-        "implant_volume_mm3": 42183.0,
-        "defect_density": 0.023707032203674316,
+        "defect_voxels": 50414,
+        "implant_voxels": 5274,
+        "implant_volume_mm3": 42192.0,
+        "defect_density": 0.024039268493652344,
         "orig_shape": [
           512,
           512,
@@ -128,6 +158,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -139,18 +179,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 368521,
-        "implant_voxels": 43693,
-        "implant_volume_mm3": 43693.0,
-        "defect_density": 0.02196556329727173,
+        "defect_voxels": 46584,
+        "implant_voxels": 5481,
+        "implant_volume_mm3": 43848.0,
+        "defect_density": 0.022212982177734375,
         "orig_shape": [
           512,
           512,
@@ -160,6 +200,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -171,18 +221,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 520474,
-        "implant_voxels": 46888,
-        "implant_volume_mm3": 46888.0,
-        "defect_density": 0.03102266788482666,
+        "defect_voxels": 65655,
+        "implant_voxels": 5843,
+        "implant_volume_mm3": 46744.0,
+        "defect_density": 0.03130674362182617,
         "orig_shape": [
           512,
           512,
@@ -192,6 +242,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -203,18 +263,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 407795,
-        "implant_voxels": 38294,
-        "implant_volume_mm3": 38294.0,
-        "defect_density": 0.02430647611618042,
+        "defect_voxels": 51663,
+        "implant_voxels": 4785,
+        "implant_volume_mm3": 38280.0,
+        "defect_density": 0.024634838104248047,
         "orig_shape": [
           512,
           512,
@@ -224,6 +284,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -235,18 +305,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 530862,
-        "implant_voxels": 61025,
-        "implant_volume_mm3": 61025.0,
-        "defect_density": 0.03164184093475342,
+        "defect_voxels": 67229,
+        "implant_voxels": 7613,
+        "implant_volume_mm3": 60904.0,
+        "defect_density": 0.03205728530883789,
         "orig_shape": [
           512,
           512,
@@ -256,6 +326,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -267,18 +347,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 420486,
-        "implant_voxels": 24813,
-        "implant_volume_mm3": 24813.0,
-        "defect_density": 0.025062918663024902,
+        "defect_voxels": 53250,
+        "implant_voxels": 3101,
+        "implant_volume_mm3": 24808.0,
+        "defect_density": 0.025391578674316406,
         "orig_shape": [
           512,
           512,
@@ -288,6 +368,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -299,18 +389,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 493745,
-        "implant_voxels": 60706,
-        "implant_volume_mm3": 60706.0,
-        "defect_density": 0.029429495334625244,
+        "defect_voxels": 62435,
+        "implant_voxels": 7559,
+        "implant_volume_mm3": 60472.0,
+        "defect_density": 0.02977132797241211,
         "orig_shape": [
           512,
           512,
@@ -320,6 +410,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -331,18 +431,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 385544,
-        "implant_voxels": 22887,
-        "implant_volume_mm3": 22887.0,
-        "defect_density": 0.022980213165283203,
+        "defect_voxels": 48859,
+        "implant_voxels": 2852,
+        "implant_volume_mm3": 22816.0,
+        "defect_density": 0.023297786712646484,
         "orig_shape": [
           512,
           512,
@@ -352,6 +452,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -363,18 +473,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 330566,
-        "implant_voxels": 29466,
-        "implant_volume_mm3": 29466.0,
-        "defect_density": 0.019703269004821777,
+        "defect_voxels": 41894,
+        "implant_voxels": 3704,
+        "implant_volume_mm3": 29632.0,
+        "defect_density": 0.01997661590576172,
         "orig_shape": [
           512,
           512,
@@ -384,6 +494,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -395,18 +515,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 403349,
-        "implant_voxels": 29927,
-        "implant_volume_mm3": 29927.0,
-        "defect_density": 0.024041473865509033,
+        "defect_voxels": 51069,
+        "implant_voxels": 3760,
+        "implant_volume_mm3": 30080.0,
+        "defect_density": 0.02435159683227539,
         "orig_shape": [
           512,
           512,
@@ -416,6 +536,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -427,18 +557,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 430201,
-        "implant_voxels": 19782,
-        "implant_volume_mm3": 19782.0,
-        "defect_density": 0.025641977787017822,
+        "defect_voxels": 54494,
+        "implant_voxels": 2487,
+        "implant_volume_mm3": 19896.0,
+        "defect_density": 0.025984764099121094,
         "orig_shape": [
           512,
           512,
@@ -448,6 +578,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -459,18 +599,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 419559,
-        "implant_voxels": 38904,
-        "implant_volume_mm3": 38904.0,
-        "defect_density": 0.025007665157318115,
+        "defect_voxels": 53247,
+        "implant_voxels": 4840,
+        "implant_volume_mm3": 38720.0,
+        "defect_density": 0.025390148162841797,
         "orig_shape": [
           512,
           512,
@@ -480,6 +620,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -491,18 +641,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 527639,
-        "implant_voxels": 48333,
-        "implant_volume_mm3": 48333.0,
-        "defect_density": 0.031449735164642334,
+        "defect_voxels": 66781,
+        "implant_voxels": 6040,
+        "implant_volume_mm3": 48320.0,
+        "defect_density": 0.03184366226196289,
         "orig_shape": [
           512,
           512,
@@ -512,6 +662,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -523,18 +683,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 408029,
-        "implant_voxels": 13018,
-        "implant_volume_mm3": 13018.0,
-        "defect_density": 0.02432042360305786,
+        "defect_voxels": 51699,
+        "implant_voxels": 1638,
+        "implant_volume_mm3": 13104.0,
+        "defect_density": 0.02465200424194336,
         "orig_shape": [
           512,
           512,
@@ -544,6 +704,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -555,18 +725,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 357269,
-        "implant_voxels": 60707,
-        "implant_volume_mm3": 60707.0,
-        "defect_density": 0.021294891834259033,
+        "defect_voxels": 45228,
+        "implant_voxels": 7596,
+        "implant_volume_mm3": 60768.0,
+        "defect_density": 0.021566390991210938,
         "orig_shape": [
           512,
           512,
@@ -576,6 +746,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -587,18 +767,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 407463,
-        "implant_voxels": 49709,
-        "implant_volume_mm3": 49709.0,
-        "defect_density": 0.02428668737411499,
+        "defect_voxels": 51553,
+        "implant_voxels": 6199,
+        "implant_volume_mm3": 49592.0,
+        "defect_density": 0.024582386016845703,
         "orig_shape": [
           512,
           512,
@@ -608,6 +788,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -619,18 +809,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 373525,
-        "implant_voxels": 19682,
-        "implant_volume_mm3": 19682.0,
-        "defect_density": 0.022263824939727783,
+        "defect_voxels": 47355,
+        "implant_voxels": 2452,
+        "implant_volume_mm3": 19616.0,
+        "defect_density": 0.022580623626708984,
         "orig_shape": [
           512,
           512,
@@ -640,6 +830,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -651,18 +851,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 351848,
-        "implant_voxels": 45826,
-        "implant_volume_mm3": 45826.0,
-        "defect_density": 0.02097177505493164,
+        "defect_voxels": 44768,
+        "implant_voxels": 5738,
+        "implant_volume_mm3": 45904.0,
+        "defect_density": 0.0213470458984375,
         "orig_shape": [
           512,
           512,
@@ -672,6 +872,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -683,18 +893,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 338371,
-        "implant_voxels": 28724,
-        "implant_volume_mm3": 28724.0,
-        "defect_density": 0.0201684832572937,
+        "defect_voxels": 42769,
+        "implant_voxels": 3610,
+        "implant_volume_mm3": 28880.0,
+        "defect_density": 0.020393848419189453,
         "orig_shape": [
           512,
           512,
@@ -704,6 +914,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -715,18 +935,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 262173,
-        "implant_voxels": 23156,
-        "implant_volume_mm3": 23156.0,
-        "defect_density": 0.015626728534698486,
+        "defect_voxels": 33239,
+        "implant_voxels": 2919,
+        "implant_volume_mm3": 23352.0,
+        "defect_density": 0.015849590301513672,
         "orig_shape": [
           512,
           512,
@@ -736,6 +956,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -747,18 +977,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 504618,
-        "implant_voxels": 29081,
-        "implant_volume_mm3": 29081.0,
-        "defect_density": 0.030077576637268066,
+        "defect_voxels": 63803,
+        "implant_voxels": 3630,
+        "implant_volume_mm3": 29040.0,
+        "defect_density": 0.030423641204833984,
         "orig_shape": [
           512,
           512,
@@ -768,6 +998,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -779,18 +1019,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 246161,
-        "implant_voxels": 34445,
-        "implant_volume_mm3": 34445.0,
-        "defect_density": 0.014672338962554932,
+        "defect_voxels": 31273,
+        "implant_voxels": 4327,
+        "implant_volume_mm3": 34616.0,
+        "defect_density": 0.014912128448486328,
         "orig_shape": [
           512,
           512,
@@ -800,6 +1040,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -811,18 +1061,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 280401,
-        "implant_voxels": 14734,
-        "implant_volume_mm3": 14734.0,
-        "defect_density": 0.016713201999664307,
+        "defect_voxels": 35548,
+        "implant_voxels": 1848,
+        "implant_volume_mm3": 14784.0,
+        "defect_density": 0.016950607299804688,
         "orig_shape": [
           512,
           512,
@@ -832,6 +1082,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -843,18 +1103,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 338929,
-        "implant_voxels": 25717,
-        "implant_volume_mm3": 25717.0,
-        "defect_density": 0.02020174264907837,
+        "defect_voxels": 43035,
+        "implant_voxels": 3197,
+        "implant_volume_mm3": 25576.0,
+        "defect_density": 0.020520687103271484,
         "orig_shape": [
           512,
           512,
@@ -864,6 +1124,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -875,18 +1145,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 416414,
-        "implant_voxels": 31429,
-        "implant_volume_mm3": 31429.0,
-        "defect_density": 0.02482020854949951,
+        "defect_voxels": 52775,
+        "implant_voxels": 3962,
+        "implant_volume_mm3": 31696.0,
+        "defect_density": 0.025165081024169922,
         "orig_shape": [
           512,
           512,
@@ -896,6 +1166,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -907,18 +1187,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 400186,
-        "implant_voxels": 24259,
-        "implant_volume_mm3": 24259.0,
-        "defect_density": 0.023852944374084473,
+        "defect_voxels": 50711,
+        "implant_voxels": 3021,
+        "implant_volume_mm3": 24168.0,
+        "defect_density": 0.024180889129638672,
         "orig_shape": [
           512,
           512,
@@ -928,6 +1208,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -939,18 +1229,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 415026,
-        "implant_voxels": 42138,
-        "implant_volume_mm3": 42138.0,
-        "defect_density": 0.02473747730255127,
+        "defect_voxels": 52674,
+        "implant_voxels": 5244,
+        "implant_volume_mm3": 41952.0,
+        "defect_density": 0.025116920471191406,
         "orig_shape": [
           512,
           512,
@@ -960,6 +1250,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -971,18 +1271,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 407897,
-        "implant_voxels": 23941,
-        "implant_volume_mm3": 23941.0,
-        "defect_density": 0.02431255578994751,
+        "defect_voxels": 51617,
+        "implant_voxels": 2985,
+        "implant_volume_mm3": 23880.0,
+        "defect_density": 0.024612903594970703,
         "orig_shape": [
           512,
           512,
@@ -992,6 +1292,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1003,18 +1313,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 425211,
-        "implant_voxels": 27484,
-        "implant_volume_mm3": 27484.0,
-        "defect_density": 0.025344550609588623,
+        "defect_voxels": 53979,
+        "implant_voxels": 3426,
+        "implant_volume_mm3": 27408.0,
+        "defect_density": 0.025739192962646484,
         "orig_shape": [
           512,
           512,
@@ -1024,6 +1334,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1035,18 +1355,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 438830,
-        "implant_voxels": 23901,
-        "implant_volume_mm3": 23901.0,
-        "defect_density": 0.026156306266784668,
+        "defect_voxels": 55508,
+        "implant_voxels": 2986,
+        "implant_volume_mm3": 23888.0,
+        "defect_density": 0.026468276977539062,
         "orig_shape": [
           512,
           512,
@@ -1056,6 +1376,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1067,18 +1397,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 421221,
-        "implant_voxels": 29941,
-        "implant_volume_mm3": 29941.0,
-        "defect_density": 0.025106728076934814,
+        "defect_voxels": 53329,
+        "implant_voxels": 3734,
+        "implant_volume_mm3": 29872.0,
+        "defect_density": 0.025429248809814453,
         "orig_shape": [
           512,
           512,
@@ -1088,6 +1418,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1099,18 +1439,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 368975,
-        "implant_voxels": 38727,
-        "implant_volume_mm3": 38727.0,
-        "defect_density": 0.021992623805999756,
+        "defect_voxels": 46882,
+        "implant_voxels": 4829,
+        "implant_volume_mm3": 38632.0,
+        "defect_density": 0.022355079650878906,
         "orig_shape": [
           512,
           512,
@@ -1120,6 +1460,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1131,18 +1481,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 361487,
-        "implant_voxels": 56948,
-        "implant_volume_mm3": 56948.0,
-        "defect_density": 0.02154630422592163,
+        "defect_voxels": 45877,
+        "implant_voxels": 7140,
+        "implant_volume_mm3": 57120.0,
+        "defect_density": 0.021875858306884766,
         "orig_shape": [
           512,
           512,
@@ -1152,6 +1502,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1163,18 +1523,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 451953,
-        "implant_voxels": 49346,
-        "implant_volume_mm3": 49346.0,
-        "defect_density": 0.02693849802017212,
+        "defect_voxels": 57087,
+        "implant_voxels": 6138,
+        "implant_volume_mm3": 49104.0,
+        "defect_density": 0.027221202850341797,
         "orig_shape": [
           512,
           512,
@@ -1184,6 +1544,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1195,18 +1565,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 368236,
-        "implant_voxels": 23865,
-        "implant_volume_mm3": 23865.0,
-        "defect_density": 0.021948575973510742,
+        "defect_voxels": 46666,
+        "implant_voxels": 2963,
+        "implant_volume_mm3": 23704.0,
+        "defect_density": 0.02225208282470703,
         "orig_shape": [
           512,
           512,
@@ -1216,6 +1586,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1227,18 +1607,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 486686,
-        "implant_voxels": 17030,
-        "implant_volume_mm3": 17030.0,
-        "defect_density": 0.02900874614715576,
+        "defect_voxels": 61491,
+        "implant_voxels": 2131,
+        "implant_volume_mm3": 17048.0,
+        "defect_density": 0.02932119369506836,
         "orig_shape": [
           512,
           512,
@@ -1248,6 +1628,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1259,18 +1649,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 441675,
-        "implant_voxels": 37296,
-        "implant_volume_mm3": 37296.0,
-        "defect_density": 0.026325881481170654,
+        "defect_voxels": 55997,
+        "implant_voxels": 4665,
+        "implant_volume_mm3": 37320.0,
+        "defect_density": 0.02670145034790039,
         "orig_shape": [
           512,
           512,
@@ -1280,6 +1670,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1291,18 +1691,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 404584,
-        "implant_voxels": 30561,
-        "implant_volume_mm3": 30561.0,
-        "defect_density": 0.02411508560180664,
+        "defect_voxels": 51238,
+        "implant_voxels": 3845,
+        "implant_volume_mm3": 30760.0,
+        "defect_density": 0.02443218231201172,
         "orig_shape": [
           512,
           512,
@@ -1312,6 +1712,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1323,18 +1733,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 425246,
-        "implant_voxels": 30049,
-        "implant_volume_mm3": 30049.0,
-        "defect_density": 0.02534663677215576,
+        "defect_voxels": 53900,
+        "implant_voxels": 3759,
+        "implant_volume_mm3": 30072.0,
+        "defect_density": 0.025701522827148438,
         "orig_shape": [
           512,
           512,
@@ -1344,6 +1754,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1355,18 +1775,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 447216,
-        "implant_voxels": 26780,
-        "implant_volume_mm3": 26780.0,
-        "defect_density": 0.026656150817871094,
+        "defect_voxels": 56527,
+        "implant_voxels": 3336,
+        "implant_volume_mm3": 26688.0,
+        "defect_density": 0.026954174041748047,
         "orig_shape": [
           512,
           512,
@@ -1376,6 +1796,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1387,18 +1817,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 456785,
-        "implant_voxels": 22329,
-        "implant_volume_mm3": 22329.0,
-        "defect_density": 0.027226507663726807,
+        "defect_voxels": 57810,
+        "implant_voxels": 2792,
+        "implant_volume_mm3": 22336.0,
+        "defect_density": 0.027565956115722656,
         "orig_shape": [
           512,
           512,
@@ -1408,6 +1838,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1419,18 +1859,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 435318,
-        "implant_voxels": 44757,
-        "implant_volume_mm3": 44757.0,
-        "defect_density": 0.025946974754333496,
+        "defect_voxels": 55261,
+        "implant_voxels": 5600,
+        "implant_volume_mm3": 44800.0,
+        "defect_density": 0.02635049819946289,
         "orig_shape": [
           512,
           512,
@@ -1440,6 +1880,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1451,18 +1901,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 563821,
-        "implant_voxels": 28605,
-        "implant_volume_mm3": 28605.0,
-        "defect_density": 0.03360635042190552,
+        "defect_voxels": 71262,
+        "implant_voxels": 3588,
+        "implant_volume_mm3": 28704.0,
+        "defect_density": 0.033980369567871094,
         "orig_shape": [
           512,
           512,
@@ -1472,6 +1922,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1483,18 +1943,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 397600,
-        "implant_voxels": 16324,
-        "implant_volume_mm3": 16324.0,
-        "defect_density": 0.023698806762695312,
+        "defect_voxels": 50417,
+        "implant_voxels": 2041,
+        "implant_volume_mm3": 16328.0,
+        "defect_density": 0.024040699005126953,
         "orig_shape": [
           512,
           512,
@@ -1504,6 +1964,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1515,18 +1985,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 319652,
-        "implant_voxels": 18607,
-        "implant_volume_mm3": 18607.0,
-        "defect_density": 0.019052743911743164,
+        "defect_voxels": 40467,
+        "implant_voxels": 2346,
+        "implant_volume_mm3": 18768.0,
+        "defect_density": 0.01929616928100586,
         "orig_shape": [
           512,
           512,
@@ -1536,6 +2006,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1547,18 +2027,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 465700,
-        "implant_voxels": 20632,
-        "implant_volume_mm3": 20632.0,
-        "defect_density": 0.027757883071899414,
+        "defect_voxels": 58923,
+        "implant_voxels": 2578,
+        "implant_volume_mm3": 20624.0,
+        "defect_density": 0.028096675872802734,
         "orig_shape": [
           512,
           512,
@@ -1568,6 +2048,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1579,18 +2069,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 536295,
-        "implant_voxels": 34751,
-        "implant_volume_mm3": 34751.0,
-        "defect_density": 0.031965672969818115,
+        "defect_voxels": 67811,
+        "implant_voxels": 4343,
+        "implant_volume_mm3": 34744.0,
+        "defect_density": 0.03233480453491211,
         "orig_shape": [
           512,
           512,
@@ -1600,6 +2090,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1611,18 +2111,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 443603,
-        "implant_voxels": 45728,
-        "implant_volume_mm3": 45728.0,
-        "defect_density": 0.026440799236297607,
+        "defect_voxels": 56148,
+        "implant_voxels": 5715,
+        "implant_volume_mm3": 45720.0,
+        "defect_density": 0.026773452758789062,
         "orig_shape": [
           512,
           512,
@@ -1632,6 +2132,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1643,18 +2153,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 467886,
-        "implant_voxels": 24292,
-        "implant_volume_mm3": 24292.0,
-        "defect_density": 0.027888178825378418,
+        "defect_voxels": 59238,
+        "implant_voxels": 3033,
+        "implant_volume_mm3": 24264.0,
+        "defect_density": 0.02824687957763672,
         "orig_shape": [
           512,
           512,
@@ -1664,6 +2174,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1675,18 +2195,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 355362,
-        "implant_voxels": 28175,
-        "implant_volume_mm3": 28175.0,
-        "defect_density": 0.021181225776672363,
+        "defect_voxels": 45077,
+        "implant_voxels": 3522,
+        "implant_volume_mm3": 28176.0,
+        "defect_density": 0.021494388580322266,
         "orig_shape": [
           512,
           512,
@@ -1696,6 +2216,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1707,18 +2237,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 445733,
-        "implant_voxels": 28399,
-        "implant_volume_mm3": 28399.0,
-        "defect_density": 0.02656775712966919,
+        "defect_voxels": 56502,
+        "implant_voxels": 3550,
+        "implant_volume_mm3": 28400.0,
+        "defect_density": 0.02694225311279297,
         "orig_shape": [
           512,
           512,
@@ -1728,6 +2258,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1739,18 +2279,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 484251,
-        "implant_voxels": 72695,
-        "implant_volume_mm3": 72695.0,
-        "defect_density": 0.028863608837127686,
+        "defect_voxels": 61236,
+        "implant_voxels": 9133,
+        "implant_volume_mm3": 73064.0,
+        "defect_density": 0.029199600219726562,
         "orig_shape": [
           512,
           512,
@@ -1760,6 +2300,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1771,18 +2321,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 458396,
-        "implant_voxels": 29559,
-        "implant_volume_mm3": 29559.0,
-        "defect_density": 0.02732253074645996,
+        "defect_voxels": 58095,
+        "implant_voxels": 3675,
+        "implant_volume_mm3": 29400.0,
+        "defect_density": 0.027701854705810547,
         "orig_shape": [
           512,
           512,
@@ -1792,6 +2342,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1803,18 +2363,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 423384,
-        "implant_voxels": 25560,
-        "implant_volume_mm3": 25560.0,
-        "defect_density": 0.025235652923583984,
+        "defect_voxels": 53699,
+        "implant_voxels": 3208,
+        "implant_volume_mm3": 25664.0,
+        "defect_density": 0.02560567855834961,
         "orig_shape": [
           512,
           512,
@@ -1824,6 +2384,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1835,18 +2405,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 394669,
-        "implant_voxels": 35992,
-        "implant_volume_mm3": 35992.0,
-        "defect_density": 0.023524105548858643,
+        "defect_voxels": 49976,
+        "implant_voxels": 4517,
+        "implant_volume_mm3": 36136.0,
+        "defect_density": 0.023830413818359375,
         "orig_shape": [
           512,
           512,
@@ -1856,6 +2426,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1867,18 +2447,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 420676,
-        "implant_voxels": 29337,
-        "implant_volume_mm3": 29337.0,
-        "defect_density": 0.025074243545532227,
+        "defect_voxels": 53297,
+        "implant_voxels": 3694,
+        "implant_volume_mm3": 29552.0,
+        "defect_density": 0.025413990020751953,
         "orig_shape": [
           512,
           512,
@@ -1888,6 +2468,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1899,18 +2489,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 375978,
-        "implant_voxels": 69822,
-        "implant_volume_mm3": 69822.0,
-        "defect_density": 0.022410035133361816,
+        "defect_voxels": 47629,
+        "implant_voxels": 8693,
+        "implant_volume_mm3": 69544.0,
+        "defect_density": 0.02271127700805664,
         "orig_shape": [
           512,
           512,
@@ -1920,6 +2510,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1931,18 +2531,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 461486,
-        "implant_voxels": 60350,
-        "implant_volume_mm3": 60350.0,
-        "defect_density": 0.027506709098815918,
+        "defect_voxels": 58370,
+        "implant_voxels": 7575,
+        "implant_volume_mm3": 60600.0,
+        "defect_density": 0.027832984924316406,
         "orig_shape": [
           512,
           512,
@@ -1952,6 +2552,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1963,18 +2573,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 378592,
-        "implant_voxels": 51436,
-        "implant_volume_mm3": 51436.0,
-        "defect_density": 0.022565841674804688,
+        "defect_voxels": 47936,
+        "implant_voxels": 6447,
+        "implant_volume_mm3": 51576.0,
+        "defect_density": 0.022857666015625,
         "orig_shape": [
           512,
           512,
@@ -1984,6 +2594,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -1995,18 +2615,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 426231,
-        "implant_voxels": 44707,
-        "implant_volume_mm3": 44707.0,
-        "defect_density": 0.02540534734725952,
+        "defect_voxels": 54057,
+        "implant_voxels": 5588,
+        "implant_volume_mm3": 44704.0,
+        "defect_density": 0.025776386260986328,
         "orig_shape": [
           512,
           512,
@@ -2016,6 +2636,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2027,18 +2657,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 428518,
-        "implant_voxels": 38835,
-        "implant_volume_mm3": 38835.0,
-        "defect_density": 0.02554166316986084,
+        "defect_voxels": 54318,
+        "implant_voxels": 4860,
+        "implant_volume_mm3": 38880.0,
+        "defect_density": 0.025900840759277344,
         "orig_shape": [
           512,
           512,
@@ -2048,6 +2678,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2059,18 +2699,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 376953,
-        "implant_voxels": 22064,
-        "implant_volume_mm3": 22064.0,
-        "defect_density": 0.022468149662017822,
+        "defect_voxels": 47738,
+        "implant_voxels": 2763,
+        "implant_volume_mm3": 22104.0,
+        "defect_density": 0.02276325225830078,
         "orig_shape": [
           512,
           512,
@@ -2080,6 +2720,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2091,18 +2741,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 423781,
-        "implant_voxels": 28656,
-        "implant_volume_mm3": 28656.0,
-        "defect_density": 0.025259315967559814,
+        "defect_voxels": 53700,
+        "implant_voxels": 3584,
+        "implant_volume_mm3": 28672.0,
+        "defect_density": 0.025606155395507812,
         "orig_shape": [
           512,
           512,
@@ -2112,6 +2762,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2123,18 +2783,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 311415,
-        "implant_voxels": 52013,
-        "implant_volume_mm3": 52013.0,
-        "defect_density": 0.01856178045272827,
+        "defect_voxels": 39564,
+        "implant_voxels": 6531,
+        "implant_volume_mm3": 52248.0,
+        "defect_density": 0.018865585327148438,
         "orig_shape": [
           512,
           512,
@@ -2144,6 +2804,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2155,18 +2825,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 379327,
-        "implant_voxels": 35652,
-        "implant_volume_mm3": 35652.0,
-        "defect_density": 0.0226096510887146,
+        "defect_voxels": 48109,
+        "implant_voxels": 4455,
+        "implant_volume_mm3": 35640.0,
+        "defect_density": 0.02294015884399414,
         "orig_shape": [
           512,
           512,
@@ -2176,6 +2846,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2187,18 +2867,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 422014,
-        "implant_voxels": 24347,
-        "implant_volume_mm3": 24347.0,
-        "defect_density": 0.0251539945602417,
+        "defect_voxels": 53504,
+        "implant_voxels": 3061,
+        "implant_volume_mm3": 24488.0,
+        "defect_density": 0.0255126953125,
         "orig_shape": [
           512,
           512,
@@ -2208,6 +2888,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2219,18 +2909,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 410227,
-        "implant_voxels": 29859,
-        "implant_volume_mm3": 29859.0,
-        "defect_density": 0.02445143461227417,
+        "defect_voxels": 51839,
+        "implant_voxels": 3743,
+        "implant_volume_mm3": 29944.0,
+        "defect_density": 0.024718761444091797,
         "orig_shape": [
           512,
           512,
@@ -2240,6 +2930,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2251,18 +2951,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 405054,
-        "implant_voxels": 23042,
-        "implant_volume_mm3": 23042.0,
-        "defect_density": 0.024143099784851074,
+        "defect_voxels": 51293,
+        "implant_voxels": 2875,
+        "implant_volume_mm3": 23000.0,
+        "defect_density": 0.02445840835571289,
         "orig_shape": [
           512,
           512,
@@ -2272,6 +2972,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2283,18 +2993,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 383573,
-        "implant_voxels": 63963,
-        "implant_volume_mm3": 63963.0,
-        "defect_density": 0.022862732410430908,
+        "defect_voxels": 48561,
+        "implant_voxels": 8012,
+        "implant_volume_mm3": 64096.0,
+        "defect_density": 0.023155689239501953,
         "orig_shape": [
           512,
           512,
@@ -2304,6 +3014,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2315,18 +3035,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 359335,
-        "implant_voxels": 36945,
-        "implant_volume_mm3": 36945.0,
-        "defect_density": 0.02141803503036499,
+        "defect_voxels": 45472,
+        "implant_voxels": 4615,
+        "implant_volume_mm3": 36920.0,
+        "defect_density": 0.0216827392578125,
         "orig_shape": [
           512,
           512,
@@ -2336,6 +3056,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2347,18 +3077,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 415596,
-        "implant_voxels": 32566,
-        "implant_volume_mm3": 32566.0,
-        "defect_density": 0.024771451950073242,
+        "defect_voxels": 52775,
+        "implant_voxels": 4100,
+        "implant_volume_mm3": 32800.0,
+        "defect_density": 0.025165081024169922,
         "orig_shape": [
           512,
           512,
@@ -2368,6 +3098,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2379,18 +3119,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 478057,
-        "implant_voxels": 53155,
-        "implant_volume_mm3": 53155.0,
-        "defect_density": 0.028494417667388916,
+        "defect_voxels": 60537,
+        "implant_voxels": 6661,
+        "implant_volume_mm3": 53288.0,
+        "defect_density": 0.028866291046142578,
         "orig_shape": [
           512,
           512,
@@ -2400,6 +3140,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2411,18 +3161,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 448578,
-        "implant_voxels": 56615,
-        "implant_volume_mm3": 56615.0,
-        "defect_density": 0.026737332344055176,
+        "defect_voxels": 56696,
+        "implant_voxels": 7045,
+        "implant_volume_mm3": 56360.0,
+        "defect_density": 0.027034759521484375,
         "orig_shape": [
           512,
           512,
@@ -2432,6 +3182,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2443,18 +3203,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 338868,
-        "implant_voxels": 56834,
-        "implant_volume_mm3": 56834.0,
-        "defect_density": 0.02019810676574707,
+        "defect_voxels": 43021,
+        "implant_voxels": 7095,
+        "implant_volume_mm3": 56760.0,
+        "defect_density": 0.02051401138305664,
         "orig_shape": [
           512,
           512,
@@ -2464,6 +3224,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2475,18 +3245,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 441205,
-        "implant_voxels": 33491,
-        "implant_volume_mm3": 33491.0,
-        "defect_density": 0.02629786729812622,
+        "defect_voxels": 55839,
+        "implant_voxels": 4205,
+        "implant_volume_mm3": 33640.0,
+        "defect_density": 0.026626110076904297,
         "orig_shape": [
           512,
           512,
@@ -2496,6 +3266,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2507,18 +3287,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 333181,
-        "implant_voxels": 25826,
-        "implant_volume_mm3": 25826.0,
-        "defect_density": 0.019859135150909424,
+        "defect_voxels": 42218,
+        "implant_voxels": 3197,
+        "implant_volume_mm3": 25576.0,
+        "defect_density": 0.02013111114501953,
         "orig_shape": [
           512,
           512,
@@ -2528,6 +3308,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2539,18 +3329,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 435079,
-        "implant_voxels": 54173,
-        "implant_volume_mm3": 54173.0,
-        "defect_density": 0.025932729244232178,
+        "defect_voxels": 55062,
+        "implant_voxels": 6774,
+        "implant_volume_mm3": 54192.0,
+        "defect_density": 0.02625560760498047,
         "orig_shape": [
           512,
           512,
@@ -2560,6 +3350,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2571,18 +3371,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 401708,
-        "implant_voxels": 62531,
-        "implant_volume_mm3": 62531.0,
-        "defect_density": 0.023943662643432617,
+        "defect_voxels": 50883,
+        "implant_voxels": 7842,
+        "implant_volume_mm3": 62736.0,
+        "defect_density": 0.02426290512084961,
         "orig_shape": [
           512,
           512,
@@ -2592,6 +3392,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2603,18 +3413,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 368785,
-        "implant_voxels": 40142,
-        "implant_volume_mm3": 40142.0,
-        "defect_density": 0.02198129892349243,
+        "defect_voxels": 46843,
+        "implant_voxels": 5002,
+        "implant_volume_mm3": 40016.0,
+        "defect_density": 0.022336483001708984,
         "orig_shape": [
           512,
           512,
@@ -2624,6 +3434,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2635,18 +3455,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 473757,
-        "implant_voxels": 28560,
-        "implant_volume_mm3": 28560.0,
-        "defect_density": 0.028238117694854736,
+        "defect_voxels": 59944,
+        "implant_voxels": 3523,
+        "implant_volume_mm3": 28184.0,
+        "defect_density": 0.028583526611328125,
         "orig_shape": [
           512,
           512,
@@ -2656,6 +3476,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2667,18 +3497,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 478658,
-        "implant_voxels": 29589,
-        "implant_volume_mm3": 29589.0,
-        "defect_density": 0.028530240058898926,
+        "defect_voxels": 60562,
+        "implant_voxels": 3704,
+        "implant_volume_mm3": 29632.0,
+        "defect_density": 0.028878211975097656,
         "orig_shape": [
           512,
           512,
@@ -2688,6 +3518,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2699,18 +3539,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 399838,
-        "implant_voxels": 43402,
-        "implant_volume_mm3": 43402.0,
-        "defect_density": 0.023832201957702637,
+        "defect_voxels": 50680,
+        "implant_voxels": 5447,
+        "implant_volume_mm3": 43576.0,
+        "defect_density": 0.024166107177734375,
         "orig_shape": [
           512,
           512,
@@ -2720,6 +3560,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2731,18 +3581,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 353912,
-        "implant_voxels": 19260,
-        "implant_volume_mm3": 19260.0,
-        "defect_density": 0.021094799041748047,
+        "defect_voxels": 44746,
+        "implant_voxels": 2405,
+        "implant_volume_mm3": 19240.0,
+        "defect_density": 0.02133655548095703,
         "orig_shape": [
           512,
           512,
@@ -2752,6 +3602,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2763,18 +3623,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 481854,
-        "implant_voxels": 62749,
-        "implant_volume_mm3": 62749.0,
-        "defect_density": 0.028720736503601074,
+        "defect_voxels": 60912,
+        "implant_voxels": 7853,
+        "implant_volume_mm3": 62824.0,
+        "defect_density": 0.02904510498046875,
         "orig_shape": [
           512,
           512,
@@ -2784,6 +3644,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2795,18 +3665,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 485738,
-        "implant_voxels": 59676,
-        "implant_volume_mm3": 59676.0,
-        "defect_density": 0.02895224094390869,
+        "defect_voxels": 61512,
+        "implant_voxels": 7445,
+        "implant_volume_mm3": 59560.0,
+        "defect_density": 0.029331207275390625,
         "orig_shape": [
           512,
           512,
@@ -2816,6 +3686,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2827,18 +3707,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 393952,
-        "implant_voxels": 32212,
-        "implant_volume_mm3": 32212.0,
-        "defect_density": 0.023481369018554688,
+        "defect_voxels": 49916,
+        "implant_voxels": 4005,
+        "implant_volume_mm3": 32040.0,
+        "defect_density": 0.023801803588867188,
         "orig_shape": [
           512,
           512,
@@ -2848,6 +3728,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2859,18 +3749,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 467829,
-        "implant_voxels": 43815,
-        "implant_volume_mm3": 43815.0,
-        "defect_density": 0.02788478136062622,
+        "defect_voxels": 59181,
+        "implant_voxels": 5488,
+        "implant_volume_mm3": 43904.0,
+        "defect_density": 0.02821969985961914,
         "orig_shape": [
           512,
           512,
@@ -2880,6 +3770,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2891,18 +3791,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 494843,
-        "implant_voxels": 43093,
-        "implant_volume_mm3": 43093.0,
-        "defect_density": 0.029494941234588623,
+        "defect_voxels": 62482,
+        "implant_voxels": 5379,
+        "implant_volume_mm3": 43032.0,
+        "defect_density": 0.029793739318847656,
         "orig_shape": [
           512,
           512,
@@ -2912,6 +3812,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2923,18 +3833,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 379590,
-        "implant_voxels": 23424,
-        "implant_volume_mm3": 23424.0,
-        "defect_density": 0.022625327110290527,
+        "defect_voxels": 48208,
+        "implant_voxels": 2919,
+        "implant_volume_mm3": 23352.0,
+        "defect_density": 0.02298736572265625,
         "orig_shape": [
           512,
           512,
@@ -2944,6 +3854,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2955,18 +3875,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 500748,
-        "implant_voxels": 51692,
-        "implant_volume_mm3": 51692.0,
-        "defect_density": 0.029846906661987305,
+        "defect_voxels": 63312,
+        "implant_voxels": 6499,
+        "implant_volume_mm3": 51992.0,
+        "defect_density": 0.03018951416015625,
         "orig_shape": [
           512,
           512,
@@ -2976,6 +3896,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -2987,18 +3917,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 359059,
-        "implant_voxels": 18421,
-        "implant_volume_mm3": 18421.0,
-        "defect_density": 0.021401584148406982,
+        "defect_voxels": 45451,
+        "implant_voxels": 2289,
+        "implant_volume_mm3": 18312.0,
+        "defect_density": 0.021672725677490234,
         "orig_shape": [
           512,
           512,
@@ -3008,6 +3938,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3019,18 +3959,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 423744,
-        "implant_voxels": 29590,
-        "implant_volume_mm3": 29590.0,
-        "defect_density": 0.025257110595703125,
+        "defect_voxels": 53761,
+        "implant_voxels": 3689,
+        "implant_volume_mm3": 29512.0,
+        "defect_density": 0.025635242462158203,
         "orig_shape": [
           512,
           512,
@@ -3040,6 +3980,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3051,18 +4001,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 267231,
-        "implant_voxels": 17485,
-        "implant_volume_mm3": 17485.0,
-        "defect_density": 0.015928208827972412,
+        "defect_voxels": 33857,
+        "implant_voxels": 2160,
+        "implant_volume_mm3": 17280.0,
+        "defect_density": 0.016144275665283203,
         "orig_shape": [
           512,
           512,
@@ -3072,6 +4022,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3083,18 +4043,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 442232,
-        "implant_voxels": 29366,
-        "implant_volume_mm3": 29366.0,
-        "defect_density": 0.026359081268310547,
+        "defect_voxels": 55961,
+        "implant_voxels": 3665,
+        "implant_volume_mm3": 29320.0,
+        "defect_density": 0.026684284210205078,
         "orig_shape": [
           512,
           512,
@@ -3104,6 +4064,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3115,18 +4085,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 436898,
-        "implant_voxels": 24492,
-        "implant_volume_mm3": 24492.0,
-        "defect_density": 0.026041150093078613,
+        "defect_voxels": 55430,
+        "implant_voxels": 3077,
+        "implant_volume_mm3": 24616.0,
+        "defect_density": 0.02643108367919922,
         "orig_shape": [
           512,
           512,
@@ -3136,6 +4106,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3147,18 +4127,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 400736,
-        "implant_voxels": 32810,
-        "implant_volume_mm3": 32810.0,
-        "defect_density": 0.023885726928710938,
+        "defect_voxels": 50776,
+        "implant_voxels": 4071,
+        "implant_volume_mm3": 32568.0,
+        "defect_density": 0.024211883544921875,
         "orig_shape": [
           512,
           512,
@@ -3168,6 +4148,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3179,18 +4169,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 380423,
-        "implant_voxels": 17978,
-        "implant_volume_mm3": 17978.0,
-        "defect_density": 0.022674977779388428,
+        "defect_voxels": 48195,
+        "implant_voxels": 2265,
+        "implant_volume_mm3": 18120.0,
+        "defect_density": 0.02298116683959961,
         "orig_shape": [
           512,
           512,
@@ -3200,6 +4190,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3211,18 +4211,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 308399,
-        "implant_voxels": 28536,
-        "implant_volume_mm3": 28536.0,
-        "defect_density": 0.018382012844085693,
+        "defect_voxels": 39039,
+        "implant_voxels": 3555,
+        "implant_volume_mm3": 28440.0,
+        "defect_density": 0.018615245819091797,
         "orig_shape": [
           512,
           512,
@@ -3232,6 +4232,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3243,18 +4253,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 351762,
-        "implant_voxels": 44487,
-        "implant_volume_mm3": 44487.0,
-        "defect_density": 0.020966649055480957,
+        "defect_voxels": 44614,
+        "implant_voxels": 5575,
+        "implant_volume_mm3": 44600.0,
+        "defect_density": 0.02127361297607422,
         "orig_shape": [
           512,
           512,
@@ -3264,6 +4274,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3275,18 +4295,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 376985,
-        "implant_voxels": 60947,
-        "implant_volume_mm3": 60947.0,
-        "defect_density": 0.022470057010650635,
+        "defect_voxels": 47755,
+        "implant_voxels": 7606,
+        "implant_volume_mm3": 60848.0,
+        "defect_density": 0.022771358489990234,
         "orig_shape": [
           512,
           512,
@@ -3296,6 +4316,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3307,18 +4337,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 321739,
-        "implant_voxels": 52257,
-        "implant_volume_mm3": 52257.0,
-        "defect_density": 0.019177138805389404,
+        "defect_voxels": 40839,
+        "implant_voxels": 6523,
+        "implant_volume_mm3": 52184.0,
+        "defect_density": 0.019473552703857422,
         "orig_shape": [
           512,
           512,
@@ -3328,6 +4358,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3339,18 +4379,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 447090,
-        "implant_voxels": 43183,
-        "implant_volume_mm3": 43183.0,
-        "defect_density": 0.026648640632629395,
+        "defect_voxels": 56674,
+        "implant_voxels": 5392,
+        "implant_volume_mm3": 43136.0,
+        "defect_density": 0.027024269104003906,
         "orig_shape": [
           512,
           512,
@@ -3360,6 +4400,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3371,18 +4421,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 453829,
-        "implant_voxels": 21695,
-        "implant_volume_mm3": 21695.0,
-        "defect_density": 0.027050316333770752,
+        "defect_voxels": 57434,
+        "implant_voxels": 2718,
+        "implant_volume_mm3": 21744.0,
+        "defect_density": 0.02738666534423828,
         "orig_shape": [
           512,
           512,
@@ -3392,6 +4442,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3403,18 +4463,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 554026,
-        "implant_voxels": 51365,
-        "implant_volume_mm3": 51365.0,
-        "defect_density": 0.033022522926330566,
+        "defect_voxels": 69951,
+        "implant_voxels": 6419,
+        "implant_volume_mm3": 51352.0,
+        "defect_density": 0.0333552360534668,
         "orig_shape": [
           512,
           512,
@@ -3424,6 +4484,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3435,18 +4505,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 376221,
-        "implant_voxels": 31631,
-        "implant_volume_mm3": 31631.0,
-        "defect_density": 0.022424519062042236,
+        "defect_voxels": 47741,
+        "implant_voxels": 3931,
+        "implant_volume_mm3": 31448.0,
+        "defect_density": 0.02276468276977539,
         "orig_shape": [
           512,
           512,
@@ -3456,6 +4526,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3467,18 +4547,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 403240,
-        "implant_voxels": 30622,
-        "implant_volume_mm3": 30622.0,
-        "defect_density": 0.024034976959228516,
+        "defect_voxels": 51013,
+        "implant_voxels": 3830,
+        "implant_volume_mm3": 30640.0,
+        "defect_density": 0.024324893951416016,
         "orig_shape": [
           512,
           512,
@@ -3488,6 +4568,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3499,18 +4589,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 530931,
-        "implant_voxels": 53056,
-        "implant_volume_mm3": 53056.0,
-        "defect_density": 0.03164595365524292,
+        "defect_voxels": 67231,
+        "implant_voxels": 6637,
+        "implant_volume_mm3": 53096.0,
+        "defect_density": 0.0320582389831543,
         "orig_shape": [
           512,
           512,
@@ -3520,6 +4610,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3531,18 +4631,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 465991,
-        "implant_voxels": 38328,
-        "implant_volume_mm3": 38328.0,
-        "defect_density": 0.027775228023529053,
+        "defect_voxels": 58920,
+        "implant_voxels": 4784,
+        "implant_volume_mm3": 38272.0,
+        "defect_density": 0.028095245361328125,
         "orig_shape": [
           512,
           512,
@@ -3552,6 +4652,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3563,18 +4673,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 436400,
-        "implant_voxels": 47659,
-        "implant_volume_mm3": 47659.0,
-        "defect_density": 0.02601146697998047,
+        "defect_voxels": 55196,
+        "implant_voxels": 5960,
+        "implant_volume_mm3": 47680.0,
+        "defect_density": 0.026319503784179688,
         "orig_shape": [
           512,
           512,
@@ -3584,6 +4694,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3595,18 +4715,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 423068,
-        "implant_voxels": 34979,
-        "implant_volume_mm3": 34979.0,
-        "defect_density": 0.02521681785583496,
+        "defect_voxels": 53717,
+        "implant_voxels": 4381,
+        "implant_volume_mm3": 35048.0,
+        "defect_density": 0.025614261627197266,
         "orig_shape": [
           512,
           512,
@@ -3616,6 +4736,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3627,18 +4757,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 506748,
-        "implant_voxels": 49043,
-        "implant_volume_mm3": 49043.0,
-        "defect_density": 0.03020453453063965,
+        "defect_voxels": 64249,
+        "implant_voxels": 6130,
+        "implant_volume_mm3": 49040.0,
+        "defect_density": 0.030636310577392578,
         "orig_shape": [
           512,
           512,
@@ -3648,6 +4778,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3659,18 +4799,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 551947,
-        "implant_voxels": 31176,
-        "implant_volume_mm3": 31176.0,
-        "defect_density": 0.03289860486984253,
+        "defect_voxels": 69736,
+        "implant_voxels": 3889,
+        "implant_volume_mm3": 31112.0,
+        "defect_density": 0.033252716064453125,
         "orig_shape": [
           512,
           512,
@@ -3680,6 +4820,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3691,18 +4841,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 444705,
-        "implant_voxels": 40335,
-        "implant_volume_mm3": 40335.0,
-        "defect_density": 0.026506483554840088,
+        "defect_voxels": 56342,
+        "implant_voxels": 5012,
+        "implant_volume_mm3": 40096.0,
+        "defect_density": 0.02686595916748047,
         "orig_shape": [
           512,
           512,
@@ -3712,6 +4862,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3723,18 +4883,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 458044,
-        "implant_voxels": 15610,
-        "implant_volume_mm3": 15610.0,
-        "defect_density": 0.027301549911499023,
+        "defect_voxels": 58152,
+        "implant_voxels": 1952,
+        "implant_volume_mm3": 15616.0,
+        "defect_density": 0.027729034423828125,
         "orig_shape": [
           512,
           512,
@@ -3744,6 +4904,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3755,18 +4925,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 499950,
-        "implant_voxels": 62476,
-        "implant_volume_mm3": 62476.0,
-        "defect_density": 0.029799342155456543,
+        "defect_voxels": 63175,
+        "implant_voxels": 7806,
+        "implant_volume_mm3": 62448.0,
+        "defect_density": 0.030124187469482422,
         "orig_shape": [
           512,
           512,
@@ -3776,6 +4946,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3787,18 +4967,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 428445,
-        "implant_voxels": 51220,
-        "implant_volume_mm3": 51220.0,
-        "defect_density": 0.025537312030792236,
+        "defect_voxels": 54357,
+        "implant_voxels": 6377,
+        "implant_volume_mm3": 51016.0,
+        "defect_density": 0.025919437408447266,
         "orig_shape": [
           512,
           512,
@@ -3808,6 +4988,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3819,18 +5009,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 350007,
-        "implant_voxels": 21218,
-        "implant_volume_mm3": 21218.0,
-        "defect_density": 0.020862042903900146,
+        "defect_voxels": 44407,
+        "implant_voxels": 2664,
+        "implant_volume_mm3": 21312.0,
+        "defect_density": 0.021174907684326172,
         "orig_shape": [
           512,
           512,
@@ -3840,6 +5030,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3851,18 +5051,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 386759,
-        "implant_voxels": 37398,
-        "implant_volume_mm3": 37398.0,
-        "defect_density": 0.023052632808685303,
+        "defect_voxels": 48937,
+        "implant_voxels": 4691,
+        "implant_volume_mm3": 37528.0,
+        "defect_density": 0.023334980010986328,
         "orig_shape": [
           512,
           512,
@@ -3872,6 +5072,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3883,18 +5093,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 343180,
-        "implant_voxels": 52856,
-        "implant_volume_mm3": 52856.0,
-        "defect_density": 0.020455121994018555,
+        "defect_voxels": 43580,
+        "implant_voxels": 6590,
+        "implant_volume_mm3": 52720.0,
+        "defect_density": 0.020780563354492188,
         "orig_shape": [
           512,
           512,
@@ -3904,6 +5114,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3915,18 +5135,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 388185,
-        "implant_voxels": 46139,
-        "implant_volume_mm3": 46139.0,
-        "defect_density": 0.02313762903213501,
+        "defect_voxels": 49239,
+        "implant_voxels": 5769,
+        "implant_volume_mm3": 46152.0,
+        "defect_density": 0.023478984832763672,
         "orig_shape": [
           512,
           512,
@@ -3936,6 +5156,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3947,18 +5177,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 441027,
-        "implant_voxels": 24451,
-        "implant_volume_mm3": 24451.0,
-        "defect_density": 0.0262872576713562,
+        "defect_voxels": 55916,
+        "implant_voxels": 3044,
+        "implant_volume_mm3": 24352.0,
+        "defect_density": 0.026662826538085938,
         "orig_shape": [
           512,
           512,
@@ -3968,6 +5198,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -3979,18 +5219,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 442168,
-        "implant_voxels": 42327,
-        "implant_volume_mm3": 42327.0,
-        "defect_density": 0.026355266571044922,
+        "defect_voxels": 55968,
+        "implant_voxels": 5275,
+        "implant_volume_mm3": 42200.0,
+        "defect_density": 0.0266876220703125,
         "orig_shape": [
           512,
           512,
@@ -4000,6 +5240,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4011,18 +5261,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 386254,
-        "implant_voxels": 36254,
-        "implant_volume_mm3": 36254.0,
-        "defect_density": 0.02302253246307373,
+        "defect_voxels": 49053,
+        "implant_voxels": 4530,
+        "implant_volume_mm3": 36240.0,
+        "defect_density": 0.02339029312133789,
         "orig_shape": [
           512,
           512,
@@ -4032,6 +5282,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4043,18 +5303,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 490076,
-        "implant_voxels": 36582,
-        "implant_volume_mm3": 36582.0,
-        "defect_density": 0.029210805892944336,
+        "defect_voxels": 62009,
+        "implant_voxels": 4566,
+        "implant_volume_mm3": 36528.0,
+        "defect_density": 0.029568195343017578,
         "orig_shape": [
           512,
           512,
@@ -4064,6 +5324,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4075,18 +5345,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 392656,
-        "implant_voxels": 42478,
-        "implant_volume_mm3": 42478.0,
-        "defect_density": 0.02340412139892578,
+        "defect_voxels": 49665,
+        "implant_voxels": 5318,
+        "implant_volume_mm3": 42544.0,
+        "defect_density": 0.023682117462158203,
         "orig_shape": [
           512,
           512,
@@ -4096,6 +5366,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4107,18 +5387,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 507892,
-        "implant_voxels": 25231,
-        "implant_volume_mm3": 25231.0,
-        "defect_density": 0.030272722244262695,
+        "defect_voxels": 64206,
+        "implant_voxels": 3153,
+        "implant_volume_mm3": 25224.0,
+        "defect_density": 0.030615806579589844,
         "orig_shape": [
           512,
           512,
@@ -4128,6 +5408,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4139,18 +5429,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 323374,
-        "implant_voxels": 44355,
-        "implant_volume_mm3": 44355.0,
-        "defect_density": 0.019274592399597168,
+        "defect_voxels": 41052,
+        "implant_voxels": 5524,
+        "implant_volume_mm3": 44192.0,
+        "defect_density": 0.019575119018554688,
         "orig_shape": [
           512,
           512,
@@ -4160,6 +5450,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4171,18 +5471,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 432799,
-        "implant_voxels": 25757,
-        "implant_volume_mm3": 25757.0,
-        "defect_density": 0.025796830654144287,
+        "defect_voxels": 54827,
+        "implant_voxels": 3213,
+        "implant_volume_mm3": 25704.0,
+        "defect_density": 0.026143550872802734,
         "orig_shape": [
           512,
           512,
@@ -4192,6 +5492,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4203,18 +5513,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 369817,
-        "implant_voxels": 24182,
-        "implant_volume_mm3": 24182.0,
-        "defect_density": 0.022042810916900635,
+        "defect_voxels": 47025,
+        "implant_voxels": 3004,
+        "implant_volume_mm3": 24032.0,
+        "defect_density": 0.022423267364501953,
         "orig_shape": [
           512,
           512,
@@ -4224,6 +5534,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4235,18 +5555,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 375951,
-        "implant_voxels": 18600,
-        "implant_volume_mm3": 18600.0,
-        "defect_density": 0.02240842580795288,
+        "defect_voxels": 47702,
+        "implant_voxels": 2312,
+        "implant_volume_mm3": 18496.0,
+        "defect_density": 0.02274608612060547,
         "orig_shape": [
           512,
           512,
@@ -4256,6 +5576,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     },
@@ -4267,18 +5597,18 @@
       "error": "",
       "checks": {
         "files_exist": true,
+        "meta_readable": true,
         "shape_spacing": true,
         "binary_values": true,
         "implant_nonempty": true,
         "physical_consistency": true,
-        "overlap_voxels": 0,
-        "meta_readable": true
+        "overlap_voxels": 0
       },
       "stats": {
-        "defect_voxels": 467691,
-        "implant_voxels": 44624,
-        "implant_volume_mm3": 44624.0,
-        "defect_density": 0.027876555919647217,
+        "defect_voxels": 59195,
+        "implant_voxels": 5564,
+        "implant_volume_mm3": 44512.0,
+        "defect_density": 0.028226375579833984,
         "orig_shape": [
           512,
           512,
@@ -4288,6 +5618,16 @@
           0.4,
           0.4,
           0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
         ]
       }
     }

@@ -554,3 +554,274 @@ ExitCode 2
 ErrorMessage ""
 Command "/opt/conda/bin/python3.10 train.py --epochs 0 --loss dice --no-aug True --pilot True --pilot-cases 3 --pilot-epochs 200 --pilot-lr 0.0005 --pilot-target-dice 0.9 --seed 42"
 2026-11-14 21:40:05,468 sagemaker-training-toolkit ERROR    Encountered exit_code 1
+---
+
+## 7. Setup change after run_1794691715 — 2026-11-14
+
+### Insight from the last pilot (not a new theory of labels)
+
+`cranial-pilot-run-1794691715` (`pilot-lr=0.0005`, AMP on) did learn, then died:
+
+| Epoch | Hard Dice | Soft loss | Pred voxels / 3 cases | Target voxels |
+|------:|----------:|----------:|----------------------:|--------------:|
+| 1 | 0.0066 | 0.996 | 13.7M | 83.6k |
+| 70 | **0.3126** | 0.993 | 437k | 83.6k |
+| 200 | 0.0319 | 0.984 | **5.2M** | 83.6k |
+
+Reading that against prior runs:
+
+1. Soft Dice loss stayed ~0.99 while hard Dice briefly reached 0.31 — the training objective and the gate metric disagree. Soft probability mass on background keeps soft Dice near zero; thresholded Dice can still look briefly okay.
+2. After the peak, predictions ballooned again. Reporting epoch-200 Dice hid the real peak. The pilot loop had no best-score gate and no patience stop.
+3. `pilot-lr=0.005` + AMP hit non-finite logits (~epoch 26). `0.0005` stayed finite but never finished the job in 200 epochs. Mid LR without AMP is the next single paid experiment.
+4. The only prior Dice ≥0.90 result was on a **downsampled** grid, not full 256³. That is still the fallback if this job stalls below a usable peak. Not applied in this change.
+
+Demo target (~0.6–0.7 overlap) is **held-out** quality later. The pilot gate remains ≥0.90 on 3 memorized cases; this change only tries to make that plumbing check reachable without burning past the peak.
+
+### Code / launcher changes (hypothesis, not proven convergence)
+
+1. `train.py` `run_pilot`:
+   - Gate on **best** Dice, not final epoch.
+   - Early-stop when best Dice does not improve for `--pilot-patience` (default 40).
+   - Log `best=@epoch` next to current Dice.
+   - When AMP is off, use plain `loss.backward()` / `optimizer.step()` (no GradScaler path).
+2. Pilot AMP **off by default** (`--pilot-amp` to re-enable). Full-run AMP unchanged.
+3. Default `--pilot-lr` → **0.001** in `train.py` and `launch_training.py` (between the NaN and stall settings).
+4. Regression: `test_pilot_passes_on_best_dice_and_stops_when_patience_expires`.
+
+Local verification after the change:
+```sh
+PYTHONPATH=/tmp/cranial-verify-deps MPLCONFIGDIR=/tmp/cranial-mpl \
+  app/cranial-env/bin/python -m pytest ml/cranial/tests -q
+```
+
+### Next paid job (user runs)
+
+```sh
+python ml/cranial/launch_training.py --mode pilot
+```
+
+Expected hyperparameters: `pilot-lr=0.001`, `pilot-amp=false`, `pilot-patience=40`, pure Dice, unaugmented 3 cases, ≤20 min SageMaker cap. Watch for `best=` climbing and either PASS ≥0.90 or early-stop with an honest peak. If peak stays well below ~0.6 with finite loss, next step is 128³ prep — not another blind LR sweep. Convergence is unverified until this job finishes.
+
+---
+
+## 8. run_1794715417 result + switch to 128³ (v2) — 2026-11-14
+
+### Result (hypothesis from §7 tested)
+
+Job `cranial-pilot-run-1794715417`: `pilot-lr=0.001`, `pilot-amp=false`, `patience=40`, pure Dice, 256³ `processed/v1`.
+
+| Epoch | Dice | Best | Pred voxels | Target |
+|------:|-----:|-----:|------------:|-------:|
+| 1 | 0.0085 | 0.0085@1 | 11.1M | 83.6k |
+| 36 | — | **0.2415@36** | — | 83.6k |
+| 40 | 0.2360 | 0.2415@36 | 612k | 83.6k |
+| 76 | 0.0430 | 0.2415@36 | 3.8M | 83.6k |
+
+Early-stop fired correctly. Soft loss still ~0.99. Peak **worse** than `…1715` (0.31 at lr 0.0005+AMP). Conclusion: float32 + mid LR does not unlock full-resolution overfit. Stop spending GPU on 256³ LR/AMP ablations.
+
+### Setup change (authorized)
+
+1. `configs/prepare.yaml`: `target_shape: [128, 128, 128]`, `processed_version: v2`, manifests `split_v2.csv` / `audit_v2.json`. Leave S3 `processed/v1` untouched.
+2. `upload_processed.py`: reads version/paths from prepare.yaml (no hard-coded v1).
+3. `launch_training.py`: default `PROCESSED_VERSION=v2`.
+
+U-Net strides still divide 128 (128/2⁴ = 8). Soft edges vs 256³ are acceptable for the pilot/demo path; held-out quality still unproven until a pilot passes.
+
+### Commands for the user (repo root, cranial-env)
+
+Raw SkullBreak must already be under `/tmp/skullbreak/` (or re-run the loader). Then:
+
+```sh
+source app/cranial-env/bin/activate
+python ml/cranial/prepare_data.py --config ml/cranial/configs/prepare.yaml --round-trip-only
+python ml/cranial/prepare_data.py --config ml/cranial/configs/prepare.yaml
+python ml/cranial/audit_data.py --manifest ml/cranial/manifests/split_v2.csv --visualize --n-vis 3
+python ml/cranial/upload_processed.py
+PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode pilot
+```
+
+Expect logs to show `processed/v2` and ~128³ tensors. Pilot gate remains Dice ≥ 0.90 on 3 cases. Convergence unverified until that job finishes.
+
+### v2 spacing fix (same day)
+
+`prepare` at `target_shape=128³` with `target_spacing=1.0` failed immediately: resampled size `[205,205,205]` exceeds 128 (reject_oversized). That is expected — the full skull is ~205 mm.
+
+Fix: set `target_spacing: [2.0, 2.0, 2.0]` with `target_shape: [128,128,128]`. Linear size halves vs v1, so cases that fit in 256@1mm fit in 128@2mm. Re-run round-trip then full prepare; do not clip.
+
+---
+
+## 9. Decision: accepted pilot recipe (R7 passed) — 2026-11-14
+
+### Result
+
+Job `cranial-pilot-run-1794717579` **PASSED** R7 overfit gate.
+
+| Setting | Value |
+|---------|--------|
+| Data | `s3://…/cranial/processed/v2` (2 mm isotropic, 128³) |
+| Loss | pure soft Dice |
+| Pilot AMP | off (`pilot-amp=false`) |
+| Pilot LR | **0.005** |
+| Patience | 40 (best-Dice gate) |
+| Cases | 3 train, no aug |
+| Peak | **best Dice = 0.9043 @ epoch 89** (loss≈0.097, pred≈9890 vs target 10450) |
+
+Failed recipes that led here (do not revisit as first experiments):
+
+| Job | Grid | LR | AMP | Peak hard Dice |
+|-----|------|----|-----|----------------|
+| …1715 | v1 256@1mm | 0.0005 | on | 0.31 then collapse |
+| …5417 | v1 256@1mm | 0.001 | off | 0.24 |
+| …7046 | v2 128@2mm | 0.001 | off | 0.23 |
+| **…7579** | **v2 128@2mm** | **0.005** | **off** | **0.90 PASS** |
+
+### Decision (locked for next full run)
+
+1. **Training cache:** processed **v2** only for the first claimed train/eval path until a later owner decision reopens v1 (1 mm / 256³).
+2. **Pilot gate recipe:** `--pilot-lr 0.005`, pilot AMP off, pure Dice, best-Dice + patience. Passes R7; this is a **memorization check**, not a demo or held-out score.
+3. **Do not freeze or evaluate the pilot-only job artifacts** as the product model. Pilot mode with `epochs=0` does not produce the full-run `best.pt` to ship.
+4. **Next job:** full training with the same data/pilot gate:
+   ```sh
+   PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full --pilot-lr 0.005
+   ```
+   Full-run optimization LR remains the launcher full `--lr` default unless separately changed. Val Dice selects `best.pt`; only then freeze and run `evaluate.py` on test.
+5. **Demo target (~0.6–0.7)** remains a **held-out** bar after Phase 7/8 — not satisfied by this pilot.
+
+Recorded in feature docs as **D7**.
+
+---
+
+## 10. Transparency: what the pilot is, what Dice means, and why we keep the gate — 2026-11-14
+
+Written so a later teammate (or us at 3am) does not confuse “pilot passed” with “demo ready.”
+
+### Pieces of the system (plain language)
+
+| Term | What it is |
+|------|------------|
+| **U-Net** | The neural net architecture (MONAI 3D U-Net). Input = defective skull mask; output = per-voxel score for “missing bone.” This is the model we train. |
+| **Hard Dice** | Overlap accuracy after thresholding scores at 0.5. `2\|P∩T\| / (\|P\|+\|T\|)`. 0 = no overlap, 1 = perfect. This is what the pilot gate and val/test reports use. |
+| **Soft Dice (loss)** | Continuous version of Dice on probabilities (before hard threshold). Training minimizes `1 − soft Dice`. Can disagree with hard Dice when lots of soft probability sits on background. |
+| **Pilot** | Cheap overfit gate (spec R7): train a **throwaway** net on **3 fixed training cases**, no augmentation, require hard Dice ≥ **0.90** on those **same** 3. If fail → exit before full train. |
+| **Full train** | New model from scratch on **91** train cases (aug on). Pick `best.pt` by **validation** Dice on **23** subjects. |
+| **Freeze + test** | After choosing `best.pt` on validation only, lock config and score the **20** official test subjects (and optionally MUG500+ B later). That is the presentable held-out claim. |
+
+### What the pilot specifically does in code
+
+1. Build a fresh U-Net (not reused for full train).
+2. Load 3 unaugmented train pairs (`make_pilot_loader`).
+3. Optimize with pure soft Dice, typically `pilot-lr=0.005`, AMP **off** (D7).
+4. Each epoch: train on those 3, then evaluate hard Dice on those 3.
+5. Track **best** Dice; early-stop if no improvement for `pilot-patience` (40).
+6. Pass if best ≥ 0.90; else fail the job (`exit 2`) so SageMaker does not continue to full train.
+7. Delete pilot weights. Full train always starts from a **new** random init.
+
+Pilot is **intentional cheating** (train and score on the same tiny set). That is the point: if it cannot memorize 3 open flashcards, the pen/ink/grading are broken.
+
+### Why keep the pilot if full train is the real work?
+
+Full train does **not** need the pilot’s weights. The pilot answers a different question:
+
+> “Is this loss / LR / precision / grid / label path capable of learning *at all*?”
+
+We kept burning that question the hard way. Chronology of insights:
+
+1. **Dice+BCE on 256³** → model learned “predict empty” (class imbalance); hard Dice ~0.
+2. **Pure Dice** fixed the empty-trap in downsampled experiments, not automatically at full res.
+3. **Soft loss stuck ~0.99 while hard Dice peeked then collapsed** → objective vs metric mismatch; reporting final-epoch Dice hid peaks → added best-Dice + patience.
+4. **`pilot-lr=0.005` + AMP on 256³** → non-finite logits; float32 pilot became default.
+5. **`pilot-lr=0.001` on 256³ and on v2 128³** → peak hard Dice ~0.23–0.31, then ballooning FPs.
+6. **v2 (2 mm / 128³) alone** did not fix learning at lr 0.001.
+7. **v2 + `pilot-lr=0.005` + no AMP** → first real SageMaker R7 pass (`…7579`, Dice 0.9043 @ ep 89). Locked as **D7**.
+
+Each failed full-shaped attempt would have cost ~provisioning + up to 1 hour. Pilot fails in minutes. So the gate is **insurance**, not pedagogy for the final model.
+
+Once D7 is trusted, `--skip-pilot` on `--mode full` is allowed to save ~few minutes. Default remains “run pilot” because silent no-learning failures were common. Skipping does **not** change the full-train math; it only removes the fuse.
+
+### What we present vs what we do not
+
+| Artifact | Present as demo / paper-style held-out? |
+|----------|----------------------------------------|
+| Pilot Dice 0.90 | **No** — memorization check only |
+| Val Dice during full train | **Model selection only** — not the final claim; can overfit to val if you peek forever |
+| Test Dice after freeze | **Yes** — primary synthetic held-out claim |
+| MUG500+ B | **Separate** domain-shift table, or “not run” |
+
+Demo wish (~0.6–0.7 overlap) means **held-out** (val during iteration, test for the report), not pilot.
+
+### Soft Dice vs hard Dice (recurring insight)
+
+On sparse implants (~0.1–0.25% of voxels), soft Dice can stay near 0 (loss ~0.99) while hard Dice briefly looks better: many voxels have mid probabilities that hurt soft Dice but stay under 0.5 so they don’t count in hard Dice—until they cross 0.5 and predictions balloon. Always log **pred_voxels vs target_voxels**, **loss**, and **best hard Dice** together. Do not trust a single number.
+
+### Grid decision (v1 vs v2)
+
+- **v1:** 1 mm, 256³ — matches earlier R4 wording; failed to overfit under the LRs we could keep numerically stable in time.
+- **v2:** 2 mm, 128³ — coarser; anything that fit in 256@1mm fits in 128@2mm; first passing pilot. Softer bone edges; acceptable for first demo path. v1 left on S3 untouched.
+
+### Full-run note (in progress at time of writing)
+
+`cranial-full-run-1794717924`: D7 pilot re-passed (0.9043 @ 89), then full train with `lr=0.0002`, aug on, AMP on for the full loop. Early val Dice climbed to ~0.12 by epoch 6 then slipped while soft loss stayed ~0.99. That does **not** invalidate the pilot; it means **generalization under full-run hyperparameters is a separate problem** from “can we overfit 3 cases.” Revisit full `lr` / crop / loss only after this job’s best val Dice is known—do not confuse with reopening the pilot fuse without evidence.
+
+### Operator checklist
+
+```sh
+# Pilot only (fuse)
+PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode pilot --pilot-lr 0.005
+
+# Full train (default includes pilot gate)
+PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full --pilot-lr 0.005
+
+# Full train without re-running pilot (only if D7 still trusted)
+PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full --pilot-lr 0.005 --skip-pilot
+```
+
+Confirm launcher prints `Processed ver: v2`. Never freeze pilot-only artifacts. Freeze only after val-selected `best.pt` from a full run.
+
+---
+
+## 11. Full run `cranial-full-run-1794717924` — val Dice ~0.12 (not demo-ready) — 2026-11-15
+
+### What happened
+
+D7 pilot gate re-passed inside the full job (best Dice 0.9043 @ epoch 89 on 3 cases), then a **new** U-Net trained on 91 cases with aug on.
+
+| Setting | Value |
+|---------|--------|
+| Data | processed **v2** (2 mm / 128³) |
+| Pilot | `pilot-lr=0.005`, AMP off → PASS |
+| Full train LR | **`lr=0.0002`** (launcher default) |
+| Full AMP | on |
+| Aug | on (`no-aug=false`) |
+| Early stop patience | 15 |
+| Saved `best.pt` | epoch **5**, **`best_val_dice ≈ 0.1156`** |
+
+Artifacts downloaded to repo as `ml/best.pt` + `ml/freeze_candidate.json` (checkpoint path on S3: `cranial/checkpoints/run_1794717924/`). SageMaker `training-output/.../output/` was empty by design — weights sync via the **checkpoints** prefix, not that folder.
+
+### Is bad performance “too little data”?
+
+**Unlikely as the main cause of 0.12.** Reasons:
+
+1. **Same 91-case pool / same v2 grid that the pilot proved learnable.** The fuse showed a U-Net + pure Dice **can** fit cranial implants on this data when the optimizer steps are large enough (`pilot-lr=0.005` → 0.90 on 3 cases). That rules out “labels are pure noise” and “architecture can’t represent the task at all.”
+2. **91 subjects is small for a robust clinical model**, and it **can** cap *how high* held-out Dice eventually goes (demo 0.6–0.7 may be hard; SOTA papers often use more skulls/variants). But “best val = 0.12 after peaking at epoch 5 then sliding” looks like **optimization / train–val dynamics**, not a hard data-volume floor. With too little data you’d more often see **train improving while val plateaus mid-range**, or mild overfitting to ~0.3–0.5 — not almost-no-signal on val while the identical stack overfits 3 cases at lr 0.005.
+3. **Primary suspect: full-run learning rate ~25× smaller than the only LR that worked.** Pilot needed **0.005**. Full train used **0.0002**. Soft train/val loss stayed ~0.99 while hard val Dice briefly hit ~0.12 then fell — the same soft/hard mismatch pattern from failed low-LR pilots (§7–§8). Early stop will tend to keep a weak `best.pt` if nothing later beats epoch 5.
+4. **Secondary factors (real, but secondary to LR here):**
+   - Full train starts from **scratch** (pilot weights discarded by design) — expected; not a bug.
+   - **Augmentation on** makes each epoch harder than the unaugmented pilot; with a tiny LR that can stall.
+   - **AMP on** for the full loop (pilot was float32); less likely than LR given v2 size, still a confounder.
+   - **Class imbalance / soft Dice** still fights sparse implants; higher LR was what finally moved soft loss on the pilot.
+   - Coarser **v2** grid softens thin bone — affects ceiling quality, not “stuck at 0.12.”
+
+### Decision / next experiment
+
+1. **Do not freeze or present** `ml/best.pt` from `…7924` as a working demo. Val ≈ 0.12 is failure for the product claim.
+2. **Next full job — change one main knob:** raise full `--lr` to match the working pilot scale:
+   ```sh
+   PROCESSED_VERSION=v2 python ml/cranial/launch_training.py --mode full --pilot-lr 0.005 --lr 0.005
+   ```
+   Hypothesis: underpowered AdamW steps, not “need 10× more skulls first.” If this NaNs or collapses, try `--lr 0.001` or full `--no-amp` next — still before collecting a new dataset.
+3. **When to blame data volume:** if a well-optimized full run reaches decent **train** Dice but **val/test** stay &lt; ~0.4 with healthy loss curves, then expand data (more SkullBreak categories / SkullFix / synthetic defects) or regularize. That is a later diagnosis.
+4. Operator note: always read `best_dice` from `best.pt` or `metrics.jsonl` under `s3://…/cranial/checkpoints/run_*/`, not `training-output/.../output/`.
+
+### Transparency one-liner
+
+Pilot 0.90 = “the pen works.” Full val 0.12 = “the real exam failed,” most likely because we took the exam with a much smaller pen stroke (`lr=0.0002`) than the stroke that passed the fuse (`0.005`), not because 91 skulls make learning impossible.

@@ -170,8 +170,7 @@ def build_model(device: torch.device) -> nn.Module:
     """
     Small 3D U-Net via MONAI.
     Channels: 16, 32, 64, 128, 256 (5 levels, 4 downsamples)
-    Input:  [B, 1, 256, 256, 256] — defective skull mask
-    Output: [B, 1, 256, 256, 256] — logit per voxel for missing bone
+    Input/output spatial size comes from the processed cache (v2 default: 128³).
     """
     try:
         from monai.networks.nets import UNet
@@ -401,12 +400,21 @@ def run_pilot(
     use_amp: bool,
     max_epochs: int = 50,
     target_dice: float = 0.90,
+    patience: int = 40,
 ) -> bool:
     """
     Deliberately overfit a tiny subset to confirm the model and loss work.
-    Returns True if Dice ≥ target_dice is reached; False otherwise.
+    Passes on peak Dice (not final epoch). Stops early if peak stops improving.
     """
-    log.info(f"=== PILOT: overfitting {len(pilot_loader.dataset)} cases for ≤{max_epochs} epochs ===")
+    log.info(
+        f"=== PILOT: overfitting {len(pilot_loader.dataset)} cases for ≤{max_epochs} epochs "
+        f"(amp={use_amp}, patience={patience}) ==="
+    )
+    best_dice = -1.0
+    best_epoch = 0
+    no_improve = 0
+    dice = 0.0
+
     for epoch in range(max_epochs):
         model.train()
         for batch in pilot_loader:
@@ -418,9 +426,13 @@ def run_pilot(
                 loss   = loss_fn(logits, implant)
             if not torch.isfinite(logits).all() or not torch.isfinite(loss):
                 raise RuntimeError(f"Non-finite pilot logits/loss at epoch {epoch + 1}")
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            if use_amp:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
 
         # Evaluate on the same cases
         dice = 0.0
@@ -445,20 +457,36 @@ def run_pilot(
                 max_probability = max(max_probability, probabilities.max().item())
         dice /= len(pilot_loader)
 
-        if epoch == 0 or (epoch + 1) % 10 == 0 or dice >= target_dice:
+        if dice > best_dice:
+            best_dice = dice
+            best_epoch = epoch + 1
+            no_improve = 0
+        else:
+            no_improve += 1
+
+        if epoch == 0 or (epoch + 1) % 10 == 0 or dice >= target_dice or no_improve >= patience:
+            amp_scale = scaler.get_scale() if use_amp else 1.0
             log.info(
-                f"  Pilot epoch {epoch+1}/{max_epochs}: dice={dice:.4f} "
+                f"  Pilot epoch {epoch+1}/{max_epochs}: dice={dice:.4f} best={best_dice:.4f}@{best_epoch} "
                 f"loss={eval_loss / len(pilot_loader):.6f} "
                 f"pred_voxels={predicted_voxels} target_voxels={target_voxels} "
-                f"max_probability={max_probability:.6f} amp_scale={scaler.get_scale()}"
+                f"max_probability={max_probability:.6f} amp_scale={amp_scale}"
             )
 
-        if dice >= target_dice:
-            log.info(f"Pilot PASSED: Dice={dice:.4f} ≥ {target_dice} at epoch {epoch+1} ✓")
+        if best_dice >= target_dice:
+            log.info(f"Pilot PASSED: best Dice={best_dice:.4f} ≥ {target_dice} at epoch {best_epoch} ✓")
             return True
 
+        if no_improve >= patience:
+            log.info(
+                f"Pilot early stop: no Dice improvement for {patience} epochs "
+                f"(best={best_dice:.4f} at epoch {best_epoch})"
+            )
+            break
+
     log.error(
-        f"Pilot FAILED: Dice={dice:.4f} < {target_dice} after {max_epochs} epochs. "
+        f"Pilot FAILED: best Dice={best_dice:.4f} < {target_dice} "
+        f"(peak epoch {best_epoch}, last epoch dice={dice:.4f}). "
         "Check label alignment, loss target, gradient flow, and crop completeness."
     )
     return False
@@ -524,7 +552,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed",          type=int,   default=42)
     p.add_argument("--threshold",     type=float, default=0.5)
     p.add_argument("--early-stop-patience", type=int, default=15)
-    p.add_argument("--no-amp",        action="store_true", help="Disable mixed precision")
+    p.add_argument("--no-amp", nargs="?", const=True, default=False, type=parse_bool,
+                   help="Disable mixed precision (SageMaker passes true/false)")
     p.add_argument("--no-aug",        nargs="?", const=True, default=False, type=parse_bool,
                    help="Disable augmentation (use for pilot)")
     p.add_argument("--loss",          default="dice", choices=["dice", "dice_bce", "dice_focal"],
@@ -536,9 +565,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--pilot-cases",   type=int, default=3,
                    help="Number of cases to use for the pilot overfit test")
     p.add_argument("--pilot-epochs",  type=int, default=200)
-    p.add_argument("--pilot-lr",      type=float, default=5e-3,
-                   help="Learning rate for pilot overfit test")
+    p.add_argument("--pilot-lr",      type=float, default=1e-3,
+                   help="Learning rate for pilot overfit test (default 1e-3; 5e-3 NaN'd, 5e-4 stalled)")
     p.add_argument("--pilot-target-dice", type=float, default=0.90)
+    p.add_argument("--pilot-patience", type=int, default=40,
+                   help="Stop pilot if best Dice does not improve for this many epochs")
+    p.add_argument("--pilot-amp", nargs="?", const=True, default=False, type=parse_bool,
+                   help="Enable AMP during pilot (default: off; prior AMP pilots hit NaN or soft/hard mismatch)")
 
     # Resume
     p.add_argument("--resume", default="", help="Path to latest.pt checkpoint to resume from")
@@ -598,16 +631,19 @@ def main() -> None:
         # Take a small subset of training cases for the pilot
         pilot_loader = make_pilot_loader(train_ds, args.pilot_cases)
 
-        # Fresh model + optimizer for pilot (don't pollute main training state)
+        # Fresh model + optimizer for pilot (don't pollute main training state).
+        # Default pilot AMP off: full-res soft Dice under AMP hit NaNs at lr=5e-3.
+        pilot_use_amp = bool(args.pilot_amp) and device.type == "cuda"
         pilot_model  = build_model(device)
         pilot_opt    = torch.optim.AdamW(pilot_model.parameters(), lr=args.pilot_lr, weight_decay=args.weight_decay)
-        pilot_scaler = GradScaler(enabled=use_amp)
+        pilot_scaler = GradScaler(enabled=pilot_use_amp)
 
         passed = run_pilot(
             pilot_model, pilot_loader, loss_fn, pilot_opt, pilot_scaler,
-            device, use_amp,
+            device, pilot_use_amp,
             max_epochs=args.pilot_epochs,
             target_dice=args.pilot_target_dice,
+            patience=args.pilot_patience,
         )
         if not passed:
             log.error("Pilot failed — stopping before full training run. Fix the model/data first.")

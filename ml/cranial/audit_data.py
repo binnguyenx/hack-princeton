@@ -7,7 +7,7 @@ before spending GPU time on training.
 What it checks:
   1. Manifest completeness — every expected case is present
   2. Partition integrity — no subject ID in two partitions; MUG500+ B excluded
-  3. Shape / spacing conformance — all processed files are 256³ uint8 at ~1mm
+  3. Shape / spacing conformance — matches each case meta final_shape / processed_spacing
   4. Binary mask sanity — no non-binary values; non-empty targets
   5. Defect/implant physical consistency — defect and implant share the same frame
   6. Defect/implant logical consistency — implant never overlaps defect bone
@@ -40,9 +40,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
-EXPECTED_SHAPE   = (256, 256, 256)
-EXPECTED_SPACING = (1.0, 1.0, 1.0)
-SPACING_TOL      = 0.05  # mm tolerance
+SPACING_TOL = 0.05  # mm tolerance
 
 
 # ---------------------------------------------------------------------------
@@ -53,14 +51,19 @@ class CaseAuditError(Exception):
     pass
 
 
-def check_shape_spacing(img: sitk.Image, name: str) -> None:
+def check_shape_spacing(
+    img: sitk.Image,
+    name: str,
+    expected_shape: tuple,
+    expected_spacing: tuple,
+) -> None:
     shape = img.GetSize()         # (x, y, z)
     spacing = img.GetSpacing()
 
-    if tuple(shape) != EXPECTED_SHAPE:
-        raise CaseAuditError(f"{name}: expected shape {EXPECTED_SHAPE}, got {shape}")
+    if tuple(shape) != tuple(expected_shape):
+        raise CaseAuditError(f"{name}: expected shape {tuple(expected_shape)}, got {shape}")
 
-    for i, (s, e) in enumerate(zip(spacing, EXPECTED_SPACING)):
+    for i, (s, e) in enumerate(zip(spacing, expected_spacing)):
         if abs(s - e) > SPACING_TOL:
             raise CaseAuditError(
                 f"{name}: axis {i} spacing {s:.3f} mm deviates from "
@@ -130,6 +133,13 @@ def audit_one_case(row: pd.Series, verbose: bool = False) -> dict:
                 raise CaseAuditError(f"Missing file: {p} ({label})")
         result["checks"]["files_exist"] = True
 
+        # --- Meta first (authoritative processed shape/spacing for this cache version) ---
+        with open(m_path) as f:
+            meta = json.load(f)
+        result["checks"]["meta_readable"] = True
+        expected_shape = tuple(int(v) for v in meta["final_shape"])
+        expected_spacing = tuple(float(v) for v in meta["processed_spacing"])
+
         # --- Load ---
         d_img = sitk.ReadImage(str(d_path))
         i_img = sitk.ReadImage(str(i_path))
@@ -137,8 +147,8 @@ def audit_one_case(row: pd.Series, verbose: bool = False) -> dict:
         i_arr = sitk.GetArrayFromImage(i_img).astype(np.uint8)
 
         # --- Shape / spacing / pixel type ---
-        check_shape_spacing(d_img, "defect")
-        check_shape_spacing(i_img, "implant")
+        check_shape_spacing(d_img, "defect", expected_shape, expected_spacing)
+        check_shape_spacing(i_img, "implant", expected_shape, expected_spacing)
         result["checks"]["shape_spacing"] = True
 
         # --- Binary values ---
@@ -164,19 +174,17 @@ def audit_one_case(row: pd.Series, verbose: bool = False) -> dict:
                 f"({overlap_frac:.1%} of implant)"
             )
 
-        # --- Meta JSON ---
-        with open(m_path) as f:
-            meta = json.load(f)
-        result["checks"]["meta_readable"] = True
-
+        voxel_mm3 = float(np.prod(expected_spacing))
         # --- Statistics ---
         result["stats"] = {
             "defect_voxels": int(d_arr.sum()),
             "implant_voxels": int(i_arr.sum()),
-            "implant_volume_mm3": float(i_arr.sum()),  # already 1mm³/voxel at 1mm spacing
+            "implant_volume_mm3": float(i_arr.sum()) * voxel_mm3,
             "defect_density": float(d_arr.mean()),
             "orig_shape": meta.get("orig_shape"),
             "orig_spacing": meta.get("orig_spacing"),
+            "final_shape": list(expected_shape),
+            "processed_spacing": list(expected_spacing),
         }
 
         if verbose:
@@ -326,7 +334,7 @@ def print_summary(results: List[dict], df_manifest: pd.DataFrame) -> dict:
 
     # Count unique subjects per partition (from manifest)
     if not df_manifest.empty:
-        log.info("\nManifest subject counts (from split_v1.csv):")
+        log.info("\nManifest subject counts:")
         for part, grp in df_manifest.groupby("partition"):
             n_subjects = grp["subject_id"].nunique()
             n_cases    = len(grp)
@@ -347,7 +355,7 @@ def print_summary(results: List[dict], df_manifest: pd.DataFrame) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit prepared cranial data")
-    parser.add_argument("--manifest", required=True, help="Path to split_v1.csv")
+    parser.add_argument("--manifest", required=True, help="Path to split manifest CSV (e.g. split_v2.csv)")
     parser.add_argument("--partition", default=None,
                         help="Audit only this partition (train|val|test). Default: all.")
     parser.add_argument("--visualize", action="store_true",

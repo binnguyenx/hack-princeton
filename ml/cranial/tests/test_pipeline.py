@@ -46,6 +46,55 @@ def test_pilot_rejects_nonfinite_logits_before_optimizer_update():
     assert not optimizer.state
 
 
+def test_pilot_passes_on_best_dice_and_stops_when_patience_expires(caplog):
+    """Gate uses peak Dice; declining after the peak must not keep burning epochs."""
+    import logging
+    from train import run_pilot
+
+    class ScriptedDiceModel(torch.nn.Module):
+        def __init__(self, dice_schedule):
+            super().__init__()
+            self.bias = torch.nn.Parameter(torch.zeros(1))
+            self.dice_schedule = list(dice_schedule)
+            self.eval_calls = 0
+
+        def forward(self, x):
+            # Constant logits during train steps; evaluation path is patched below.
+            return x * 0 + self.bias
+
+    schedule = [0.10, 0.40, 0.20, 0.15, 0.10]  # peak 0.40 at epoch 2
+    model = ScriptedDiceModel(schedule)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0)
+    loader = torch.utils.data.DataLoader([
+        {'defect': torch.ones(1, 1, 4, 4, 4), 'implant': torch.ones(1, 1, 4, 4, 4)}
+    ])
+
+    import train as train_mod
+    original = train_mod.compute_implant_dice
+
+    def fake_dice(logits, targets, threshold=0.5):
+        idx = min(model.eval_calls, len(schedule) - 1)
+        model.eval_calls += 1
+        return schedule[idx]
+
+    train_mod.compute_implant_dice = fake_dice
+    try:
+        with caplog.at_level(logging.INFO):
+            passed = run_pilot(
+                model, loader, lambda lg, tg: (lg * 0).sum() + 0.99,
+                optimizer, torch.cuda.amp.GradScaler(enabled=False),
+                torch.device('cpu'), False,
+                max_epochs=20, target_dice=0.90, patience=2,
+            )
+    finally:
+        train_mod.compute_implant_dice = original
+
+    assert passed is False
+    assert model.eval_calls == 4  # epochs 1..4 then patience stop (peak at 2, +2)
+    assert any('best Dice=0.4000' in r.message for r in caplog.records)
+    assert any('early stop' in r.message for r in caplog.records)
+
+
 def asymmetric_mask():
     a = np.zeros((16, 16, 16), dtype=np.uint8)
     a[2:5, 4:7, 8:11] = 1

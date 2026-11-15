@@ -64,40 +64,46 @@ python3 ml/cranial/upload_processed.py --bucket YOUR_BUCKET_NAME
 
 `--bucket` can be omitted when `S3_BUCKET` is set, including in the project `.env` if `python-dotenv` is installed. The script uploads `data/processed/v1/{train,val,test}/` under `cranial/processed/v1/` and the manifest files under `cranial/manifests/`. It stops if either audit report is missing, the preparation rejected cases, or the saved-file audit has failures. Confirm the uploaded `train/` and `val/` objects exist before launching SageMaker; the launcher expects those exact prefixes.
 
-### 3. Pilot on the GPU
+### 3. Pilot on the GPU (intentional overfit gate — not the demo model)
 
-First confirm the selected AWS region has nonzero `ml.g5.2xlarge` training quota and that the job fits the available credits. The pilot tries to learn **three training cases**, with augmentation off, to implant Dice ≥ 0.90. This is a pipeline sanity check, not a generalization result. Record its Dice, step time, GPU memory, job ID, and artifact location. If it misses 0.90, inspect alignment, labels, loss, and model output before full training.
+**What it is:** a cheap fuse before full training. The U-Net is the model; hard Dice is overlap accuracy after a 0.5 threshold (0–1). The pilot trains a **throwaway** network on **3 fixed training cases** (augmentation off) and requires hard Dice ≥ **0.90 on those same 3**. Spec R7. If it fails, the job exits so you do not spend a full GPU hour on a broken loss/LR/grid/label path.
+
+**What it is not:** a score on unseen patients; a checkpoint to freeze; something you present as accuracy.
+
+**Why keep it if full train “is the real work” anyway?** Full training does not reuse pilot weights (new init). The pilot only answers “can this recipe learn at all?” We hit many silent failures (all-zero predictions, NaNs, soft loss stuck ~0.99 while hard Dice peeked then collapsed). Pilot fails in minutes; full train costs up to the 1h cap. After the accepted recipe (**D7**: processed **v2**, `pilot-lr=0.005`, pilot AMP off) is trusted, `--skip-pilot` is optional to save a few minutes—it removes the fuse, not a training ingredient. Details and failed-job table: `LIVE_INVESTIGATION_LOG.md` §9–§10.
+
+First confirm the selected AWS region has nonzero `ml.g5.2xlarge` training quota and that the job fits the available credits. Record Dice, step time, GPU memory, job ID, and artifact location.
 
 ```bash
-python3 ml/cranial/launch_training.py --mode pilot
+PROCESSED_VERSION=v2 python3 ml/cranial/launch_training.py --mode pilot --pilot-lr 0.005
 ```
 
-The launcher writes SageMaker's training output under `s3://<bucket>/cranial/training-output/` so it does not try to create an account-default bucket. The AWS role still needs access to write to that existing bucket. The pilot runs with augmentation disabled. The script's printed checkpoint prefix is not proof of where SageMaker placed the final model artifact; record the actual artifact URI from the completed job.
+Confirm the printout shows `Processed ver: v2`. The launcher writes SageMaker output under `s3://<bucket>/cranial/training-output/`. The printed checkpoint prefix is not proof of the final artifact URI; record the URI from the completed job. Do **not** treat pilot-only artifacts as `best.pt` for evaluate.
 
 ### 4. Full training and freeze
 
-After a passing pilot, run full training with a measured runtime budget. The configured maximum is 50 epochs with early stopping; the job has a separate wall-clock cap. Check the per-epoch `metrics.jsonl` and pick `best.pt` by **validation** Dice. Save the checkpoint, run config, dependency versions, split hash, and job metadata together.
+After a passing pilot (or with `--skip-pilot` once D7 is trusted), run full training. New U-Net from scratch on **91** train cases (aug on). Cap 50 epochs with early stopping on **validation** Dice (23 subjects); separate wall-clock cap (~1h). Pick `best.pt` by val Dice — that is model selection, not the final held-out claim.
 
 ```bash
-python3 ml/cranial/launch_training.py --mode full
+PROCESSED_VERSION=v2 python3 ml/cranial/launch_training.py --mode full --pilot-lr 0.005
 ```
 
-Review `freeze_candidate.json`, verify that its checkpoint hash matches the chosen `best.pt`, and write `manifests/freeze_v1.json` with `frozen: true`. Freeze the checkpoint, threshold, and preprocessing/postprocessing settings before opening test metrics. Do not assume the candidate file is sufficient just because training finished.
+Review `freeze_candidate.json`, verify that its checkpoint hash matches the chosen `best.pt`, and write a freeze file (e.g. `manifests/freeze_v2.json`) with `frozen: true` **before** opening test metrics. Freeze checkpoint, threshold, and preprocessing/postprocessing together.
 
-### 5. Evaluate and report
+### 5. Evaluate and report (unseen / presentable scores)
 
-Once the freeze exists, run evaluation with the same local checkpoint and freeze file:
+Once the freeze exists, run evaluation with the same local checkpoint and freeze file. Use the **v2** manifest if that is the training cache:
 
 ```bash
 python3 ml/cranial/evaluate.py \
   --checkpoint ml/cranial/checkpoints/best.pt \
-  --freeze ml/cranial/manifests/freeze_v1.json \
+  --freeze ml/cranial/manifests/freeze_v2.json \
   --split test \
-  --manifest ml/cranial/manifests/split_v1.csv \
-  --report-dir ml/cranial/reports/eval_v1
+  --manifest ml/cranial/manifests/split_v2.csv \
+  --report-dir ml/cranial/reports/eval_v2
 ```
 
-Read `reports/eval_v1/per_case_test.csv` and `summary_test.json`, including failed cases and baseline scores. The [spec](../../features/ml-model/spec.md) calls for separate MUG500+ B domain-shift results; if those cases are unavailable, state "not run" and why. Report model scores as research/demo evidence, not clinical validation.
+Read `per_case_*.csv` and `summary_*.json`, including failures and baselines. Test (20 official subjects) is the primary synthetic held-out claim. The [spec](../../features/ml-model/spec.md) also calls for separate MUG500+ B results; if unavailable, state "not run" and why. Report scores as research/demo evidence, not clinical validation. Demo targets (~0.6–0.7 Dice) refer to **held-out** overlap, not pilot.
 
 ## Boundaries to keep intact
 

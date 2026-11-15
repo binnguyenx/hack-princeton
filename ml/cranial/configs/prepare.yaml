@@ -18,19 +18,22 @@ split:
   mug500b_reserved_ids: []   # fill in once MUG500+ B is downloaded; never train on these
 
 preprocessing:
-  target_spacing: [1.0, 1.0, 1.0]   # mm isotropic
-  target_shape:   [256, 256, 256]
+  # v2: coarser grid for learning. At 1 mm the skull is ~205³ and cannot pad into 128³
+  # without clipping (reject_oversized). 2 mm → ~102³ content, pads into 128³.
+  # Anything that fit in v1 (256 @ 1 mm) fits here. Softens thin bone; pilot/demo tradeoff.
+  target_spacing: [2.0, 2.0, 2.0]   # mm isotropic
+  target_shape:   [128, 128, 128]
   convert_to_ras: false             # re-indexes array axes only; keep off unless you need it
   reject_oversized: true            # reject cases that do not fit; never clip
 
 output:
-  local_processed_dir: data/processed       # the version folder (v1) is added automatically
-  local_manifest_path: ml/cranial/manifests/split_v1.csv
-  local_audit_path:    ml/cranial/manifests/audit_v1.json
+  local_processed_dir: data/processed       # the version folder (v2) is added automatically
+  local_manifest_path: ml/cranial/manifests/split_v2.csv
+  local_audit_path:    ml/cranial/manifests/audit_v2.json
 
 s3:
   bucket: ""                  # or set S3_BUCKET in .env, or pass --s3-bucket
   prefix: cranial
-  processed_version: v1       # bump to v2 if preprocessing changes; never overwrite a version used for training
+  processed_version: v2       # bump when preprocessing changes; never overwrite a version used for training
   upload_after_prepare: false
-  # Layout: s3://<bucket>/cranial/processed/v1/{train,val,test}/  and  cranial/manifests/
+  # Layout: s3://<bucket>/cranial/processed/v2/{train,val,test}/  and  cranial/manifests/

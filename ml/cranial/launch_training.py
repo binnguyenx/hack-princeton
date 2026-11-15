@@ -129,7 +129,22 @@ def main() -> None:
     parser.add_argument("--run-id", default="", help="Run identifier (default: auto timestamp)")
     parser.add_argument("--epochs", type=int, default=0, help="Override epoch count")
     parser.add_argument("--lr", type=float, default=2e-4, help="Learning rate for full training (default: 2e-4)")
-    parser.add_argument("--pilot-lr", type=float, default=0.005, help="Learning rate for the pilot")
+    parser.add_argument(
+        "--pilot-lr", type=float, default=0.001,
+        help="Learning rate for the pilot (default 0.001; 0.005 NaN'd under AMP, 0.0005 stalled)",
+    )
+    parser.add_argument(
+        "--pilot-amp", action="store_true",
+        help="Enable AMP during pilot (default: off)",
+    )
+    parser.add_argument(
+        "--pilot-patience", type=int, default=40,
+        help="Stop pilot if best Dice does not improve for this many epochs",
+    )
+    parser.add_argument(
+        "--no-amp", action="store_true",
+        help="Disable AMP for the full training loop (needed with lr≈0.005; pilot AMP stays separate)",
+    )
     parser.add_argument("--skip-pilot", action="store_true", help="Skip the pilot overfit check in full mode")
     args = parser.parse_args()
 
@@ -146,8 +161,11 @@ def main() -> None:
             "pilot-epochs": 200,
             "pilot-lr": args.pilot_lr,
             "pilot-target-dice": 0.90,
+            "pilot-patience": args.pilot_patience,
+            "pilot-amp": args.pilot_amp,
             "loss": "dice",
             "no-aug": True,
+            "no-amp": args.no_amp,
             "epochs": 0,     # stop after the pilot
             "seed": 42,
         }
@@ -155,6 +173,10 @@ def main() -> None:
         print(f"\n[PILOT] run_id={run_id}")
         print(f"  Instance:     {INSTANCE_TYPE}")
         print(f"  Max runtime:  {max_run // 60} minutes")
+        print(f"  pilot-lr:     {args.pilot_lr}")
+        print(f"  pilot-amp:    {args.pilot_amp}")
+        print(f"  no-amp:       {args.no_amp}")
+        print(f"  patience:     {args.pilot_patience}")
         print(f"  Checkpoints:  {s3_path(S3_PREFIX, 'checkpoints', run_id)}")
         print(f"  Spot:         {args.spot}")
 
@@ -177,13 +199,17 @@ def main() -> None:
             "pilot-epochs": 200,
             "pilot-lr": args.pilot_lr,
             "pilot-target-dice": 0.90,
+            "pilot-patience": args.pilot_patience,
+            "pilot-amp": args.pilot_amp,
             "no-aug": False,
+            "no-amp": args.no_amp,
         }
         max_run = MAX_RUN_FULL
         print(f"\n[FULL TRAINING] run_id={run_id}")
         print(f"  Instance:     {INSTANCE_TYPE}  (~$1.52/hr)")
         print(f"  Epochs:       {n_epochs} (early stop patience=15)")
         print(f"  Pilot check:  {run_pilot_check}")
+        print(f"  no-amp:       {args.no_amp}")
         print(f"  Max runtime:  {max_run // 3600} hours")
         print(f"  Checkpoints:  {s3_path(S3_PREFIX, 'checkpoints', run_id)}")
         print(f"  Spot:         {args.spot}")
@@ -193,14 +219,16 @@ def main() -> None:
     # Data channels — SageMaker copies these from S3 before the job starts.
     # Bump PROCESSED_VERSION if you rerun prepare_data.py with new settings.
     # This ensures a new training run is always traceable to the exact processed cache it used.
-    PROCESSED_VERSION = os.environ.get("PROCESSED_VERSION", "v1")
+    # Default v2 = 128³ cache after 256³ pilots stalled. Override with PROCESSED_VERSION=v1 if needed.
+    PROCESSED_VERSION = os.environ.get("PROCESSED_VERSION", "v2")
     data_channels = {
         "training":   s3_path(S3_PREFIX, "processed", PROCESSED_VERSION, "train"),
         "validation": s3_path(S3_PREFIX, "processed", PROCESSED_VERSION, "val"),
     }
     log.info(f"  Processed version: {PROCESSED_VERSION}")
 
-    print(f"\n  Training data:   {data_channels['training']}")
+    print(f"\n  Processed ver:   {PROCESSED_VERSION}")
+    print(f"  Training data:   {data_channels['training']}")
     print(f"  Validation data: {data_channels['validation']}")
     print(f"\nSubmitting job... (this takes ~2 min to provision the instance)")
 

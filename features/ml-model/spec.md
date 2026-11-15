@@ -1,6 +1,6 @@
 # Spec: Cranial reconstruction model
 
-Intent: [intent.md](intent.md) · Status: draft · Last updated: 2026-11-14
+Intent: [intent.md](intent.md) · Status: draft · Last updated: 2026-11-15
 
 ## Summary
 This feature trains and evaluates a small 3D U-Net that predicts the missing bone volume from a segmented defective skull. The first pass uses SkullBreak parietotemporal cases only, so it fits one day and a GPU window of about 2 to 3 hours. It produces a frozen checkpoint, a published split manifest, a `predict` entry point that writes a candidate volume in the input's coordinates, and a report of per-case results.
@@ -39,18 +39,19 @@ The model learns f(D) → I. D is the segmented defective skull, one binary chan
 
 The first pass trains on SkullBreak parietotemporal pairs only. That is one defect per skull, so 91 training pairs. SkullFix and healthy MUG500+ with synthetic defects are added in a second run only if the first finishes with time left. Parietotemporal defects are mostly one-sided, which also makes the mirror baseline usable.
 
-Starting settings come from the research and are engineering choices, not published optima: PyTorch with MONAI; U-Net channels 16, 32, 64, 128, 256; instance normalization; loss of soft Dice plus binary cross-entropy at equal weight; AdamW at learning rate 0.0001 and weight decay 0.00001; batch size 1; mixed precision after a full-precision smoke test; small paired rotations, translations and scales. Binary masks resample with nearest-neighbor, and predicted scores resample linearly before thresholding. The deterministic preprocessing is cached as uint8 and augmentation runs after the cache.
+Starting settings come from the research and are engineering choices, not published optima: PyTorch with MONAI; U-Net channels 16, 32, 64, 128, 256; instance normalization; default loss is pure soft Dice (`--loss dice`; `dice_bce` and `dice_focal` remain available); AdamW; batch size 1; pilot defaults to float32 with `--pilot-lr 0.001` and AMP off unless `--pilot-amp`; full training may still use AMP; small paired rotations, translations and scales when augmentation is on. Binary masks resample with nearest-neighbor, and predicted scores resample linearly before thresholding. The deterministic preprocessing is cached as uint8 and augmentation runs after the cache. Live default preprocessing keeps `convert_to_ras: false` so prepare and predict share the same axis setting.
 
 The first run is capped at 50 epochs. At 91 training pairs that is 4,550 steps, plus validation. Run a timed pilot first and measure seconds per step and peak GPU memory. If a step takes about 2 seconds or less, 50 epochs fit in a 3 hour window. If it takes longer, stop and choose: extend the window, accept fewer epochs (the best checkpoint so far is kept), use a coarser grid, which blurs thin bone, or use a pretrained model. That is a decision for the team, not a silent change.
 
 The platform is AWS SageMaker with S3 for data, checkpoints and reports. Kaggle's free GPU sessions are the fallback for training. Neither is a serving option. Serving belongs to `cranial-reconstruction-candidate`.
 
 ## Where it lives
-Proposed paths. The repo has not been inspected, so none of these exist yet or are confirmed.
-- Scripts: `ml/cranial/prepare_data.py`, `ml/cranial/train.py`, `ml/cranial/evaluate.py`, `ml/cranial/predict.py`
-- Configs and manifests: `ml/cranial/configs/`, `ml/cranial/manifests/`
-- Reports: `ml/cranial/reports/`
+Confirmed under `ml/cranial/`:
+- Scripts: `ml/cranial/prepare_data.py`, `ml/cranial/audit_data.py`, `ml/cranial/train.py`, `ml/cranial/launch_training.py`, `ml/cranial/evaluate.py`, `ml/cranial/predict.py`, `ml/cranial/load_skullbreak_s3.py`, `ml/cranial/upload_processed.py`
+- Configs and manifests: `ml/cranial/configs/` (live prepare default is v2: 2 mm / 128³), `ml/cranial/manifests/split_v1.csv`, `ml/cranial/manifests/split_v2.csv`, `ml/cranial/manifests/audit_v1.json`, `ml/cranial/manifests/audit_v2.json`
+- Reports / investigation: `ml/cranial/reports/`, `ml/cranial/LIVE_INVESTIGATION_LOG.md`, `ml/cranial/LEARNING_FAILURE_POSTMORTEM.md`
 - Tests: `ml/cranial/tests/`
+- Local Python env used for CPU checks: `app/cranial-env/`
 
 ## Decisions
 - D1. Direct prediction of the missing volume. Why: the output matches the candidate object. Alternatives: predict the full skull and subtract. Revisit only if direct prediction fails on unfamiliar defects.
@@ -59,14 +60,19 @@ Proposed paths. The repo has not been inspected, so none of these exist yet or a
 - D4. This feature owns the core of `predict`, and the candidate feature wraps it as a service. Why: training, evaluation and serving then share one preprocessing and inverse-transform path, which prevents mismatches. Alternatives: let the candidate feature write its own.
 - D5. A pretrained model is an acceptable fallback with recorded provenance and demo-only scores. Why: it may have seen the test subjects.
 - D6. The first run is capped at 50 epochs, and a timed pilot confirms it fits the window before the full run starts. Why: the research warns that hours can't be assumed from dataset size, and 50 epochs at 91 pairs is an estimated 1.3 to 3.8 hours. Alternatives: the research's 100-epoch ceiling, which needs about twice that.
+- D7. First accepted training recipe (2026-11-14): processed **v2** (2 mm isotropic, 128³), pure soft Dice, pilot with **AMP off** and **`pilot-lr=0.005`**, best-Dice gate with patience 40. Evidence: SageMaker job `cranial-pilot-run-1794717579` reached best implant Dice **0.9043** at epoch 89 on 3 unaugmented train cases (R7). Why: v1 256³ and v2@`pilot-lr=0.001` peaked ~0.23–0.31 then collapsed; this recipe is the first full pipeline overfit pass. Alternatives rejected for the first full run: stay on v1, or keep pilot-lr≤0.001. The pilot checkpoint is **not** the product model; full train → val-selected `best.pt` → freeze → test. See `ml/cranial/LIVE_INVESTIGATION_LOG.md` §9–§10.
+- D8. Keep the pilot gate by default even after D7. Why: the pilot does not feed weights into full train; it is a cheap fuse against silent no-learning failures (all-zero BCE collapse, AMP NaNs, soft/hard Dice mismatch). Full train is the real generalization run (91 train / 23 val); test after freeze is the presentable held-out claim. `--skip-pilot` is allowed only when the operator explicitly accepts removing that fuse. Transparency write-up: `LIVE_INVESTIGATION_LOG.md` §10 and `ml/cranial/WORKFLOW.md` §3.
+- D9. Full run `cranial-full-run-1794717924` (v2, pilot 0.005, **full `lr=0.0002`**) reached **best val Dice ≈ 0.116** (epoch 5) — not acceptable to freeze/demo. Why it is bad is **not** primarily “too few data”: the same stack overfit 3 cases at 0.90 with `pilot-lr=0.005`, so capacity/labels work; 91 skulls can limit a high ceiling later but do not explain stalling at ~0.12 with soft loss ~0.99. Leading hypothesis: full-run LR ~25× below the only LR that moved learning. Next experiment: `--mode full --pilot-lr 0.005 --lr 0.005` before collecting more datasets. See `LIVE_INVESTIGATION_LOG.md` §11.
 
 ## Flagged concerns
 - The scope in D2 departs from the intent, which says training uses SkullBreak, SkullFix and healthy MUG500+. It is an amendment to accept or reject.
 - GPU quota is the biggest schedule risk. New accounts may have a quota of zero for GPU instances, and AWS reviews increase requests. Check the quota for the instance type in Service Quotas now. If it is zero and an increase doesn't arrive, move training to Kaggle.
 - The 2 to 3 hour window covers training only. Quota, downloads, preprocessing, the pilot and evaluation add time. Step-time and epoch figures are not measured yet.
 - R15 depends on converting 29 expert meshes onto exact grids, which is likely the first thing to slip. The spec allows an explicit "not run".
-- The intent the research cites and the live repo were not available, so "Where it lives" is proposed and nothing was checked against existing conventions.
+- R7 pilot gate is met on v2 (D7); frozen checkpoint and held-out report still do not exist until full train + evaluate.
 - Pretrained model scores may include test subjects. They can't be called held-out results.
+- D7 / live defaults use processed **v2** (2 mm / 128³) while R4 still textually requires ~1 mm / 256³. R4 should be amended to match D7 or a later return to v1 — do not leave both as unspoken authority.
+- Local unit Proof: `test_real_augmentation_preserves_pair_alignment` fails under MONAI 1.3.0 in `app/cranial-env/` (uint32 seed overflow).
 
 ## Open questions
 - Which exact dataset versions and checksums are downloaded, and do the counts in R2 hold once the parietotemporal subset is filtered?

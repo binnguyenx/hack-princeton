@@ -5,9 +5,17 @@ import json
 import os
 from pathlib import Path
 
+import yaml
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bucket", default="")
+    parser.add_argument(
+        "--config",
+        default="ml/cranial/configs/prepare.yaml",
+        help="Prepare config (used for processed_version and manifest paths)",
+    )
     args = parser.parse_args()
 
     try:
@@ -19,12 +27,20 @@ def main() -> None:
     if not bucket:
         parser.error("set S3_BUCKET or pass --bucket")
 
-    processed = Path("data/processed/v1")
-    manifests = Path("ml/cranial/manifests")
+    cfg = yaml.safe_load(Path(args.config).read_text())
+    version = cfg["s3"].get("processed_version", "v1")
+    prefix = cfg["s3"].get("prefix", "cranial").strip("/")
+    processed = Path(cfg["output"]["local_processed_dir"]) / version
+    manifest_path = Path(cfg["output"]["local_manifest_path"])
+    preparation_report = Path(cfg["output"]["local_audit_path"])
+    manifests = manifest_path.parent
     report = Path("ml/cranial/reports/audit_results.json")
-    preparation_report = manifests / "audit_v1.json"
-    if not processed.is_dir() or not (manifests / "split_v1.csv").is_file() or not preparation_report.is_file() or not report.is_file():
-        parser.error("processed data, split_v1.csv, audit_v1.json, and audit_results.json must exist")
+
+    if not processed.is_dir() or not manifest_path.is_file() or not preparation_report.is_file() or not report.is_file():
+        parser.error(
+            f"processed data ({processed}), {manifest_path}, {preparation_report}, "
+            "and audit_results.json must exist"
+        )
 
     audit = json.loads(report.read_text())
     preparation = json.loads(preparation_report.read_text())
@@ -37,8 +53,9 @@ def main() -> None:
     import boto3  # Fail before uploading if the Python S3 dependency is missing.
     from prepare_data import upload_to_s3
 
-    upload_to_s3(processed, bucket, "cranial/processed/v1")
-    upload_to_s3(manifests, bucket, "cranial/manifests")
+    upload_to_s3(processed, bucket, f"{prefix}/processed/{version}")
+    upload_to_s3(manifests, bucket, f"{prefix}/manifests")
+    print(f"Uploaded {processed} → s3://{bucket}/{prefix}/processed/{version}/")
 
 
 if __name__ == "__main__":
