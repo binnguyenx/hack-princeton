@@ -49,6 +49,14 @@ def create_application_router() -> APIRouter:
         except Exception as error:
             return public_error(error)
 
+    @router.get('/projects/{id}/samples')
+    async def search_project_samples(id: str, request: Request, q: str = ''):
+        try:
+            samples = await _call(request, 'search_project_samples', id, q)
+            return {'samples': samples}
+        except Exception as error:
+            return public_error(error)
+
     @router.delete('/projects/{id}', status_code=204)
     async def delete_project(id: str, request: Request):
         try:

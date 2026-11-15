@@ -10,6 +10,7 @@ import { FeatureHint, FeatureHintProvider } from './FeatureHint'
 import { SliceDock } from './SliceDock'
 import { ViewFrame } from './ViewFrame'
 import { AiChatPanel } from './AiChatPanel'
+import type { ChatContext } from './AiChatPanel'
 import type { Vec3 } from '../geometry/coordinates'
 import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
 
@@ -39,6 +40,7 @@ type Props = {
   children: ReactNode
   aiChatOpen?: boolean
   onAiChatOpenChange?: (open: boolean) => void
+  chatContext?: ChatContext
 }
 
 const MODES = [
@@ -76,6 +78,7 @@ export function CanvasWorkspace({
   children,
   aiChatOpen,
   onAiChatOpenChange,
+  chatContext,
 }: Props) {
   const [sliceDockCollapsed, setSliceDockCollapsed] = useState(false)
   const [maximizedView, setMaximizedView] = useState<'three-d' | SlicePlaneId | null>(
@@ -203,6 +206,7 @@ export function CanvasWorkspace({
               open={isChatOpen}
               onOpenChange={setChatOpen}
               contextLabel={documentName}
+              chatContext={chatContext}
             />
           </aside>
         ) : (

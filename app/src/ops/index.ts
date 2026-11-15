@@ -4,6 +4,7 @@ export * from './projectRegistry'
 export * from './importPrepared'
 
 import {
+  clearDirty,
   closeDocument,
   createCandidate,
   createCase,
@@ -35,6 +36,7 @@ export const publicOps = {
   openDocument,
   closeDocument,
   setActiveDocument,
+  clearDirty,
   transformCandidate,
   restoreRevision,
 }

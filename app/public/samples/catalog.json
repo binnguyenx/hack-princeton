@@ -7,6 +7,13 @@
     "license": "CC BY-NC-SA 4.0"
   },
   {
+    "id": "skullbreak-000-parietotemporal-complete",
+    "label": "skullbreak-000-parietotemporal-complete",
+    "primaryVolume": "complete_skull.nrrd",
+    "baseUrl": "/samples/skullbreak-000-parietotemporal-complete",
+    "license": "CC BY-NC-SA 4.0"
+  },
+  {
     "id": "skullbreak-001-frontoorbital",
     "label": "skullbreak-001-frontoorbital",
     "primaryVolume": "defective_skull.nrrd",

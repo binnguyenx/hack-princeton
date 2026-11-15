@@ -15,6 +15,7 @@ import {
 import type { Mat4, Sample, SpatialMeta } from './domain/types'
 import { buildCanvasCommands, type CommandId } from './commands/registry'
 import {
+  clearDirty,
   closeDocument,
   navigateCamera,
   openDocument,
@@ -22,6 +23,11 @@ import {
   setVisibility,
   setActiveDocument,
 } from './ops'
+import {
+  afterCloseOpenDocuments,
+  beginCloseDocument,
+  type PendingClose,
+} from './ops/documentTabs'
 import {
   fetchPreparedSample,
   loadSampleCatalog,
@@ -52,6 +58,8 @@ import {
 import { NewProjectDialog } from './ui/dialogs/NewProjectDialog'
 import { NewCaseDialog } from './ui/dialogs/NewCaseDialog'
 import { ImportSampleDialog } from './ui/dialogs/ImportSampleDialog'
+import { SamplePickerDialog, type SamplePickerRow } from './ui/dialogs/SamplePickerDialog'
+import { ConfirmCloseDocumentDialog } from './ui/dialogs/ConfirmCloseDocumentDialog'
 
 const ctx = { store: editorStore }
 const nudgePose: Mat4 = [
@@ -122,7 +130,15 @@ export default function App() {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [newCaseOpen, setNewCaseOpen] = useState(false)
   const [importSampleOpen, setImportSampleOpen] = useState(false)
+  const [samplePickerOpen, setSamplePickerOpen] = useState(false)
+  const [samplePickerQuery, setSamplePickerQuery] = useState('')
+  const [samplePickerRows, setSamplePickerRows] = useState<SamplePickerRow[]>([])
+  const [samplePickerLoading, setSamplePickerLoading] = useState(false)
+  const [samplePickerError, setSamplePickerError] = useState<string | null>(null)
+  const [pendingClose, setPendingClose] = useState<PendingClose | null>(null)
+  const [suppressAutoOpen, setSuppressAutoOpen] = useState(false)
   const meshBuildSeqRef = useRef(0)
+  const samplePickerQueryRef = useRef('')
 
   const refresh = useCallback(() => setTick((t) => t + 1), [])
   const state = useMemo(() => editorStore.getState(), [tick])
@@ -138,6 +154,24 @@ export default function App() {
     openDocuments?: EditorState['openDocuments']
     activeDocumentId?: string | null
   }) => {
+    const prior = editorStore.getState()
+    const manifestTabs = manifest.openDocuments ?? []
+    // Live FastAPI manifests leave openDocuments empty; keep session tabs that still exist.
+    const openDocuments =
+      manifestTabs.length > 0
+        ? manifestTabs
+        : (prior?.openDocuments ?? []).filter((d) =>
+            d.kind === 'sample'
+              ? manifest.samples.some((s) => s.id === d.id)
+              : manifest.candidates.some((c) => c.objectId === d.id),
+          )
+    const preferredActive =
+      manifest.activeDocumentId &&
+      openDocuments.some((d) => d.id === manifest.activeDocumentId)
+        ? manifest.activeDocumentId
+        : openDocuments.some((d) => d.id === prior?.activeDocumentId)
+          ? prior?.activeDocumentId ?? null
+          : (openDocuments[openDocuments.length - 1]?.id ?? null)
     editorStore.setState({
       user: manifest.user,
       project: manifest.project,
@@ -148,8 +182,8 @@ export default function App() {
       view: manifest.viewState,
       volumes: new Map(),
       dirty: false,
-      openDocuments: manifest.openDocuments ?? [],
-      activeDocumentId: manifest.activeDocumentId ?? null,
+      openDocuments,
+      activeDocumentId: preferredActive,
     })
     setActiveProjectId(manifest.project.id)
     setSelectedCaseId((prev) =>
@@ -197,6 +231,7 @@ export default function App() {
 
   useEffect(() => {
     if (nav !== 'canvas') return
+    if (suppressAutoOpen || samplePickerOpen) return
     const st = editorStore.getState()
     if (!st) return
     if (st.openDocuments.length > 0) return
@@ -217,7 +252,77 @@ export default function App() {
     setSignal(false)
     setMessage(`Opened sample in 3D: ${preferred.displayName ?? preferred.id}`)
     refresh()
-  }, [nav, selectedCaseId, state?.samples.length, state?.openDocuments.length, refresh])
+  }, [
+    nav,
+    selectedCaseId,
+    state?.samples.length,
+    state?.openDocuments.length,
+    refresh,
+    suppressAutoOpen,
+    samplePickerOpen,
+  ])
+
+  const loadSamplePicker = useCallback(
+    async (q: string) => {
+      if (!activeProjectId) {
+        setSamplePickerError('Open a project first')
+        setSamplePickerRows([])
+        return
+      }
+      setSamplePickerLoading(true)
+      setSamplePickerError(null)
+      try {
+        const res = await apiClient.searchProjectSamples(activeProjectId, q)
+        if (samplePickerQueryRef.current !== q) return
+        setSamplePickerRows(res.samples)
+      } catch (e) {
+        if (samplePickerQueryRef.current !== q) return
+        setSamplePickerError(e instanceof Error ? e.message : String(e))
+        setSamplePickerRows([])
+      } finally {
+        if (samplePickerQueryRef.current === q) setSamplePickerLoading(false)
+      }
+    },
+    [activeProjectId],
+  )
+
+  function openSamplePicker() {
+    if (!activeProjectId) {
+      setSignal(true)
+      setMessage('Open a project first')
+      return
+    }
+    setSuppressAutoOpen(true)
+    setSamplePickerQuery('')
+    samplePickerQueryRef.current = ''
+    setSamplePickerOpen(true)
+    void loadSamplePicker('')
+  }
+
+  function completeCloseAndMaybePicker() {
+    const st = editorStore.getState()
+    const remaining = st?.openDocuments.length ?? 0
+    refresh()
+    if (afterCloseOpenDocuments(remaining) === 'open-picker') {
+      openSamplePicker()
+    }
+  }
+
+  function requestCloseDocument(kind: PendingClose['kind'], id: string) {
+    const st = editorStore.getState()
+    if (!st) return
+    if (beginCloseDocument(st.dirty) === 'confirm-dirty') {
+      setPendingClose({ kind, id })
+      return
+    }
+    const res = closeDocument(ctx, { kind, id })
+    if (!res.ok) {
+      setSignal(true)
+      setMessage(res.error)
+      return
+    }
+    completeCloseAndMaybePicker()
+  }
 
   async function ensureVolumeLoaded(docId: string, expectedVolumeId: string): Promise<void> {
     const st = editorStore.getState()
@@ -634,10 +739,21 @@ export default function App() {
   async function handleDeleteSample(sampleId: string) {
     if (!activeProjectId) return
     try {
+      const wasOpen = Boolean(
+        editorStore
+          .getState()
+          ?.openDocuments.some((d) => d.kind === 'sample' && d.id === sampleId),
+      )
       await apiClient.deleteSample(sampleId)
       await loadProject(activeProjectId)
       setSignal(false)
-      setMessage('Sample deleted')
+      setMessage(
+        wasOpen ? 'Sample deleted — closed its document tab' : 'Sample deleted',
+      )
+      const remaining = editorStore.getState()?.openDocuments.length ?? 0
+      if (wasOpen && afterCloseOpenDocuments(remaining) === 'open-picker') {
+        openSamplePicker()
+      }
     } catch (e) {
       setSignal(true)
       setMessage(e instanceof Error ? e.message : String(e))
@@ -652,9 +768,17 @@ export default function App() {
     return null
   }
 
-  async function onSave() {
+  async function onSave(): Promise<boolean> {
+    const cleared = clearDirty(ctx)
+    if (!cleared.ok) {
+      setSignal(true)
+      setMessage(cleared.error)
+      return false
+    }
     setSignal(false)
     setMessage('All management changes are already persisted')
+    refresh()
+    return true
   }
 
   async function onRestore() {
@@ -834,6 +958,16 @@ export default function App() {
   const activeCandidate = activeDocument?.kind === 'candidate'
     ? state?.candidates.find((candidate) => candidate.objectId === activeDocument.id)
     : undefined
+  const chatObjectId = selectionObjectId ?? activeCandidate?.objectId ?? activeSample?.sourceAnatomy.objectId
+  const chatRevisionId = activeCandidate?.currentRevisionId
+  const chatContext = activeProjectId && activeSample && chatObjectId
+    ? {
+        projectId: activeProjectId,
+        caseId: activeSample.caseId,
+        objectId: chatObjectId,
+        revisionId: chatRevisionId,
+      }
+    : undefined
   const activeDocumentName =
     activeCandidate?.displayName ?? activeSample?.displayName ?? 'No active anatomy'
   const volumeAvailable = Boolean(activeSample?.sourceAnatomy.volumeId)
@@ -999,6 +1133,8 @@ export default function App() {
                 documents={state?.openDocuments ?? []}
                 activeDocumentId={state?.activeDocumentId ?? null}
                 isDirty={state?.dirty}
+                addDisabled={!activeProjectId}
+                onAdd={openSamplePicker}
                 labelFor={(d) => {
                   if (!state) return d.id
                   if (d.kind === 'sample') {
@@ -1019,13 +1155,7 @@ export default function App() {
                   refresh()
                 }}
                 onClose={(kind, id) => {
-                  const res = closeDocument(ctx, { kind, id })
-                  if (!res.ok) {
-                    setSignal(true)
-                    setMessage(res.error)
-                    return
-                  }
-                  refresh()
+                  requestCloseDocument(kind, id)
                 }}
               />
 
@@ -1036,6 +1166,7 @@ export default function App() {
                   activeMode={canvasMode}
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}
+                  chatContext={chatContext}
                   projection={projection}
                   voxels={activeSliceVolume?.voxels}
                   volumeSizes={activeSliceVolume?.sizes}
@@ -1221,6 +1352,79 @@ export default function App() {
         catalog={catalog}
         selectedCaseName={selectedCase?.name}
         onImport={(catalogId) => void handleImportSample(catalogId)}
+      />
+      <SamplePickerDialog
+        open={samplePickerOpen}
+        onOpenChange={(open) => {
+          setSamplePickerOpen(open)
+          if (!open) setSuppressAutoOpen(false)
+        }}
+        query={samplePickerQuery}
+        onQueryChange={(q) => {
+          setSamplePickerQuery(q)
+          samplePickerQueryRef.current = q
+          void loadSamplePicker(q)
+        }}
+        samples={samplePickerRows}
+        loading={samplePickerLoading}
+        error={samplePickerError}
+        openSampleIds={
+          new Set(
+            (state?.openDocuments ?? [])
+              .filter((d) => d.kind === 'sample')
+              .map((d) => d.id),
+          )
+        }
+        onSelect={(sampleId) => {
+          const opened = openDocument(ctx, { kind: 'sample', id: sampleId })
+          if (!opened.ok) {
+            setSignal(true)
+            setMessage(opened.error)
+            return
+          }
+          setSamplePickerOpen(false)
+          setSuppressAutoOpen(false)
+          setSignal(false)
+          const label =
+            samplePickerRows.find((r) => r.id === sampleId)?.displayName ?? sampleId
+          setMessage(`Opened sample in 3D: ${label}`)
+          setNav('canvas')
+          refresh()
+        }}
+      />
+      <ConfirmCloseDocumentDialog
+        open={pendingClose !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingClose(null)
+        }}
+        onCancel={() => setPendingClose(null)}
+        onDiscard={() => {
+          if (!pendingClose) return
+          clearDirty(ctx)
+          const res = closeDocument(ctx, pendingClose)
+          setPendingClose(null)
+          if (!res.ok) {
+            setSignal(true)
+            setMessage(res.error)
+            return
+          }
+          completeCloseAndMaybePicker()
+        }}
+        onSave={() => {
+          void (async () => {
+            if (!pendingClose) return
+            const ok = await onSave()
+            if (!ok) return
+            const res = closeDocument(ctx, pendingClose)
+            setPendingClose(null)
+            if (!res.ok) {
+              setSignal(true)
+              setMessage(res.error)
+              return
+            }
+            completeCloseAndMaybePicker()
+          })()
+        }}
       />
       <CommandPalette
         open={commandPaletteOpen}

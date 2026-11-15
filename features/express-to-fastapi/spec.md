@@ -1,6 +1,6 @@
 # Spec: Express-to-FastAPI migration
 
-Intent: [intent.md](intent.md) · Status: draft · Last updated:2026-11-14
+Intent: [intent.md](intent.md) · Status: accepted · Last updated:2026-11-14
 
 ## Publication state
 
@@ -8,7 +8,7 @@ Slice1 implements application repository, frozen Node-created data compatibility
 
 ## Requirements
 
-- R1. FastAPI must expose all 13 currently implemented routes under the same `/api` paths and HTTP methods listed in the route inventory.
+- R1. FastAPI must expose every supported application route under the same `/api` path and HTTP method listed in the route inventory; the formerly Express-owned CRUD subset is not the whole application contract.
 - R2. Successful responses must preserve current status codes, camelCase JSON keys, nested ProjectManifest structure, identifier values and relationships, nullability, omitted optional fields, and empty-array behavior.
 - R3. The authoritative ownership chain must remain User → Project → Case → Sample → Candidate → CandidateRevision. Source anatomy belongs to a Sample. A Candidate and every CandidateRevision belong to that Sample through the existing relationships.
 - R4. Sample import must accept multipart fields named `file`, `displayName`, `spatiallyVerified`, and `meta`. `file` contains raw bytes; `meta` is JSON text; only the exact string `true` currently maps to true; an absent or empty `displayName` falls back to the uploaded filename. Current Express JSON bodies are limited to 10 MB, while Multer keeps uploads in memory and declares no explicit file-size limit; any FastAPI limit change requires an explicit compatibility decision.
@@ -42,14 +42,28 @@ Slice1 implements application repository, frozen Node-created data compatibility
 - R32. Future live AI integration must use the same FastAPI application-service boundary as direct UI actions. A separate AI HTTP application backend is out of scope unless separately requested; separate sandbox and LangGraph checkpoint stores do not create additional live application backends.
 - R33. The successful live migration path must stop Express, create and verify the paired backup, start FastAPI as the sole live writer, verify readiness and normal operation, and finish with FastAPI running. Returning live ownership to Express is a separate conditional rollback action, not part of successful cutover.
 - R34. If live rollback is conditionally triggered after FastAPI acknowledges writes, it must stop writes and prefer the S13-verified Express code/runtime over the current compatible data. Before acknowledged writes, the paired snapshot may be restored. If compatibility or integrity is uncertain, preserve current data and backup for explicit reconciliation; discarding acknowledged data remains destructive and separately approved.
+- R35. The FastAPI route inventory is: CRUD and volumes — `GET|POST /api/projects`, `GET|DELETE /api/projects/{id}`, `GET /api/projects/{id}/samples`, `POST /api/projects/{id}/cases`, `DELETE /api/projects/{id}/cases/{case_id}`, `POST /api/projects/{id}/cases/{case_id}/samples`, `GET /api/samples/{id}/volume`, `DELETE /api/samples/{id}`, `POST /api/samples/{id}/candidates`, `POST /api/candidates/{id}/transform`, `POST /api/candidates/{id}/restore`, `DELETE /api/candidates/{id}`; manual operations and storage-backed extensions — `POST /api/candidates/{id}/placement`, `POST /api/candidates/{id}/voxel-operation`, `POST /api/candidates/{id}/measurements`, `GET /api/candidates/{id}/revisions/{revision_id}/measurements`, `GET|POST /api/samples/{id}/landmarks`, `DELETE /api/samples/{id}/landmarks/{landmark_id}`, `POST /api/projects/{id}/package`, `POST /api/packages/import`, `GET /api/candidates/{id}/revisions/{revision_id}/volume`; and read-only agent chat — `POST /api/ai/chat`. `GET /healthz`, API 404 behavior, and FastAPI SPA fallback behavior remain supported server behavior. No route in this inventory may be removed, redirected to Node, or silently change its response contract during Node-runtime cleanup.
+- R36. Remove the tracked Node application server and data stores (`app/server/`, `app/vite-api-plugin.ts`), their Express/Multer dependencies and type packages, and tests whose subject is that Node implementation. The frontend retains Node-based Vite, TypeScript, Vitest, Playwright, and fixture-sync tooling. No production or development command may start Express, mount an Express middleware router, or require Express/Multer at runtime.
+- R37. The AI panel must call the existing same-origin `POST /api/ai/chat` typed contract. It must send the active project, case, selected object, current revision when applicable, a transient request id and conversation id, and the user message. It must render FastAPI's explicit read-only limitations and domain outcome; it must not call `VITE_LANGGRAPH_API_URL`, show a mock/live transport switch, invent clinical measurements or recommendations, or claim a streamed/persisted conversation.
+- R38. Node removal must not alter FastAPI's repository authority, seven-table SQLite schema, `volumes/` layout, raw NRRD bytes, package behavior, direct manual-operation routes, sandbox `SQLiteApplicationStorage`, or fake-model read-only graph boundary. The sandbox remains isolated and is not a replacement application server.
+
+## Success criteria
+
+- S1. Given a temporary storage root, when every route in R35 is exercised with its existing valid and representative invalid request, then FastAPI returns the current documented status/body/media contract and uses only `ApplicationRepository` for application data.
+- S2. Given the frontend's project/case/sample/candidate workflow, when it runs through the Vite development proxy and the built frontend served by FastAPI, then each existing CRUD and volume request reaches FastAPI and the persisted project manifest, revision pointer, and NRRD bytes remain correct.
+- S3. Given the AI panel with an active selection, when a user sends a message, then it makes one same-origin read-only FastAPI chat request and renders the returned grounded outcome and limitations; no separate LangGraph-server request or fabricated clinical response occurs.
+- S4. Given a clean dependency install and application test run, when runtime and source dependencies are inspected, then no Express, Multer, Node router, Node SQLite application store, or Vite API middleware remains, while frontend build/test tooling still works.
+- S5. Given a sandbox operation/reconstruction test, when it runs after Node cleanup, then it still uses isolated sandbox storage and never opens or writes the FastAPI application database.
 
 ## Where it lives
 
 - Application repository: `backend/ai/src/skullfix_ai/application/`
+- FastAPI composition and routes: `backend/ai/src/skullfix_ai/api/`
+- Frontend HTTP clients and panel: `app/src/api/`, `app/src/ui/AiChatPanel.tsx`
 - Paired backup helper: `backend/ai/scripts/application_snapshot.py`
 - Application regressions: `backend/ai/tests/integration/application/`
 - Synthetic Node baseline: `backend/ai/tests/fixtures/node-application-baseline/`
 
 ## Decisions
 
-Retain the shipped public baseline during this migration. D1–D5 proposed validation/error/delete/cleanup amendments remain deferred; no new request identity, restore model or automatic recovery is added. Temporary roots and one-writer handoffs are required. The final documentation PR records verified local cutover rather than retroactively claiming each intermediate slice performed it.
+Retain the shipped public baseline during this migration. D1–D5 proposed validation/error/delete/cleanup amendments remain deferred; no new request identity, restore model or automatic recovery is added. Temporary roots and one-writer handoffs are required. The FastAPI inventory, not the removed Express router, is the current compatibility baseline. The chat panel is a one-request read-only UI over the existing typed route; it is not a LangGraph server client or a live clinical tool. The final documentation PR records verified local cutover rather than retroactively claiming each intermediate slice performed it.

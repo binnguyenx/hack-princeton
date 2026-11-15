@@ -140,16 +140,13 @@ data: {}
 
 ---
 
-## 3. Frontend Implementation & Mock Support
+## 3. Historical frontend prototype (removed)
 
 ### 3.1 Architecture Overview
 
-The frontend implementation consists of two core files under `app/src/`:
+The following described a removed prototype. It must not be restored:
 
-1. `app/src/ai/langGraphClient.ts`:
-   - Handles HTTP POST / SSE communication with LangGraph Server.
-   - Built-in **Mock Provider** simulating streaming message generation, defect metrics, candidate constraints, and margin analysis when no live server is connected.
-   - Seamlessly switches to live network requests when `VITE_LANGGRAPH_API_URL` is configured.
+1. `app/src/ai/langGraphClient.ts` was removed because it targeted a separate LangGraph Server and fabricated clinical output.
 
 2. `app/src/ui/AiChatPanel.tsx`:
    - Implements the complete chat column interface with context strip, message bubbles, suggestion prompt chips, textarea input, and action buttons.
@@ -161,19 +158,9 @@ The frontend implementation consists of two core files under `app/src/`:
 
 ---
 
-### 3.2 Environment Configuration
+### 3.2 Current integration
 
-To point the frontend to a running LangGraph server, configure `.env.local`:
-
-```env
-# URL where your LangGraph Server or LangGraph Studio is running
-VITE_LANGGRAPH_API_URL=http://localhost:2024
-
-# Assistant / graph ID defined in langgraph.json
-VITE_LANGGRAPH_ASSISTANT_ID=agent
-```
-
-When `VITE_LANGGRAPH_API_URL` is omitted or empty, the client runs in **Mock mode** (indicated by the `Mock` pill badge in the header).
+`app/src/api/chat.ts` posts one request at a time to same-origin `POST /api/ai/chat`. `AiChatPanel` renders the returned read-only outcome and limitations. There is no separate server configuration, SSE, mock provider, or persisted conversation.
 
 ---
 

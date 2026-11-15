@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   closeDocument,
   createCandidate,
@@ -35,6 +35,22 @@ async function setupTwoTabs() {
 }
 
 describe('R29 / R25 Document taskbar UI', () => {
+  it('exposes an add control that opens the sample picker', () => {
+    const onAdd = vi.fn()
+    render(
+      <DocumentTaskbar
+        documents={[]}
+        activeDocumentId={null}
+        labelFor={(d) => d.id}
+        onActivate={() => {}}
+        onClose={() => {}}
+        onAdd={onAdd}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Open sample/i }))
+    expect(onAdd).toHaveBeenCalledTimes(1)
+  })
+
   it('activates and closes tabs through ops without deleting records', async () => {
     const { ctx, sampleId, candidateId } = await setupTwoTabs()
 

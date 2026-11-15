@@ -349,6 +349,14 @@ export function setActiveDocument(
   return ok()
 }
 
+/** Mark workspace clean after Save succeeds (or acknowledges already-persisted state). */
+export function clearDirty(ctx: OpsContext): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  ctx.store.update((st) => ({ ...st, dirty: false }))
+  return ok()
+}
+
 /** Test helper: seeded project with a default case (legacy fixtures). */
 export function seedEmptyProject(ctx: OpsContext): void {
   const projectId = 'proj-new'

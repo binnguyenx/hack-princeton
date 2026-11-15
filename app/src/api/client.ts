@@ -45,6 +45,18 @@ export const apiClient = {
     return request<ProjectManifest>(`/projects/${encodeURIComponent(id)}`)
   },
 
+  async searchProjectSamples(
+    projectId: string,
+    q = '',
+  ): Promise<{
+    samples: Array<{ id: string; displayName: string; caseId: string; caseName: string }>
+  }> {
+    const query = new URLSearchParams()
+    if (q) query.set('q', q)
+    const suffix = query.toString() ? `?${query.toString()}` : ''
+    return request(`/projects/${encodeURIComponent(projectId)}/samples${suffix}`)
+  },
+
   // Cases
   async createCase(projectId: string, name: string): Promise<{ caseId: string }> {
     return request<{ caseId: string }>(`/projects/${encodeURIComponent(projectId)}/cases`, {
