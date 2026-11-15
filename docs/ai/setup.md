@@ -264,3 +264,11 @@ SKULLFIX_PYTHON="$PWD/.venv/bin/python" HACK_CHAT_BROWSER_CHANNEL=chrome app/nod
 ```
 
 Use installed Chrome as above, or omit the channel when Playwright Chromium is installed. To repeat against built assets, use a new disposable root and add `HACK_CHAT_BUILT=1`. Servers use isolated ports 18573/18583 and refuse reuse; results remain under the disposable root. Tests never select live storage. No new dependency or schema migration is required.
+
+### PR #31 final review repairs
+
+Chat now follows the active source/candidate document. Retained viewport selection from another tab cannot override the chat identity or history; switching tabs starts the corresponding conversation without changing viewport selection. Repeated follow-ups (`continue`, `yes`, `tell me more`, etc.) resolve to the most recent substantive human turn within the bounded history. Assistant text never selects intent or supplies geometry facts.
+
+`npm --prefix app run test:browser` intentionally excludes the mutating chat spec. Run that spec only with `app/e2e/read-only-chat.config.ts` and a fresh `mktemp -d /private/tmp/hp-chat-e2e-XXXXXX` root, as shown above. The dedicated config rejects noncanonical roots and symlink/hardlink storage escapes; the spec rechecks its explicit disposable profile and actual base URL before any test HTTP request. Reusing a live server or setting a temporary-root variable under an unrelated config does not satisfy the guard. A regression runs an alternate profile against an in-memory HTTP trap and confirms zero requests arrive.
+
+These repairs do not update any running app; the owner subsequently authorized publication to PR #31 after review, without merge. No live storage was used for verification, and the Vite SQLite apiPlugin, CRUD implementation, recovery CSS, viewport and slices remain unchanged.

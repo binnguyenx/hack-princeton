@@ -3,10 +3,19 @@ from skullfix_ai.schemas.workspace import AppObjectContext
 
 
 def read_only_reply(message: str, history, context: AppObjectContext) -> str:
-    intent = message.strip().casefold().rstrip('.!?')
-    if intent in {'yes', 'continue', 'tell me more', 'more details', 'what about it'}:
-        previous = next((turn.content for turn in reversed(history) if turn.role == 'human'), '')
-        intent = previous.casefold()
+    followups = {'yes', 'continue', 'tell me more', 'more details', 'what about it'}
+    def normalize(text):
+        return text.strip().casefold().rstrip('.!?')
+    intent = normalize(message)
+    if intent in followups:
+        intent = ''
+        for turn in reversed(history):
+            if turn.role != 'human':
+                continue
+            previous = normalize(turn.content)
+            if previous and previous not in followups:
+                intent = previous
+                break
     identity = (f'Project {context.project_id}; case {context.case_id}; selected object {context.selected_object_id}. '
                 f'Source sample {context.sample_id}; selected volume hash {context.volume_hash}.')
     if context.revision_id:

@@ -268,3 +268,11 @@ Read-only chat implementation locations: `backend/ai/src/skullfix_ai/api/routes/
 - R93. Development adds an exact-path AI-only forwarding middleware before the unchanged SQLite apiPlugin. CRUD stays with that plugin. FastAPI and Vite must use the same explicitly selected storage root; proxy errors surface as errors, never canned success. Built serving uses FastAPI's same-origin route. No CORS wildcard or provider credentials.
 - R94. Keep the recovery markup/classes, CSS, studio, grid and slice behavior. Only thin context wiring, truthful read-only copy and client state may change. No Bedrock, AI writes or cutover. Publication requires separate owner authorization, now granted for the reviewed chat PR; merging remains unauthorized.
 - R95. Prove the screenshot's two prompts no longer return a greeting, canonical context routing, stale/foreign selection, reset/late response guards, failed transport, no-write manifest invariance, and real browser chat through Vite plus FastAPI with disposable storage.
+
+## PR #31 final review clarifications — 2026-11-14
+
+R90/R92: chat is anchored to the active source/candidate document. Retained viewport selection from another tab cannot override its identity or keep the previous conversation active. Missing/unknown active documents disable chat. Tab changes reset chat scope/history without modifying viewport selection.
+
+R91: a chain of supported follow-up tokens resolves to the most recent substantive human turn within the bounded history, ignoring assistant claims and previous follow-up tokens. With no substantive turn, return an honest metadata-only response.
+
+R93/R95: mutating chat browser specs are excluded from the default Playwright runner. The dedicated config validates a canonical disposable root, rejects traversal/symlink escapes (including storage children), uses exclusive test ports, and identifies its profile explicitly. Before any test request, the spec independently verifies the disposable profile, root and base URL; exporting a root variable alone must not authorize a different runner/live URL.

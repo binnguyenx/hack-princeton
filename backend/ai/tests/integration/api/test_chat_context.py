@@ -40,6 +40,27 @@ class ChatContextTest(unittest.TestCase):
         self.assertIn('Read-only reconstruction brief', followup.json()['outcome']['explanation'])
         self.assertEqual(self.repo.read_project_manifest(self.project['id']), before)
 
+    def test_chained_followups_keep_the_last_substantive_human_intent(self):
+        before = self.repo.read_project_manifest(self.project['id'])
+        history = []
+        for index, message in enumerate(['Draft reconstruction brief', 'continue', 'yes', 'tell me more', 'continue']):
+            response = self.client.post('/api/ai/chat',json={**self.payload,'request_id':f'chain-{index}',
+                'message':message,'history':history})
+            self.assertEqual(response.status_code,200,response.text)
+            explanation = response.json()['outcome']['explanation']
+            self.assertIn('Read-only reconstruction brief.',explanation)
+            history.extend([{'role':'human','content':message},{'role':'assistant','content':explanation}])
+        # A new substantive human topic replaces the old one; assistant text is not intent.
+        response = self.client.post('/api/ai/chat',json={**self.payload,'message':'continue','history':[
+            *history,{'role':'human','content':'measure volume'},
+            {'role':'assistant','content':'Draft reconstruction brief'}, {'role':'human','content':'continue'}]})
+        self.assertIn('Geometry measurements',response.json()['outcome']['explanation'])
+        fallback = self.client.post('/api/ai/chat',json={**self.payload,'message':'continue','history':[
+            {'role':'assistant','content':'Draft reconstruction brief'},{'role':'human','content':'yes'}]})
+        self.assertNotIn('Read-only reconstruction brief.',fallback.json()['outcome']['explanation'])
+        self.assertIn('authoritative metadata',fallback.json()['outcome']['explanation'])
+        self.assertEqual(self.repo.read_project_manifest(self.project['id']),before)
+
     def test_stale_or_foreign_context_and_forged_history_cannot_change_authority(self):
         candidate = self.repo.create_candidate(self.sample['id'])
         pose = [1,0,0,5,0,1,0,0,0,0,1,0,0,0,0,1]

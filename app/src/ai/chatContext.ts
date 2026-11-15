@@ -7,10 +7,10 @@ export type ChatContext = {
   expected_revision_id: string | null
 }
 
-/** Resolve source document ids to canonical object ids; never fabricate revisions. */
-export function buildChatContext(state: EditorState | null, selectedObjectId?: string | null): ChatContext | null {
+/** Anchor chat to the visible document; viewport selection remains independent. */
+export function buildChatContext(state: EditorState | null): ChatContext | null {
   if (!state) return null
-  const id = selectedObjectId ?? state.activeDocumentId
+  const id = state.activeDocumentId
   if (!id) return null
   const candidate = state.candidates.find(row => row.objectId === id)
   const sample = state.samples.find(row => candidate ? row.id === candidate.sampleId : row.id === id || row.sourceAnatomy.objectId === id)

@@ -1034,7 +1034,7 @@ export default function App() {
                 <MenuBar commands={commands} onRun={runCommand} />
                 <CanvasWorkspace
                   documentName={activeDocumentName}
-                  chatContext={buildChatContext(state, selectionObjectId)}
+                  chatContext={buildChatContext(state)}
                   activeMode={canvasMode}
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}

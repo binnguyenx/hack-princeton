@@ -1,4 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { assertDisposableChatProfile } from './disposable-chat'
+
+// This guard also protects alternate runners that explicitly include this spec.
+test.beforeEach(({baseURL}, info) => assertDisposableChatProfile(info.config.metadata, baseURL))
 
 const spatial = { units:'mm', sizes:[2,3,4], spacings:[1,1,1], bboxMm:[2,3,4] }
 test('restored UI chats with FastAPI and never writes from chat', async ({page,request}) => {
@@ -29,6 +33,14 @@ test('restored UI chats with FastAPI and never writes from chat', async ({page,r
   expect(chatRequests[0]).toMatchObject({project_id:projectId,case_id:caseId,object_id:before.samples[0].sourceAnatomy.objectId,expected_revision_id:null,history:[]})
   expect(chatRequests[1]).toMatchObject({history:[{role:'human',content:'Draft reconstruction brief'},{role:'assistant',content:expect.stringContaining('Read-only reconstruction brief')}]})
   await expect(panel.getByText('What would you like to work on?')).toHaveCount(0)
+  // Repeated follow-ups must resolve past earlier follow-up tokens.
+  for (const message of ['Draft reconstruction brief','continue','continue']) {
+    await expect(panel.getByLabel('Message for AI assistant')).toBeEnabled()
+    const reply = page.waitForResponse(response => response.url().endsWith('/api/ai/chat'))
+    await panel.getByLabel('Message for AI assistant').fill(message)
+    await panel.getByLabel('Send message to AI assistant').click()
+    expect((await (await reply).json()).outcome.explanation).toContain('Read-only reconstruction brief.')
+  }
   expect(await (await request.get(`/api/projects/${projectId}`)).json()).toEqual(before)
   const offline = await request.get('/api/ai/chat')
   expect(offline.status()).toBe(404)
@@ -81,4 +93,52 @@ test('fake tool reads a restored candidate pointer, refuses mutation prompts and
   await panel.getByLabel('Send message to AI assistant').click()
   await expect(panel.getByRole('alert')).toContainText('stale-revision')
   expect(await (await request.get(`/api/projects/${projectId}`)).json()).toEqual(afterManual)
+})
+
+test('switching documents ignores retained viewport selection and starts fresh chat history', async ({page,request}) => {
+  const projectId = (await (await request.post('/api/projects',{data:{name:'Document chat scope'}})).json()).projectId
+  const caseId = (await (await request.post(`/api/projects/${projectId}/cases`,{data:{name:'Case'}})).json()).caseId
+  for (const displayName of ['Doc A','Doc B']) {
+    const response = await request.post(`/api/projects/${projectId}/cases/${caseId}/samples`,{multipart:{
+      file:{name:'source.nrrd',mimeType:'application/octet-stream',buffer:Buffer.concat([Buffer.from('NRRD0005\ntype: unsigned char\ndimension: 3\nsizes: 2 3 4\nencoding: raw\n\n'),Buffer.alloc(24,1)])},
+      displayName,spatiallyVerified:'true',meta:JSON.stringify(spatial)}})
+    expect(response.status()).toBe(201)
+  }
+  const before = await (await request.get(`/api/projects/${projectId}`)).json()
+  const sourceA = before.samples.find((sample: {displayName:string}) => sample.displayName === 'Doc A').sourceAnatomy.objectId
+  const sourceB = before.samples.find((sample: {displayName:string}) => sample.displayName === 'Doc B').sourceAnatomy.objectId
+  await page.goto('/')
+  await page.getByRole('region',{name:'Projects home'}).getByRole('button',{name:'Document chat scope',exact:true}).click()
+  await page.getByRole('row').filter({hasText:'Doc A'}).getByRole('button',{name:'Open 3D',exact:true}).click()
+  await page.getByRole('button',{name:'Cases & Anatomy',exact:true}).click()
+  await page.getByRole('row').filter({hasText:'Doc B'}).getByRole('button',{name:'Open 3D',exact:true}).click()
+  // Exercise the public view-only operation; this does not touch the application DB.
+  const selected = await page.evaluate(id => {
+    const debug = window.__hackPrincetonDebug
+    return debug?.ops.selectObject(debug.ctx,id)
+  },sourceA)
+  expect(selected?.ok).toBe(true)
+  await page.getByRole('tab',{name:/Doc A/}).click()
+  const panel = page.getByRole('region',{name:'AI Workspace Assistant'})
+  await expect(panel.getByLabel('Message for AI assistant')).toBeEnabled()
+  const first = page.waitForResponse(response => response.url().endsWith('/api/ai/chat'))
+  await panel.getByLabel('Message for AI assistant').fill('Describe skull A')
+  await panel.getByLabel('Send message to AI assistant').click()
+  const firstBody = await (await first).json()
+  expect(firstBody.outcome.context.selected_object_id).toBe(sourceA)
+  await page.getByRole('tab',{name:/Doc B/}).click()
+  await expect(panel.locator('.ai-chat-context')).toContainText('Doc B')
+  await expect(panel.getByText('Describe skull A',{exact:true})).toHaveCount(0,{timeout:3000})
+  const second = page.waitForResponse(response => response.url().endsWith('/api/ai/chat'))
+  await panel.getByLabel('Message for AI assistant').fill('Describe skull B')
+  await panel.getByLabel('Send message to AI assistant').click()
+  const secondResponse = await second
+  const sent = secondResponse.request().postDataJSON()
+  expect(sent.object_id).toBe(sourceB)
+  expect(sent.history).toEqual([])
+  expect(sent.conversation_id).not.toBe(firstBody.conversation_id)
+  expect((await secondResponse.json()).outcome.context.selected_object_id).toBe(sourceB)
+  const selection = await page.evaluate(() => window.__hackPrincetonDebug?.ctx.store.getState()?.view.selectionObjectId)
+  expect(selection).toBe(sourceA)
+  expect(await (await request.get(`/api/projects/${projectId}`)).json()).toEqual(before)
 })
