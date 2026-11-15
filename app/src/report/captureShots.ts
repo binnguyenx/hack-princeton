@@ -48,7 +48,7 @@ export async function runReportJob(
   try {
     const report = await uploadReportCaptures(job, captures)
     if (report.status !== 'ready') return fail(`Building the PDF failed: ${report.error ?? 'unknown error'}`)
-    const result = { status: 'ready' as const, pages: report.pages, pdfUrl: reportPdfUrl(job.reportId) }
+    const result = { status: 'ready' as const, pages: report.pages, pdfUrl: reportPdfUrl(job.reportId, job.conversationId) }
     onProgress({ phase: 'ready', pages: result.pages, pdfUrl: result.pdfUrl })
     return result
   } catch (error) {

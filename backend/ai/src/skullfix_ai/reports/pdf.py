@@ -9,7 +9,7 @@ from __future__ import annotations
 import io
 import re
 from datetime import datetime
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape, quoteattr
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
@@ -206,9 +206,10 @@ def build_report_pdf(report: Report, captures: dict[str, bytes], *, generated_at
     if sources:
         story.append(_p("Sources", "h2"))
         for index, source in enumerate(sources, start=1):
-            url = escape(source.url)
+            # The href is an attribute value, so quotes must be escaped too (quoteattr adds the quotes).
             story.append(Paragraph(f"[{index}] {escape(scrub(source.title))} — "
-                                   f'<link href="{url}" color="#2F6BFF">{url}</link>', _STYLES["body"]))
+                                   f'<link href={quoteattr(source.url)} color="#2F6BFF">{escape(source.url)}</link>',
+                                   _STYLES["body"]))
     story += [Spacer(1, 12), KeepTogether([_p(f"{DISCLAIMER}. This report was assembled by an AI assistant from "
                                               "workspace data and conversation; verify every value before use.", "muted")])]
 

@@ -74,6 +74,12 @@ class ReportPdfTest(unittest.TestCase):
         self.assertIn('62 mm', text)
         self.assertIn('pubmed.ncbi.nlm.nih.gov/34567890', text)
 
+    def test_a_source_url_with_markup_characters_still_builds_and_is_listed(self):
+        url = 'https://example.org/search?q="peek"&lang=en'
+        item, captures = report(sources=[{'title': 'Quoted query', 'url': url}])
+        text = ' '.join(' '.join(pages_text(build_report_pdf(item, captures, generated_at=AT)[0])).split())
+        self.assertIn('example.org/search?q="peek"&lang=en', text)
+
     def test_no_repair_page_without_a_candidate(self):
         facts = CaseFacts(case_name='C', source_object_ids={'src'}, candidate_object_ids=set(), annotations={})
         store = ReportStore()

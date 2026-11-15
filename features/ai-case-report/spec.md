@@ -32,7 +32,7 @@ When the user asks for a case report in chat, the main Deep Agent spawns a `case
   - **Annotated pages:** one per `annotated_view`, plus a three-slice panel page for each `slices` shot.
   - **Findings page:** "Findings and Conversation", with findings, the measurements table, a conversation summary and the sources list with links.
 - R12. Every page has the footer "University of South Florida · Case <case name> · Page n of N · Demonstration only, not for clinical use". No logo, and no Stryker, 3D Systems or VSP name, logo, agreement or terms text appears anywhere.
-- R13. The PDF is stored in memory against the conversation: up to 5 reports per conversation, oldest dropped first, 30 MB max each. It is available at `GET /api/ai/reports/{report_id}.pdf` and listed at `GET /api/ai/conversations/{conversation_id}/reports`. It is lost on server restart, like conversation memory.
+- R13. The PDF is stored in memory against the conversation: up to 5 reports per conversation, oldest dropped first, 30 MB max each. It is available at `GET /api/ai/reports/{report_id}.pdf?conversation_id={conversation_id}` and listed at `GET /api/ai/conversations/{conversation_id}/reports`. It is lost on server restart, like conversation memory.
 - R14. A report id from another conversation or an unknown id returns 404. Reports are never written to the application database or the project package.
 
 ### Chat and thinking UI
@@ -83,6 +83,7 @@ The subagent's events come from the same translator as research (`subagent` kind
 - D4. Highlights in the report are the user's own annotations in their colours, plus callout labels drawn at capture time. Why: AI writes are disabled (R61), and the owner wants their annotation tools to carry the highlights. Alternatives: AI-created annotations through the proposal flow (slow for a demo, needs accepts).
 - D6. "Defect" slice centre = first visible ROI / closed curve / highlight / plane annotation, else volume centre. Why: the browser has no implant-region geometry; owner approved for the demo. Alternatives: backend-computed defect centre (later).
 - D7. Captures render the single active document as displayed. Why: the 3D view holds one document at a time; owner approved for the demo. Alternatives: load extra documents into an offscreen scene (later).
+- D8. The PDF route takes the conversation as a `conversation_id` query parameter; a missing or mismatched one returns the same 404 as an unknown id (R14). Why: the chat opens the PDF in a new tab, so no request body or header can carry it. Alternatives: a per-report download token (stronger than a conversation id, not needed for the demo).
 - D5. Store reports in memory per conversation. Why: the owner chose "saved on the current chat session for now". Alternatives: persist on the case (a later feature).
 
 ## Flagged concerns

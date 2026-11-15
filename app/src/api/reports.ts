@@ -10,7 +10,9 @@ export type ReportSummary = {
   error: string | null
 }
 
-export const reportPdfUrl = (reportId: string) => `${API_BASE}/api/ai/reports/${encodeURIComponent(reportId)}.pdf`
+/** The server serves a PDF only to its own conversation (ai-case-report R14). */
+export const reportPdfUrl = (reportId: string, conversationId: string) =>
+  `${API_BASE}/api/ai/reports/${encodeURIComponent(reportId)}.pdf?conversation_id=${encodeURIComponent(conversationId)}`
 
 /** Upload one PNG per shot; the server validates them and builds the PDF (R10). */
 export async function uploadReportCaptures(job: ReportJob, captures: Record<string, Blob>): Promise<ReportSummary> {

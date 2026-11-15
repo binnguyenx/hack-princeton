@@ -51,9 +51,11 @@ def create_reports_router():
         return {'report': reports.set_pdf(report_id, pdf, pages=pages).public()}
 
     @router.get('/reports/{report_id}.pdf')
-    async def report_pdf(report_id: str, request: Request):
+    async def report_pdf(report_id: str, request: Request, conversation_id: str | None = None):
+        # R14: another conversation's id (or none) gets the same 404 as an unknown id.
         report = store(request).get(report_id)
-        if report is None or report.status != 'ready' or report.pdf is None:
+        if (report is None or report.conversation_id != conversation_id or report.status != 'ready'
+                or report.pdf is None):
             return JSONResponse({'error': 'Report not found', 'code': 'report-not-found'}, status_code=404)
         return Response(report.pdf, media_type='application/pdf',
                         headers={'Content-Disposition': f'inline; filename="case-report-{report_id[:8]}.pdf"',

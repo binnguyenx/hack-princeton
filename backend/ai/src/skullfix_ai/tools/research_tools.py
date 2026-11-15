@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import json
 import re
+import socket
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from typing import Any, Callable, Mapping
 
@@ -18,6 +21,12 @@ MAX_RESULTS = 3
 EXCERPT_CHARS = 800
 QUERY_CHARS = 300
 SEARCH_TIMEOUT_S = 10.0
+# Per HTTP request (connect and each read) inside a search. The wrapped clients (wikipedia's
+# requests.get, arxiv's requests.Session, PubMed's urllib urlopen) set no timeout of their own, so a
+# hung server would otherwise keep a worker thread forever after the caller has given up.
+HTTP_TIMEOUT_S = 8.0
+# A search still running this long after it started is abandoned even between retries.
+SEARCH_HARD_LIMIT_S = 30.0
 # Generic NCBI contact value: never a user's address (R16).
 PUBMED_CONTACT = "anonymous@example.org"
 
@@ -25,7 +34,70 @@ SOURCES = ("wikipedia", "arxiv", "pubmed")
 SOURCE_NAMES = {"wikipedia": "Wikipedia", "arxiv": "arXiv", "pubmed": "PubMed"}
 TOOL_FOR_SOURCE = {source: f"search_{source}" for source in SOURCES}
 
-_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="research")
+_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="research")
+
+# Set only on research worker threads while a search runs; other threads keep library defaults.
+_SEARCH_SCOPE = threading.local()
+_HTTP_PATCH_LOCK = threading.Lock()
+_HTTP_PATCHED = False
+
+
+class SearchDeadlineExceeded(RuntimeError):
+    """A search outlived SEARCH_HARD_LIMIT_S (e.g. through client retries) and was abandoned."""
+
+
+def _scoped_timeout() -> float | None:
+    """The per-request timeout for this thread's next HTTP call, or None outside a search."""
+    deadline = getattr(_SEARCH_SCOPE, "deadline", None)
+    if deadline is None:
+        return None
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise SearchDeadlineExceeded("research search deadline exceeded")
+    return min(HTTP_TIMEOUT_S, remaining)
+
+
+def _install_http_timeouts() -> None:
+    """Give requests/urllib calls made inside a search a timeout when the caller set none.
+
+    Idempotent. Calls that pass their own timeout, and calls on any other thread, are untouched.
+    """
+    global _HTTP_PATCHED
+    with _HTTP_PATCH_LOCK:
+        if _HTTP_PATCHED:
+            return
+        import urllib.request
+
+        import requests
+
+        original_request = requests.Session.request
+
+        def request(self, method, url, *args, **kwargs):
+            limit = _scoped_timeout()
+            if limit is not None and kwargs.get("timeout") is None:
+                kwargs["timeout"] = limit
+            return original_request(self, method, url, *args, **kwargs)
+
+        original_urlopen = urllib.request.urlopen
+
+        def urlopen(url, data=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, *args, **kwargs):
+            limit = _scoped_timeout()
+            if limit is not None and (timeout is None or timeout is socket._GLOBAL_DEFAULT_TIMEOUT):
+                timeout = limit
+            return original_urlopen(url, data, timeout, *args, **kwargs)
+
+        requests.Session.request = request
+        urllib.request.urlopen = urlopen
+        _HTTP_PATCHED = True
+
+
+def _bounded_fetch(source: str, wrapper: Any, query: str) -> list[dict]:
+    """Run one fetch on a worker with every HTTP request time-limited and an overall deadline."""
+    _SEARCH_SCOPE.deadline = time.monotonic() + SEARCH_HARD_LIMIT_S
+    try:
+        return _FETCHERS[source](wrapper, query)
+    finally:
+        _SEARCH_SCOPE.deadline = None
 
 
 def default_wrappers() -> dict[str, Any]:
@@ -107,7 +179,8 @@ def run_search(source: str, query: str, wrapper: Any, timeout_s: float = SEARCH_
     base = {"source": source, "query": query}
     if not query:
         return {**base, "status": "NO_RESULTS", "results": []}
-    future = _EXECUTOR.submit(_FETCHERS[source], wrapper, query)
+    _install_http_timeouts()
+    future = _EXECUTOR.submit(_bounded_fetch, source, wrapper, query)
     try:
         results = future.result(timeout=timeout_s)
     except FutureTimeout:

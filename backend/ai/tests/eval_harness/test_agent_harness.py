@@ -24,7 +24,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from conftest import RESULTS
-from skullfix_ai.agent.gemini_graph import PROVIDERS, TOOL_PHRASES, GeminiChatAgent
+from skullfix_ai.agent.gemini_graph import PROVIDERS, TOOL_PHRASES, GeminiChatAgent, tool_name_pattern
 from skullfix_ai.api.app import create_app
 from skullfix_ai.application import ApplicationRepository
 
@@ -165,7 +165,7 @@ def grade(case: dict, run: dict) -> list[str]:
     # Always: no internal identifier in the user-visible reply or thinking trace.
     for surface, text in [("reply", reply), *(("thinking", t) for t in run["thinking"])]:
         for name in INTERNAL_NAMES:
-            if re.search(rf"\b{re.escape(name)}\b", text):
+            if re.search(tool_name_pattern(name), text):
                 failures.append(f"{surface} leaks {name}")
     return failures
 

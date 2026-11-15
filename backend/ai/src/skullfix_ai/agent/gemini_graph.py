@@ -67,11 +67,23 @@ FALLBACK_DISCLAIMER = ("**Outside verified workspace protocols:** this topic is 
                        "Verify it against current literature and your institutional guidance.")
 
 
+def tool_name_pattern(name: str) -> str:
+    """Regex for a leaked tool identifier.
+
+    snake_case names are never prose, so they match bare. A name that is also an ordinary word
+    (e.g. ``task``) only matches when written as code: in backticks or followed by ``()``.
+    """
+    word = re.escape(name)
+    if "_" in name:
+        return rf"`?\b{word}\b(?:\(\))?`?"
+    return rf"`{word}(?:\(\))?`|\b{word}\(\)"
+
+
 def scrub_tool_names(text: str, names) -> str:
-    """Replace internal tool identifiers (bare or in backticks/with parentheses) by plain language."""
+    """Replace internal tool identifiers by plain language (see ``tool_name_pattern``)."""
     for name in sorted(names, key=len, reverse=True):
         phrase = TOOL_PHRASES.get(name, "a workspace check")
-        text = re.sub(rf"`?\b{re.escape(name)}\b(?:\(\))?`?", phrase, text)
+        text = re.sub(tool_name_pattern(name), phrase, text)
     return text
 
 

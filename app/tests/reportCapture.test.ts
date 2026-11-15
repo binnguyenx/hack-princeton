@@ -38,7 +38,7 @@ describe('runReportJob (ai-case-report R7, R10, R15, R17)', () => {
     expect(captureSlices.mock.calls.map(c => c[0].id)).toEqual(['shot-03'])
     expect(progress.map(p => p.phase)).toEqual(['capturing', 'capturing', 'capturing', 'building', 'ready'])
     expect(progress.slice(0, 3).map(p => p.phase === 'capturing' && `${p.done}/${p.total}`)).toEqual(['1/3', '2/3', '3/3'])
-    expect(result).toEqual({ status: 'ready', pages: 6, pdfUrl: '/api/ai/reports/rep-1.pdf' })
+    expect(result).toEqual({ status: 'ready', pages: 6, pdfUrl: '/api/ai/reports/rep-1.pdf?conversation_id=conv-1' })
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]

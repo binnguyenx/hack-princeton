@@ -91,6 +91,10 @@ class ReportFlowTest(unittest.TestCase):
         return self.client.post(f"/api/ai/reports/{job['report_id']}/captures",
                                 data={'conversation_id': conversation_id}, files=files)
 
+    def pdf(self, report_id, conversation_id='conv-report'):
+        query = '' if conversation_id is None else f'?conversation_id={conversation_id}'
+        return self.client.get(f"/api/ai/reports/{report_id}.pdf{query}")
+
     def test_s1_delegation_streams_case_report_steps_and_returns_a_report_job(self):
         lines = self.report_turn(self.plan())
         sub = [line for line in lines if line.get('kind') == 'subagent']
@@ -123,7 +127,7 @@ class ReportFlowTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()['report']
         self.assertEqual(body['status'], 'ready')
-        pdf = self.client.get(f"/api/ai/reports/{job['report_id']}.pdf")
+        pdf = self.pdf(job['report_id'])
         self.assertEqual(pdf.status_code, 200)
         self.assertEqual(pdf.headers['content-type'], 'application/pdf')
         pages = PdfReader(io.BytesIO(pdf.content)).pages
@@ -146,13 +150,23 @@ class ReportFlowTest(unittest.TestCase):
                 response = self.upload(job, files)
                 self.assertEqual(response.status_code, 422)
                 self.assertEqual(response.json()['code'], code)
-        self.assertEqual(self.client.get(f"/api/ai/reports/{job['report_id']}.pdf").status_code, 404)
+        self.assertEqual(self.pdf(job['report_id']).status_code, 404)
 
     def test_s6_other_conversations_and_unknown_ids(self):
         job = self.report_turn(self.plan())[-1]['report_job']
         self.assertEqual(self.upload(job, conversation_id='someone-else').status_code, 404)
         self.assertEqual(self.client.get('/api/ai/conversations/someone-else/reports').json()['reports'], [])
-        self.assertEqual(self.client.get('/api/ai/reports/does-not-exist.pdf').status_code, 404)
+        self.assertEqual(self.pdf('does-not-exist').status_code, 404)
+
+    def test_r14_a_ready_pdf_is_served_only_to_its_own_conversation(self):
+        job = self.report_turn(self.plan())[-1]['report_job']
+        self.assertEqual(self.upload(job).status_code, 200)
+        self.assertEqual(self.pdf(job['report_id']).status_code, 200)
+        for conversation_id in ('someone-else', None):
+            with self.subTest(conversation_id=conversation_id):
+                response = self.pdf(job['report_id'], conversation_id=conversation_id)
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(response.json()['code'], 'report-not-found')
 
 
 if __name__ == '__main__':
