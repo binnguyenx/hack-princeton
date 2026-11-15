@@ -34,3 +34,51 @@ test('restored UI chats with FastAPI and never writes from chat', async ({page,r
   expect(offline.status()).toBe(404)
   expect(await offline.json()).toEqual({error:'API route not found'})
 })
+
+test('fake tool reads a restored candidate pointer, refuses mutation prompts and reports stale context', async ({page,request}) => {
+  const projectId = (await (await request.post('/api/projects',{data:{name:'Restored fake-tool audit'}})).json()).projectId
+  const caseId = (await (await request.post(`/api/projects/${projectId}/cases`,{data:{name:'Case'}})).json()).caseId
+  const sampleId = (await (await request.post(`/api/projects/${projectId}/cases/${caseId}/samples`,{multipart:{
+    file:{name:'source.nrrd',mimeType:'application/octet-stream',buffer:Buffer.concat([Buffer.from('NRRD0005\ntype: unsigned char\ndimension: 3\nsizes: 2 3 4\nencoding: raw\n\n'),Buffer.alloc(24,1)])},
+    displayName:'Protected source',spatiallyVerified:'true',meta:JSON.stringify(spatial)}})).json()).sampleId
+  const candidate = await (await request.post(`/api/samples/${sampleId}/candidates`)).json()
+  const pose = [1,0,0,5,0,1,0,0,0,0,1,0,0,0,0,1]
+  const transformed = await request.post(`/api/candidates/${candidate.candidateId}/transform`,{data:{pose}})
+  expect(transformed.status()).toBe(201)
+  const newer = await transformed.json()
+  expect(newer.revisionId).toEqual(expect.any(String))
+  expect(newer.revisionId).not.toBe(candidate.revisionId)
+  expect((await request.post(`/api/candidates/${candidate.candidateId}/restore`,{data:{revisionId:candidate.revisionId}})).status()).toBe(200)
+  const before = await (await request.get(`/api/projects/${projectId}`)).json()
+  expect(before.revisions).toHaveLength(2)
+  expect(before.revisions).toEqual(expect.arrayContaining([
+    expect.objectContaining({id:candidate.revisionId,order:0}),
+    expect.objectContaining({id:newer.revisionId,order:1}),
+  ]))
+  expect(before.candidates[0].currentRevisionId).toBe(candidate.revisionId)
+  await page.goto('/')
+  await page.getByRole('region',{name:'Projects home'}).getByRole('button',{name:'Restored fake-tool audit',exact:true}).click()
+  await page.getByRole('row').filter({hasText:candidate.candidateId}).getByRole('button',{name:'Edit 3D',exact:true}).click()
+  const panel = page.getByRole('region',{name:'AI Workspace Assistant'})
+  await expect(panel.getByLabel('Message for AI assistant')).toBeEnabled()
+  const reply = page.waitForResponse(response => response.url().endsWith('/api/ai/chat'))
+  await panel.getByLabel('Message for AI assistant').fill('Apply placement, restore, then generate a candidate')
+  await panel.getByLabel('Send message to AI assistant').click()
+  const result = await (await reply).json()
+  expect(result.outcome.steps).toEqual(['load_context','propose','validate','execute','explain'])
+  expect(result.outcome.observation.scope).toBe('application-read')
+  expect(result.outcome.observation.metadata.revision_id).toBe(candidate.revisionId)
+  expect(result.outcome.context.revision_id).toBe(candidate.revisionId)
+  expect(result.outcome.context.revision_id).not.toBe(newer.revisionId)
+  await expect(panel.getByText(/It cannot recommend clinical implant parameters/)).toBeVisible()
+  await expect(panel.getByText(new RegExp(`Current candidate revision: ${candidate.revisionId}`))).toBeVisible()
+  expect(await (await request.get(`/api/projects/${projectId}`)).json()).toEqual(before)
+  // A manual change after the UI loaded must not silently retarget the next AI read.
+  const changed = await request.post(`/api/candidates/${candidate.candidateId}/transform`,{data:{pose}})
+  expect(changed.status()).toBe(201)
+  const afterManual = await (await request.get(`/api/projects/${projectId}`)).json()
+  await panel.getByLabel('Message for AI assistant').fill('Describe selection')
+  await panel.getByLabel('Send message to AI assistant').click()
+  await expect(panel.getByRole('alert')).toContainText('stale-revision')
+  expect(await (await request.get(`/api/projects/${projectId}`)).json()).toEqual(afterManual)
+})
