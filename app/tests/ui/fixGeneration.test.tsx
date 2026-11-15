@@ -3,7 +3,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FIX_STAGES, FixProgressCard, GenerateFixButton } from '../../src/ui/FixGeneration'
-import { watchRun, type FixRun } from '../../src/ui/fixRun'
+import { FixRunLostError, watchRun, type FixRun } from '../../src/ui/fixRun'
+import { ApiCodeError } from '../../src/api/client'
 
 afterEach(() => cleanup())
 
@@ -58,9 +59,38 @@ describe('watchRun', () => {
       run({ status: 'succeeded', stage: 'Saving candidate', result: { candidateId: 'c1', revisionId: 'v1', implantVoxels: 8 } })]
     const get = vi.fn(async () => states.shift()!)
     const seen: string[] = []
-    const final = await watchRun(get, 'r1', (r) => seen.push(r.stage), async () => {})
+    const final = await watchRun(get, 'r1', (r) => seen.push(r.stage), { sleep: async () => {} })
     expect(seen).toEqual(['Uploading skull', 'Predicting missing bone', 'Saving candidate'])
     expect(final.status).toBe('succeeded')
     expect(get).toHaveBeenCalledTimes(3)
+  })
+
+  it('keeps tracking through a transient poll failure', async () => {
+    const results: Array<FixRun | Error> = [run({ stage: 'Uploading skull' }), new Error('network'),
+      run({ status: 'succeeded', stage: 'Saving candidate' })]
+    const get = vi.fn(async () => { const next = results.shift()!; if (next instanceof Error) throw next; return next })
+    const final = await watchRun(get, 'r1', () => {}, { sleep: async () => {} })
+    expect(final.status).toBe('succeeded')
+    expect(get).toHaveBeenCalledTimes(3)
+  })
+
+  it('gives up with FixRunLostError after too many consecutive failures', async () => {
+    const get = vi.fn(async (): Promise<FixRun> => { throw new Error('down') })
+    await expect(watchRun(get, 'r1', () => {}, { sleep: async () => {}, maxConsecutiveErrors: 2 }))
+      .rejects.toBeInstanceOf(FixRunLostError)
+    expect(get).toHaveBeenCalledTimes(3)
+  })
+
+  it('stops immediately when the server no longer knows the run', async () => {
+    const get = vi.fn(async (): Promise<FixRun> => { throw new ApiCodeError('gone', 'run-not-found', 404) })
+    await expect(watchRun(get, 'r1', () => {}, { sleep: async () => {} })).rejects.toBeInstanceOf(ApiCodeError)
+    expect(get).toHaveBeenCalledOnce()
+  })
+
+  it('times out a run that never finishes', async () => {
+    let t = 0
+    const get = vi.fn(async () => run({ stage: 'Predicting missing bone' }))
+    await expect(watchRun(get, 'r1', () => {}, { sleep: async () => { t += 1000 }, now: () => t, timeoutMs: 3000 }))
+      .rejects.toBeInstanceOf(FixRunLostError)
   })
 })

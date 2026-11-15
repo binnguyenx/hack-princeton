@@ -122,6 +122,13 @@ it('yields only proposals for the exact selection and rejects malformed ones', a
   expect(await run({ ...base, base_revision_id: 'rev-0' })).toHaveLength(0)
   expect(await run(null)).toHaveLength(0)
   await expect(run({ ...base, kind: 'delete_everything' })).rejects.toThrow('Invalid AI chat response')
+  // model_fix: generate is bound to the skull (no candidate yet); adjustments are bound to the selected revision.
+  const fix = { ...base, kind: 'model_fix', sample_id: 'sample', payload: { action: 'generate' }, candidate_id: null, base_revision_id: null }
+  expect(await run(fix)).toHaveLength(1)
+  expect(await run({ ...fix, case_id: 'other-case' })).toHaveLength(0)
+  expect(await run({ ...fix, payload: { action: 'threshold', threshold: 0.4 }, candidate_id: 'cand', base_revision_id: 'rev-1' })).toHaveLength(1)
+  expect(await run({ ...fix, payload: { action: 'threshold', threshold: 0.4 }, candidate_id: 'cand', base_revision_id: 'rev-0' })).toHaveLength(0)
+  await expect(run({ ...fix, payload: { action: 'explode' } })).rejects.toThrow('Invalid AI chat response')
 })
 
 it('yields a viewport overlay only for the measured selection and drops malformed ones', async () => {

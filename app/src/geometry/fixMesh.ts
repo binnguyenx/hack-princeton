@@ -9,14 +9,17 @@ export const FIX_ACCENT = 0x2f6bff
 export const SKULL_PART_NAME = 'skull'
 export const FIX_PART_NAME = 'predicted-fix'
 
-/** Voxels the candidate adds to the source skull (candidate AND NOT source). */
-export function fixMaskVoxels(candidateBytes: Uint8Array, sourceBytes: Uint8Array): Uint8Array {
-  const candidate = decodeNrrdVoxels(candidateBytes).voxels
-  const source = decodeNrrdVoxels(sourceBytes).voxels
+/** Voxels the candidate adds to the source skull (candidate AND NOT source). Takes decoded voxels. */
+export function fixMaskFromVoxels(candidate: Uint8Array, source: Uint8Array): Uint8Array {
   if (candidate.length !== source.length) throw new Error('Fix and skull grids differ')
   const fix = new Uint8Array(candidate.length)
   for (let n = 0; n < candidate.length; n++) fix[n] = candidate[n] > 0 && source[n] === 0 ? 1 : 0
   return fix
+}
+
+/** Voxels the candidate adds to the source skull (candidate AND NOT source). */
+export function fixMaskVoxels(candidateBytes: Uint8Array, sourceBytes: Uint8Array): Uint8Array {
+  return fixMaskFromVoxels(decodeNrrdVoxels(candidateBytes).voxels, decodeNrrdVoxels(sourceBytes).voxels)
 }
 
 /**
@@ -29,9 +32,10 @@ export function buildFixScene(
   spatial: SpatialMeta,
   options?: { resolution?: number },
 ): THREE.Group {
-  const fix = fixMaskVoxels(candidateBytes, sourceBytes)
+  const source = decodeNrrdVoxels(sourceBytes).voxels
+  const fix = fixMaskFromVoxels(decodeNrrdVoxels(candidateBytes).voxels, source)
   if (!fix.some((v) => v > 0)) throw new Error('This candidate has no fix voxels to show')
-  const skull = voxelsToDisplayMesh(decodeNrrdVoxels(sourceBytes).voxels, spatial, options)
+  const skull = voxelsToDisplayMesh(source, spatial, options)
   skull.name = SKULL_PART_NAME
   const fixMesh = voxelsToDisplayMesh(fix, spatial, { ...options, color: FIX_ACCENT })
   fixMesh.name = FIX_PART_NAME

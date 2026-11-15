@@ -1,4 +1,5 @@
 """Generate a predicted bone fix from the frozen cranial model (cranial-reconstruction-candidate spec)."""
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ import threading
 import time
 from uuid import uuid4
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .binary_nrrd import VoxelError, decode_binary_nrrd, verify_header_spatial
@@ -27,6 +29,24 @@ class ReconstructionError(Exception):
         self.message = message
         self.status = status
         super().__init__(message)
+
+
+@contextmanager
+def domain_errors():
+    """Map storage and decoding failures to coded ReconstructionErrors instead of raw 500s."""
+    from .packages import PackageError
+    try:
+        yield
+    except ReconstructionError:
+        raise
+    except PackageError as error:
+        raise ReconstructionError(error.code, str(error), error.status) from error
+    except VoxelError as error:
+        raise ReconstructionError('unreadable-volume', 'A stored fix volume could not be read: ' + str(error) + '.') from error
+
+
+def _array(voxels) -> np.ndarray:
+    return np.frombuffer(voxels, dtype=np.uint8)
 
 
 FIX_ASSETS_DDL = '''CREATE TABLE IF NOT EXISTS fix_assets (
@@ -64,28 +84,49 @@ def run_in_thread(fn):
 class RunRegistry:
     """In-memory run state keyed by run id. Runs do not survive a backend restart (spec Design)."""
 
-    def __init__(self, runner=run_in_thread):
+    def __init__(self, runner=run_in_thread, *, retention_s: float = 3600.0, max_finished: int = 200, clock=time.time):
         self.runner = runner
         self._runs = {}
+        self._running = {}  # sample id -> run id, so the in-progress check does not scan history
         self._lock = threading.Lock()
+        self._retention_s, self._max_finished, self._clock = retention_s, max_finished, clock
 
     def create(self, sample_id):
         run_id = str(uuid4())
         with self._lock:
-            if any(r['sampleId'] == sample_id and r['status'] == 'running' for r in self._runs.values()):
+            self._prune()
+            if sample_id in self._running:
                 raise ReconstructionError('run-in-progress', 'A fix is already being generated for this skull', 409)
             self._runs[run_id] = {'runId': run_id, 'sampleId': sample_id, 'status': 'running',
-                                  'stage': STAGES[0], 'startedAt': time.time()}
+                                  'stage': STAGES[0], 'startedAt': self._clock()}
+            self._running[sample_id] = run_id
         return run_id
 
     def update(self, run_id, **fields):
         with self._lock:
-            self._runs[run_id].update(fields)
+            run = self._runs[run_id]
+            run.update(fields)
+            if run['status'] != 'running':
+                run.setdefault('finishedAt', self._clock())
+                if self._running.get(run['sampleId']) == run_id:
+                    del self._running[run['sampleId']]
+
+    def _prune(self):
+        """Drop finished runs older than the retention window, and the oldest beyond max_finished."""
+        finished = sorted((r for r in self._runs.values() if r['status'] != 'running'), key=lambda r: r['finishedAt'])
+        cutoff = self._clock() - self._retention_s
+        excess = len(finished) - self._max_finished
+        for index, run in enumerate(finished):
+            if index < excess or run['finishedAt'] < cutoff:
+                del self._runs[run['runId']]
 
     def get(self, run_id):
         with self._lock:
             run = self._runs.get(run_id)
-            return None if run is None else {**run, 'elapsedS': round(time.time() - run['startedAt'], 1)}
+            if run is None:
+                return None
+            public = {k: v for k, v in run.items() if k != 'finishedAt'}
+            return {**public, 'elapsedS': round(run.get('finishedAt', self._clock()) - run['startedAt'], 1)}
 
 
 class ModelReconstructionService:
@@ -101,7 +142,8 @@ class ModelReconstructionService:
         if self.endpoint is None:
             raise ReconstructionError('model-endpoint-unconfigured',
                                       'The cranial model endpoint is not configured.', 503)
-        context = self._source_context(sample_id, command)
+        with domain_errors():
+            context = self._source_context(sample_id, command)
         run_id = self.runs.create(sample_id)
         self.runs.runner(lambda: self._execute(run_id, context))
         return run_id
@@ -128,7 +170,7 @@ class ModelReconstructionService:
             verify_header_spatial(grid, anatomy['spatial'])
         except VoxelError as error:
             raise ReconstructionError('unsupported-input', UNSUPPORTED + '; ' + str(error) + '.') from error
-        if not any(grid.voxels):
+        if not _array(grid.voxels).any():
             raise ReconstructionError('unsupported-input', UNSUPPORTED + '; the mask is empty.')
         spacing = anatomy['spatial']['spacings']
         columns = anatomy['spatial'].get('spaceDirections', [[spacing[0], 0, 0], [0, spacing[1], 0], [0, 0, spacing[2]]])
@@ -153,7 +195,7 @@ class ModelReconstructionService:
                 'operation': MODEL_OPERATION, 'model': meta['model'], 'checkpointHash': meta['checkpoint_hash'],
                 'freezeRunId': meta['freeze_run_id'], 'threshold': meta['threshold'], 'thresholdIsDefault': True,
                 'region': None, 'sourceVolumeHash': context['sample']['sourceAnatomy']['volumeHash'],
-                'implantVoxels': sum(implant.voxels), 'inferenceSeconds': meta['inference_seconds'],
+                'implantVoxels': int(np.count_nonzero(_array(implant.voxels))), 'inferenceSeconds': meta['inference_seconds'],
                 'totalSeconds': round(self.clock() - started, 3)})
             self.runs.update(run_id, status='succeeded', stage=STAGES[-1], result=result)
         except ReconstructionError as error:
@@ -185,9 +227,10 @@ class ModelReconstructionService:
             raise ReconstructionError(code, 'The model returned an invalid volume: ' + str(error)) from error
         if implant.sizes != source.sizes or len(implant.voxels) != len(source.voxels):
             raise ReconstructionError('grid-mismatch', "The model's output grid does not match the skull.")
-        if not any(implant.voxels):
+        mask = _array(implant.voxels)
+        if not mask.any():
             raise ReconstructionError('empty-prediction', 'The model predicted no missing bone for this skull.')
-        if any(a and b for a, b in zip(source.voxels, implant.voxels)):
+        if (mask & _array(source.voxels)).any():
             raise ReconstructionError('overlaps-source-bone', 'The predicted fix overlaps existing bone.')
         return implant
 
@@ -215,9 +258,15 @@ class ModelReconstructionService:
         if not provenance or provenance.get('operation') != MODEL_OPERATION:
             raise ReconstructionError('not-a-model-fix', 'This candidate is not a predicted fix.', 422)
         anatomy = sample['sourceAnatomy']
-        stats = fix_statistics(self.repo.read_volume(project_id, anatomy['volumeId']),
-                               self.repo.read_revision_volume(candidate_id, revision['id']), anatomy['spatial'])
-        return {'candidateId': candidate_id, 'revisionId': revision['id'], 'fix': stats, 'mlRecord': ml_record(provenance)}
+        with domain_errors():
+            stats = fix_statistics(self.repo.read_volume(project_id, anatomy['volumeId']),
+                                   self.repo.read_revision_volume(candidate_id, revision['id']), anatomy['spatial'])
+        try:
+            record = ml_record(provenance)
+        except (OSError, KeyError, ValueError) as error:  # missing/garbled model card or eval summaries
+            raise ReconstructionError('model-record-unavailable',
+                                      'The model card or its evaluation summaries could not be read.', 503) from error
+        return {'candidateId': candidate_id, 'revisionId': revision['id'], 'fix': stats, 'mlRecord': record}
 
     # -- tailoring (R18, R19) -------------------------------------------------------------
 
@@ -237,8 +286,11 @@ class ModelReconstructionService:
         asset = self._fix_asset(candidate_id)
         if asset is None or not previous or previous.get('operation') != MODEL_OPERATION:
             raise ReconstructionError('not-a-model-fix', 'Only a predicted fix can be adjusted this way.', 422)
-        source = decode_binary_nrrd(self.repo.read_volume(command.project_id, sample['sourceAnatomy']['volumeId']))
-        probability = decode_binary_nrrd(self.repo.read_volume(command.project_id, asset['probability_volume_id']), binary=False)
+        with domain_errors():
+            source = decode_binary_nrrd(self.repo.read_volume(command.project_id, sample['sourceAnatomy']['volumeId']))
+            probability = decode_binary_nrrd(self.repo.read_volume(command.project_id, asset['probability_volume_id']), binary=False)
+        if probability.sizes != source.sizes or len(probability.voxels) != len(source.voxels):
+            raise ReconstructionError('grid-mismatch', 'The stored probability volume does not match the skull.')
         threshold = previous['threshold'] if command.threshold is None else command.threshold
         region = command.region if command.region is not None else previous['region']
         if region is not None:
@@ -246,30 +298,33 @@ class ModelReconstructionService:
                 validate_bounds(VoxelCommand.model_validate({
                     'project_id': command.project_id, 'case_id': command.case_id, 'expected_revision_id': command.expected_revision_id,
                     'operation': 'voxel.box', 'bounds': region, 'mode': 'fill'}), source.sizes)
-            except (VoxelError, ValueError) as error:
-                raise ReconstructionError('invalid-request', 'Region is outside the skull grid.') from error
+            except VoxelError as error:
+                message = 'Region is outside the skull grid.' if 'outside' in str(error) else f'Region is too large ({error}).'
+                raise ReconstructionError('invalid-request', message) from error
+            except ValueError as error:
+                raise ReconstructionError('invalid-request', 'Region requires two 3D IJK corners.') from error
         implant = self._threshold(probability.voxels, source, threshold, region)
-        if not any(implant):
+        implant_voxels = int(np.count_nonzero(implant))
+        if not implant_voxels:
             raise ReconstructionError('empty-fix', 'This adjustment leaves no fix voxels.')
         provenance = {**previous, 'threshold': threshold, 'thresholdIsDefault': threshold == asset['default_threshold'],
-                      'region': region, 'implantVoxels': sum(implant), 'inputRevisionId': revision['id'],
+                      'region': region, 'implantVoxels': implant_voxels, 'inputRevisionId': revision['id'],
                       'totalSeconds': round(self.clock() - started, 3)}
-        union = source.encode(bytes(a | b for a, b in zip(source.voxels, implant)))
+        union = source.encode((_array(source.voxels) | implant).tobytes())
         return self._commit_adjusted(candidate_id, command, revision, union, provenance)
 
     @staticmethod
-    def _threshold(probability, source, threshold, region):
-        cut = threshold * 255
-        sx, sy, _ = source.sizes
-        low, high = region if region is not None else ([0, 0, 0], [n - 1 for n in source.sizes])
-        out = bytearray(len(probability))
-        for k in range(low[2], high[2] + 1):
-            for j in range(low[1], high[1] + 1):
-                for i in range(low[0], high[0] + 1):
-                    index = i + j * sx + k * sx * sy
-                    if probability[index] >= cut and not source.voxels[index]:
-                        out[index] = 1
-        return bytes(out)
+    def _threshold(probability, source, threshold, region) -> np.ndarray:
+        """Flat 0/1 implant: probability >= threshold, not existing bone, and inside the region if one is given."""
+        sx, sy, sz = source.sizes
+        shape = (sz, sy, sx)  # NRRD order: i fastest
+        mask = (_array(probability).reshape(shape) >= threshold * 255) & (_array(source.voxels).reshape(shape) == 0)
+        if region is not None:
+            (i0, j0, k0), (i1, j1, k1) = region
+            kept = np.zeros(shape, dtype=bool)
+            kept[k0:k1 + 1, j0:j1 + 1, i0:i1 + 1] = mask[k0:k1 + 1, j0:j1 + 1, i0:i1 + 1]
+            mask = kept
+        return mask.astype(np.uint8).reshape(-1)
 
     def _fix_asset(self, candidate_id):
         with self.repo._db() as db:
@@ -312,7 +367,7 @@ class ModelReconstructionService:
         sample, command = context['sample'], context['command']
         candidate_id, base_id, fix_id, volume_id, probability_id = (str(uuid4()) for _ in range(5))
         provenance = {**provenance, 'inputRevisionId': base_id}
-        data = source.encode(bytes(a | b for a, b in zip(source.voxels, implant)))
+        data = source.encode((_array(source.voxels) | _array(implant)).tobytes())
         digest = hashlib.sha256(data).hexdigest()
 
         def write(db):

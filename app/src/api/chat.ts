@@ -70,17 +70,27 @@ export type ChatRequestContext = {
   expected_revision_id: string | null
 }
 
-export type StagedProposal = {
+export type ProposalStatus = 'pending' | 'accepted' | 'discarded' | 'stale' | 'expired'
+type ProposalBase = {
   proposal_id: string
-  kind: 'rigid_pose'
-  status: 'pending' | 'accepted' | 'discarded' | 'stale' | 'expired'
+  status: ProposalStatus
   summary: string
   project_id: string
   case_id: string
-  candidate_id: string
-  base_revision_id: string
   resolved_revision_id?: string | null
 }
+export type FixAction = 'generate' | 'threshold' | 'region'
+export type StagedProposal =
+  | (ProposalBase & { kind: 'rigid_pose'; candidate_id: string; base_revision_id: string })
+  | (ProposalBase & {
+      kind: 'model_fix'
+      /** null for a generate proposal: it is bound to the skull until accepted. */
+      candidate_id: string | null
+      base_revision_id: string | null
+      sample_id: string | null
+      payload: { action: FixAction; threshold?: number; region?: number[][] }
+      resolved_run_id?: string | null
+    })
 export type OverlaySeverity = 'critical' | 'warning' | 'ok'
 /** Read-only geometric finding to draw on the 3D skull (voxel indices in the source grid). */
 export type ViewportOverlay = {
@@ -147,14 +157,26 @@ function validatedExplanation(body: unknown, requestId: string, conversationId: 
   return String(outcome.explanation)
 }
 
+const FIX_ACTIONS: readonly string[] = ['generate', 'threshold', 'region']
+const optionalString = (value: unknown) => value === null || typeof value === 'string'
+
 function stagedProposal(value: unknown, context: ChatRequestContext): StagedProposal | null {
   if (value === null || value === undefined) return null
-  if (!record(value) || value.kind !== 'rigid_pose' || value.status !== 'pending' || typeof value.summary !== 'string'
-    || ['proposal_id', 'project_id', 'case_id', 'candidate_id', 'base_revision_id'].some(key => typeof value[key] !== 'string'))
+  if (!record(value) || value.status !== 'pending' || typeof value.summary !== 'string'
+    || ['proposal_id', 'project_id', 'case_id'].some(key => typeof value[key] !== 'string'))
     throw new Error('Invalid AI chat response.')
+  if (value.kind === 'rigid_pose') {
+    if (typeof value.candidate_id !== 'string' || typeof value.base_revision_id !== 'string') throw new Error('Invalid AI chat response.')
+  } else if (value.kind === 'model_fix') {
+    if (!optionalString(value.candidate_id) || !optionalString(value.base_revision_id) || !optionalString(value.sample_id ?? null)
+      || !record(value.payload) || !FIX_ACTIONS.includes(String(value.payload.action))) throw new Error('Invalid AI chat response.')
+  } else {
+    throw new Error('Invalid AI chat response.')
+  }
   // A proposal must target exactly the selection the question was asked about.
-  if (value.project_id !== context.project_id || value.case_id !== context.case_id
-    || value.candidate_id !== context.object_id || value.base_revision_id !== context.expected_revision_id) return null
+  if (value.project_id !== context.project_id || value.case_id !== context.case_id) return null
+  const generate = value.kind === 'model_fix' && (value.payload as Record<string, unknown>).action === 'generate'
+  if (!generate && (value.candidate_id !== context.object_id || value.base_revision_id !== context.expected_revision_id)) return null
   return value as unknown as StagedProposal
 }
 

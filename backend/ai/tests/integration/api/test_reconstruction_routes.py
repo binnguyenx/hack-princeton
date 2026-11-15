@@ -298,6 +298,54 @@ class ReconstructionRouteTest(unittest.TestCase):
                 self.assertEqual((response.status_code, response.json()['code']), (status, code), response.text)
         self.assertEqual(self.repo.get_project_manifest(self.project_id), before)
 
+    def test_region_errors_name_the_actual_problem(self):
+        client, fix = self.generate_graded_fix()
+        outside = self.adjust(client, fix, region=[[0, 0, 0], [9, 3, 1]])
+        self.assertEqual(outside.json()['error'], 'Region is outside the skull grid.')
+        from unittest import mock
+        with mock.patch('skullfix_ai.application.voxel_operations.MAX_ROI', 4):
+            large = self.adjust(client, fix, region=[[0, 0, 0], [3, 3, 1]])
+        self.assertEqual(large.status_code, 422)
+        self.assertIn('too large', large.json()['error'])
+
+    def test_unreadable_probability_volume_is_a_coded_error(self):
+        client, fix = self.generate_graded_fix()
+        from skullfix_ai.application.model_reconstruction import ModelReconstructionService
+        asset = ModelReconstructionService(self.repo, None, None)._fix_asset(fix['candidateId'])
+        path = self.repo._volume_path(asset['probability_volume_id'])
+        path.write_bytes(b'not an nrrd')
+        response = self.adjust(client, fix, threshold=0.7)
+        self.assertEqual(response.status_code // 100, 4, response.text)
+        self.assertIn('code', response.json())
+
+
+class RunRegistryTest(unittest.TestCase):
+    def test_finished_runs_are_pruned_and_running_runs_are_kept(self):
+        from skullfix_ai.application.model_reconstruction import RunRegistry
+        now = [0.0]
+        runs = RunRegistry(retention_s=10, max_finished=2, clock=lambda: now[0])
+        old = runs.create('a')
+        runs.update(old, status='succeeded')
+        active = runs.create('b')
+        now[0] = 20
+        recent = [runs.create(s) for s in ('c', 'd', 'e')]
+        for run_id in recent:
+            runs.update(run_id, status='failed')
+        runs.create('f')  # prunes: `old` is past retention, and only the newest 2 finished runs are kept
+        self.assertIsNone(runs.get(old))
+        self.assertIsNone(runs.get(recent[0]))
+        self.assertIsNotNone(runs.get(recent[2]))
+        self.assertEqual(runs.get(active)['status'], 'running')
+
+    def test_same_skull_can_run_again_once_finished(self):
+        from skullfix_ai.application.model_reconstruction import ReconstructionError, RunRegistry
+        runs = RunRegistry()
+        first = runs.create('a')
+        with self.assertRaises(ReconstructionError):
+            runs.create('a')
+        runs.update(first, status='failed')
+        self.assertNotEqual(runs.create('a'), first)
+
 
 if __name__ == '__main__':
     unittest.main()

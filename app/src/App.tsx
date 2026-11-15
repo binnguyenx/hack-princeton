@@ -7,6 +7,7 @@ import { buildFixScene, setFixVisible } from './geometry/fixMesh'
 import { FixProgressCard, GenerateFixButton } from './ui/FixGeneration'
 import { FixPanel } from './ui/FixPanel'
 import { watchRun, type FixRun } from './ui/fixRun'
+import type { StagedProposal } from './api/chat'
 import { loadDisplayMeshAsset } from './geometry/displayMesh'
 import { applyPoseToObject } from './geometry/pose'
 import { tagVoxelFrame } from './geometry/aiOverlay'
@@ -135,7 +136,18 @@ export default function App() {
   const [signal, setSignal] = useState(false)
   const [mesh, setMesh] = useState<Object3D | null>(null)
   // Predicted fix (cranial-reconstruction-candidate): one run per skull, report for the open fix.
-  const [fixRun, setFixRun] = useState<(FixRun & { sampleId: string }) | null>(null)
+  // One entry per skull, so concurrent runs on different skulls never overwrite each other.
+  const [fixRuns, setFixRuns] = useState<Record<string, FixRun & { sampleId: string }>>({})
+  const setFixRun = useCallback((sampleId: string, run: FixRun | null) => {
+    setFixRuns((runs) => {
+      const next = { ...runs }
+      if (run) next[sampleId] = { ...run, sampleId }
+      else delete next[sampleId]
+      return next
+    })
+  }, [])
+  // Where the user is *now*; a run finishing later must not navigate away from somewhere else.
+  const viewingRef = useRef<{ projectId: string | null; sampleId: string | null }>({ projectId: null, sampleId: null })
   const [fixReport, setFixReport] = useState<FixReport | null>(null)
   const [fixBusy, setFixBusy] = useState(false)
   const [fixVisible, setFixVisibleState] = useState(true)
@@ -528,7 +540,12 @@ export default function App() {
         try {
           await ensureVolumeLoaded(sample.id, sample.sourceAnatomy.volumeId)
           const sourceBytes = editorStore.getState()?.volumes.get(sample.sourceAnatomy.volumeId)
-          const fixBytes = await apiClient.fetchRevisionVolume(cand.objectId, rev.id)
+          let fixBytes = editorStore.getState()?.volumes.get(rev.volumeId)
+          if (!fixBytes) {
+            const fetched = await apiClient.fetchRevisionVolume(cand.objectId, rev.id)
+            editorStore.update((curr) => ({ ...curr, volumes: new Map(curr.volumes).set(rev.volumeId, fetched) }))
+            fixBytes = fetched
+          }
           if (!isCurrentBuild()) return
           if (!sourceBytes) throw new Error('Skull volume missing')
           const scene = buildFixScene(sourceBytes, fixBytes, spatial, { resolution: 128 })
@@ -1204,26 +1221,56 @@ export default function App() {
   async function handleGenerateFix(sampleId: string, caseId: string) {
     if (!activeProjectId) return
     const projectId = activeProjectId
-    const scope = { project_id: projectId, case_id: caseId }
-    setFixRun({ runId: '', sampleId, status: 'running', stage: 'Checking skull', elapsedS: 0 })
+    setFixRun(sampleId, { runId: '', status: 'running', stage: 'Checking skull', elapsedS: 0 })
     try {
-      const { runId } = await apiClient.startFix(sampleId, scope)
-      const final = await watchRun(apiClient.getFixRun, runId, (run) => setFixRun({ ...run, sampleId }))
-      if (final.status !== 'succeeded' || !final.result) return
-      setFixRun({ ...final, sampleId, status: 'running', stage: 'Building mesh' })
-      await loadProject(projectId)
-      openDocument(ctx, { kind: 'candidate', id: final.result.candidateId })
-      setNav('canvas')
-      refresh()
-      setFixRun({ ...final, sampleId })
-      setSignal(false)
-      setMessage('Predicted fix created')
+      const { runId } = await apiClient.startFix(sampleId, { project_id: projectId, case_id: caseId })
+      await trackFixRun(runId, sampleId, projectId)
     } catch (e) {
-      const message = e instanceof ApiCodeError && e.code === 'model-endpoint-unconfigured'
-        ? 'model-endpoint-unconfigured: the cranial model endpoint is not configured.'
-        : e instanceof Error ? e.message : String(e)
-      setFixRun({ runId: '', sampleId, status: 'failed', stage: 'Checking skull', elapsedS: 0,
-        error: { code: e instanceof ApiCodeError ? e.code ?? 'error' : 'error', message } })
+      failFixRun(sampleId, e)
+    }
+  }
+
+  function failFixRun(sampleId: string, e: unknown) {
+    const message = e instanceof ApiCodeError && e.code === 'model-endpoint-unconfigured'
+      ? 'model-endpoint-unconfigured: the cranial model endpoint is not configured.'
+      : e instanceof Error ? e.message : String(e)
+    setFixRun(sampleId, { runId: '', status: 'failed', stage: 'Checking skull', elapsedS: 0,
+      error: { code: e instanceof ApiCodeError ? e.code ?? 'error' : 'error', message } })
+  }
+
+  /** Follow a started run (from the button or an accepted agent proposal) until it finishes. */
+  async function trackFixRun(runId: string, sampleId: string, projectId: string) {
+    try {
+      const final = await watchRun(apiClient.getFixRun, runId, (run) => setFixRun(sampleId, run))
+      if (final.status !== 'succeeded' || !final.result) return
+      if (viewingRef.current.projectId !== projectId) {
+        setFixRun(sampleId, final)
+        return
+      }
+      setFixRun(sampleId, { ...final, status: 'running', stage: 'Building mesh' })
+      await loadProject(projectId)
+      // Only jump to the new candidate if the user is still on the skull it was generated for.
+      if (viewingRef.current.projectId === projectId && viewingRef.current.sampleId === sampleId) {
+        openDocument(ctx, { kind: 'candidate', id: final.result.candidateId })
+        setNav('canvas')
+        refresh()
+        setSignal(false)
+        setMessage('Predicted fix created')
+      } else {
+        setMessage('A predicted fix finished on another skull')
+      }
+      setFixRun(sampleId, final)
+    } catch (e) {
+      failFixRun(sampleId, e)
+    }
+  }
+
+  function handleWorkspaceChanged(accepted?: StagedProposal) {
+    if (!activeProjectId) return
+    void loadProject(activeProjectId)
+    if (accepted?.kind === 'model_fix' && accepted.payload.action === 'generate' && accepted.resolved_run_id && accepted.sample_id) {
+      setFixRun(accepted.sample_id, { runId: accepted.resolved_run_id, status: 'running', stage: 'Checking skull', elapsedS: 0 })
+      void trackFixRun(accepted.resolved_run_id, accepted.sample_id, activeProjectId)
     }
   }
 
@@ -1748,8 +1795,11 @@ export default function App() {
     : !activeSample.spatiallyVerified
       ? 'Only segmented skull masks (NRRD) are supported; this skull has no verified spatial metadata.'
       : null
-  const fixRunActive = fixRun?.status === 'running' && fixRun.sampleId === activeSample?.id
-  const visibleFixRun = fixRun && fixRun.sampleId === activeSample?.id ? fixRun : null
+  const visibleFixRun = activeSample ? fixRuns[activeSample.id] ?? null : null
+  const fixRunActive = visibleFixRun?.status === 'running'
+  useEffect(() => {
+    viewingRef.current = { projectId: activeProjectId, sampleId: activeSample?.id ?? null }
+  }, [activeProjectId, activeSample?.id])
   useEffect(() => {
     if (!activeFixRevision || !activeCandidate || !activeProjectId || !activeSample) {
       setFixReport(null)
@@ -1990,7 +2040,7 @@ export default function App() {
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}
                   chatContext={chatContext}
-                  onWorkspaceChanged={() => { if (activeProjectId) void loadProject(activeProjectId) }}
+                  onWorkspaceChanged={handleWorkspaceChanged}
                   activeOverlayId={aiOverlay?.overlay_id ?? null}
                   onOverlayChange={setAiOverlay}
                   projection={projection}
@@ -2209,7 +2259,7 @@ export default function App() {
                     <div className="fix-progress-float">
                       <FixProgressCard run={visibleFixRun} />
                       {visibleFixRun.status !== 'running' ? (
-                        <button type="button" className="btn btn--secondary btn--xs" onClick={() => setFixRun(null)}>Dismiss</button>
+                        <button type="button" className="btn btn--secondary btn--xs" onClick={() => setFixRun(visibleFixRun.sampleId, null)}>Dismiss</button>
                       ) : null}
                     </div>
                   ) : null}

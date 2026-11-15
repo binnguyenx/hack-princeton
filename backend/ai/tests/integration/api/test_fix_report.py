@@ -104,6 +104,26 @@ class FixReportTest(unittest.TestCase):
         self.assertEqual(record['limitation'], 'Trained on synthetic parietotemporal defects. Other defect types and '
                                                'real patient scans have no measured accuracy. Not a clinical design.')
 
+    def test_missing_model_card_is_a_coded_503_not_a_crash(self):
+        import os
+        from unittest import mock
+        with mock.patch.dict(os.environ, {'CRANIAL_MODEL_CARD': '/nonexistent/model_card.json'}):
+            temporary = tempfile.TemporaryDirectory()
+            self.addCleanup(temporary.cleanup)
+            root = Path(temporary.name) / 'application'
+            repo = ApplicationRepository(root)
+            project = repo.create_project('Volume')
+            case = repo.add_case(project['id'], 'Case')
+            ids = {'project_id': project['id'], 'case_id': case['id']}
+            sample = repo.add_sample(project['id'], case['id'], 'Skull', True, META, HEADER + SOURCE)
+            client = TestClient(create_app(root, repository=repo, model_endpoint=SlabEndpoint(),
+                                           reconstruction_runner=lambda fn: fn()))
+            self.addCleanup(client.close)
+            run_id = client.post('/api/samples/' + sample['id'] + '/reconstructions', json=ids).json()['runId']
+            fix = client.get('/api/reconstructions/' + run_id).json()['result']
+            response = client.get('/api/candidates/' + fix['candidateId'] + '/fix-report', params=ids)
+        self.assertEqual((response.status_code, response.json()['code']), (503, 'model-record-unavailable'))
+
 
 if __name__ == '__main__':
     unittest.main()

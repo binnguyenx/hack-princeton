@@ -53,7 +53,7 @@ interface Props {
   contextLabel?: string
   chatContext?: ChatContext | null
   /** Called after a human-accepted proposal commits, so the workspace reloads. */
-  onWorkspaceChanged?: () => void
+  onWorkspaceChanged?: (accepted?: StagedProposal) => void
   /** Id of the AI overlay currently drawn in the viewport (null = none). */
   activeOverlayId?: string | null
   /** Show (overlay) or hide (null) an AI finding in the 3D viewport. */
@@ -383,13 +383,23 @@ type ProposalUiState = 'pending' | 'accepting' | 'accepted' | 'discarding' | 'di
 
 /** True only while the selection is exactly the proposal's candidate at its base revision. */
 function proposalMatches(proposal: StagedProposal, context?: ChatRequestContext | null): boolean {
-  return !!context && context.project_id === proposal.project_id && context.case_id === proposal.case_id
-    && context.object_id === proposal.candidate_id && context.expected_revision_id === proposal.base_revision_id
+  if (!context || context.project_id !== proposal.project_id || context.case_id !== proposal.case_id) return false
+  // A generate proposal is bound to the skull (case), not to a candidate revision.
+  if (proposal.kind === 'model_fix' && proposal.payload.action === 'generate') return true
+  return context.object_id === proposal.candidate_id && context.expected_revision_id === proposal.base_revision_id
+}
+
+function proposalMeta(proposal: StagedProposal): string {
+  if (proposal.kind === 'rigid_pose') return `Candidate pose · based on revision ${proposal.base_revision_id.slice(0, 8)}`
+  const { action, threshold } = proposal.payload
+  if (action === 'generate') return 'Predicted fix · runs the cranial model on this skull'
+  const change = action === 'threshold' ? `Fix threshold ${threshold}` : 'Fix region'
+  return `${change} · based on revision ${(proposal.base_revision_id ?? '').slice(0, 8)}`
 }
 
 /** Review card for an AI-staged change. Nothing is written until the user clicks Accept. */
 function ProposalCard({ proposal, chatContext, onWorkspaceChanged }: {
-  proposal: StagedProposal; chatContext?: ChatRequestContext | null; onWorkspaceChanged?: () => void
+  proposal: StagedProposal; chatContext?: ChatRequestContext | null; onWorkspaceChanged?: (accepted?: StagedProposal) => void
 }) {
   const [state, setState] = useState<ProposalUiState>('pending')
   const [error, setError] = useState<string | null>(null)
@@ -401,9 +411,9 @@ function ProposalCard({ proposal, chatContext, onWorkspaceChanged }: {
   const accept = async () => {
     setState('accepting'); setError(null)
     try {
-      await langGraphClient.acceptProposal(proposal)
+      const accepted = await langGraphClient.acceptProposal(proposal)
       setState('accepted')
-      onWorkspaceChanged?.()
+      onWorkspaceChanged?.(accepted)
     } catch (failure) {
       setState('pending')
       setError(failure instanceof Error ? failure.message : 'Proposal could not be applied.')
@@ -429,7 +439,7 @@ function ProposalCard({ proposal, chatContext, onWorkspaceChanged }: {
       </div>
       <p className="ai-chat-proposal-summary">{proposal.summary}</p>
       <p className="ai-chat-proposal-meta">
-        Candidate pose · based on revision {proposal.base_revision_id.slice(0, 8)}
+        {proposalMeta(proposal)}
       </p>
       {error && <p className="ai-chat-proposal-error" role="alert">{error}</p>}
       {!settled && (

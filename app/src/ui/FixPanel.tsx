@@ -98,8 +98,11 @@ export function FixPanel({ report, fixVisible, busy, onThreshold, onKeepRegion, 
           <dt>Threshold</dt>
           <dd>
             {ml.threshold}
-            {ml.thresholdIsDefault ? ' (evaluated setting)' : (
-              <>{' · '}<span className="fix-adjusted">Adjusted threshold, not the evaluated setting</span></>
+            {ml.thresholdIsDefault && !ml.region ? ' (evaluated setting)' : (
+              <>{' · '}<span className="fix-adjusted">
+                {ml.thresholdIsDefault ? 'Trimmed to a region' : ml.region ? 'Adjusted threshold and region' : 'Adjusted threshold'}
+                , not the evaluated setting
+              </span></>
             )}
           </dd>
           <dt>This run</dt><dd>Model {ml.inferenceSeconds} s · total {ml.totalSeconds} s</dd>

@@ -64,25 +64,22 @@ export class ApiCodeError extends Error {
   }
 }
 
-async function requestWithCode<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...init })
-  const body = (await res.json().catch(() => ({}))) as { code?: string; error?: string }
-  if (!res.ok) throw new ApiCodeError(body.error ?? res.statusText, body.code ?? null, res.status)
-  return body as T
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers ?? {})
   if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
-  const res = await fetch(`${BASE}${path}`, {
-    headers,
-    ...init,
-  })
+  const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
-    throw new Error(`API ${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`)
+    let body: { code?: unknown; error?: unknown } = {}
+    try { body = JSON.parse(text) } catch { /* plain-text error */ }
+    const code = typeof body.code === 'string' ? body.code : null
+    // Coded backend errors carry a human-readable message; show that instead of the raw response.
+    const message = code && typeof body.error === 'string'
+      ? body.error
+      : `API ${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`
+    throw new ApiCodeError(message, code, res.status)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
@@ -91,27 +88,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const apiClient = {
   // Predicted fix (cranial-reconstruction-candidate)
   async startFix(sampleId: string, scope: FixScope): Promise<{ runId: string }> {
-    return requestWithCode(`/samples/${encodeURIComponent(sampleId)}/reconstructions`, {
+    return request(`/samples/${encodeURIComponent(sampleId)}/reconstructions`, {
       method: 'POST', body: JSON.stringify(scope),
     })
   },
 
   async getFixRun(runId: string): Promise<FixRunState> {
-    return requestWithCode(`/reconstructions/${encodeURIComponent(runId)}`)
+    return request(`/reconstructions/${encodeURIComponent(runId)}`)
   },
 
   async adjustFix(
     candidateId: string,
     body: FixScope & { expected_revision_id: string; threshold?: number; region?: number[][] },
   ): Promise<FixRunResult & { threshold: number; thresholdIsDefault: boolean }> {
-    return requestWithCode(`/candidates/${encodeURIComponent(candidateId)}/fix-adjustment`, {
+    return request(`/candidates/${encodeURIComponent(candidateId)}/fix-adjustment`, {
       method: 'POST', body: JSON.stringify(body),
     })
   },
 
   async getFixReport(candidateId: string, scope: FixScope): Promise<FixReport> {
     const query = new URLSearchParams(scope).toString()
-    return requestWithCode(`/candidates/${encodeURIComponent(candidateId)}/fix-report?${query}`)
+    return request(`/candidates/${encodeURIComponent(candidateId)}/fix-report?${query}`)
   },
 
   async fetchRevisionVolume(candidateId: string, revisionId: string): Promise<Uint8Array> {
