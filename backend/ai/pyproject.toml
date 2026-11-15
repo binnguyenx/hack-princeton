@@ -15,6 +15,7 @@ dependencies = [
   "brotli==1.2.1",
   "zstandard==0.25.0",
   "langgraph==1.2.22",
+  "langchain-google-genai==4.5.0",
 ]
 
 [project.optional-dependencies]
@@ -22,3 +23,6 @@ test = ["httpx==0.28.1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+skullfix_ai = ["agent/*.md"]

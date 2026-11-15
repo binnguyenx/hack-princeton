@@ -17,7 +17,7 @@ import {
   Send,
   Sparkles,
 } from 'lucide-react'
-import { chatClient, type ReadOnlyChatRequest } from '../api/chat'
+import { chatClient, type ChatMode, type ReadOnlyChatRequest } from '../api/chat'
 
 type ChatMessage = {
   id: string
@@ -51,6 +51,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<ChatMode | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   // Conversation ids correlate stateless requests; FastAPI does not persist history.
@@ -102,6 +103,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
           message: text,
         }
         const response = await chatClient.send(request)
+        setMode(response.mode)
         const content = [response.outcome.explanation, ...response.limitations.map((item) => `• ${item}`)]
           .filter(Boolean)
           .join('\n\n')
@@ -136,8 +138,11 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
         <div className="ai-chat-title">
           <Bot size={16} className="ai-chat-icon" />
           <span>AI Assistant</span>
-          <span className="ai-chat-badge" title="Read-only FastAPI chat">
-            Read-only
+          <span
+            className="ai-chat-badge"
+            title={mode === 'gemini-read-only' ? 'FastAPI LangGraph agent (Gemini) with read-only tools' : 'Read-only FastAPI chat'}
+          >
+            {mode === 'gemini-read-only' ? 'Gemini · read-only' : 'Read-only'}
           </span>
         </div>
         <div className="ai-chat-header-actions">

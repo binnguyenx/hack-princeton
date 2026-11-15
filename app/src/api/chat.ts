@@ -1,3 +1,10 @@
+/** `fake-read-only`: deterministic metadata model. `gemini-read-only`: LangGraph + Gemini with read-only tools. */
+export type ChatMode = 'fake-read-only' | 'gemini-read-only'
+const CHAT_MODES: readonly string[] = ['fake-read-only', 'gemini-read-only']
+// Optional direct FastAPI origin (CORS); default is same-origin through the Vite /api proxy.
+const API_BASE = ((import.meta.env.VITE_LANGGRAPH_API_URL as string | undefined) ?? '').trim().replace(/\/+$/, '')
+export const CHAT_ENDPOINT = `${API_BASE}/api/ai/chat`
+
 export type ReadOnlyChatRequest = {
   request_id: string
   conversation_id: string
@@ -9,7 +16,7 @@ export type ReadOnlyChatRequest = {
 }
 
 export type ReadOnlyChatResponse = {
-  mode: 'fake-read-only'
+  mode: ChatMode
   request_id: string
   conversation_id: string
   outcome: {
@@ -23,7 +30,7 @@ export type ReadOnlyChatResponse = {
 function isResponse(value: unknown): value is ReadOnlyChatResponse {
   if (!value || typeof value !== 'object') return false
   const response = value as Partial<ReadOnlyChatResponse>
-  return response.mode === 'fake-read-only'
+  return typeof response.mode === 'string' && CHAT_MODES.includes(response.mode)
     && typeof response.request_id === 'string'
     && typeof response.conversation_id === 'string'
     && !!response.outcome
@@ -33,7 +40,7 @@ function isResponse(value: unknown): value is ReadOnlyChatResponse {
 
 export const chatClient = {
   async send(request: ReadOnlyChatRequest, signal?: AbortSignal): Promise<ReadOnlyChatResponse> {
-    const response = await fetch('/api/ai/chat', {
+    const response = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),

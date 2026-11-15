@@ -1,7 +1,8 @@
-"""Single FastAPI application for UI contracts and read-only fake-model chat."""
+"""Single FastAPI application for UI contracts and Gemini read-only chat."""
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException
 
@@ -19,9 +20,13 @@ from .routes.annotations import create_annotation_router
 from .routes.packages import create_package_router
 
 ALL_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+# Vite dev origins allowed to call the API directly (VITE_LANGGRAPH_API_URL). Never a wildcard.
+DEFAULT_CORS_ORIGINS = ('http://127.0.0.1:5174', 'http://localhost:5174',
+                        'http://127.0.0.1:5173', 'http://localhost:5173')
 
 
-def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = None, repository=None) -> FastAPI:
+def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = None, repository=None,
+               chat_agent=None, cors_origins=DEFAULT_CORS_ORIGINS) -> FastAPI:
     settings = ApplicationSettings(Path(storage_root), Path(frontend_dir) if frontend_dir is not None else None)
     if repository is None:
         from skullfix_ai.application import ApplicationRepository
@@ -29,6 +34,8 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app = FastAPI(title='Application API', docs_url=None, redoc_url=None)
     app.state.repository = repository
     app.state.settings = settings
+    # GeminiChatAgent required for /api/ai/chat; None → HTTP 503 (no fake-model fallback).
+    app.state.chat_agent = chat_agent
 
     @app.middleware('http')
     async def current_json_parser(request: Request, call_next):
@@ -64,6 +71,10 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app.include_router(create_measurement_router())
     app.state.voxel_adapter = BinaryVoxelAdapter()
     app.include_router(create_voxel_router())
+
+    if cors_origins:
+        app.add_middleware(CORSMiddleware, allow_origins=list(cors_origins), allow_credentials=False,
+                           allow_methods=['GET', 'POST', 'OPTIONS'], allow_headers=['Content-Type'])
 
     @app.get('/healthz', include_in_schema=False)
     def health():
