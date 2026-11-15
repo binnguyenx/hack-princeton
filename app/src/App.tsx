@@ -5,13 +5,17 @@ import { installDebugBridge, updateCanvasRuntime } from './debug/bridge'
 import { volumeToDisplayMesh } from './geometry/derivedMesh'
 import { loadDisplayMeshAsset } from './geometry/displayMesh'
 import { applyPoseToObject } from './geometry/pose'
-import { decodeNrrdVoxels } from './geometry/nrrdVoxels'
+import { decodeNrrdVoxels, type VoxelBuffer } from './geometry/nrrdVoxels'
 import { ijkToRas, type Vec3 } from './geometry/coordinates'
 import {
   volumeIntensityRange,
   type IjkPoint,
   type VolumeSizes,
 } from './geometry/slices'
+
+/** Cranial CT bone Window/Level defaults (HU) — plan P3. */
+const HU_BONE_WINDOW_CENTER = 400
+const HU_BONE_WINDOW_WIDTH = 1500
 import type { Mat4, Sample, SpatialMeta } from './domain/types'
 import { buildCanvasCommands, type CommandId } from './commands/registry'
 import {
@@ -52,6 +56,7 @@ import {
 import { NewProjectDialog } from './ui/dialogs/NewProjectDialog'
 import { NewCaseDialog } from './ui/dialogs/NewCaseDialog'
 import { ImportSampleDialog } from './ui/dialogs/ImportSampleDialog'
+import { ImportDicomDialog } from './ui/dialogs/ImportDicomDialog'
 
 const ctx = { store: editorStore }
 const nudgePose: Mat4 = [
@@ -110,7 +115,7 @@ export default function App() {
   const [rendererStatus, setRendererStatus] = useState<'ready' | 'lost' | 'restoring'>('ready')
   const [sliceVolume, setSliceVolume] = useState<{
     documentId: string
-    voxels: Uint8Array
+    voxels: VoxelBuffer
     sizes: VolumeSizes
   } | null>(null)
   const [sliceStatus, setSliceStatus] = useState<string | null>(null)
@@ -122,6 +127,7 @@ export default function App() {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [newCaseOpen, setNewCaseOpen] = useState(false)
   const [importSampleOpen, setImportSampleOpen] = useState(false)
+  const [importDicomOpen, setImportDicomOpen] = useState(false)
   const meshBuildSeqRef = useRef(0)
 
   const refresh = useCallback(() => setTick((t) => t + 1), [])
@@ -631,6 +637,36 @@ export default function App() {
     }
   }
 
+  async function handleImportDicom(files: File[], displayName: string) {
+    if (!selectedCaseId || !activeProjectId) {
+      setSignal(true)
+      setMessage('Open a project and select a case first')
+      return
+    }
+    try {
+      setViewportStatus('Converting CT DICOM series…')
+      const imported = await apiClient.importDicomSample(activeProjectId, selectedCaseId, {
+        files,
+        displayName,
+      })
+      await loadProject(activeProjectId)
+      openDocument(ctx, { kind: 'sample', id: imported.sampleId })
+      setNav('canvas')
+      setMessage(
+        imported.spatiallyVerified
+          ? `Imported CT intensity Sample: ${displayName}`
+          : `Imported CT Sample ${displayName} (spatial tags incomplete — candidate creation blocked)`,
+      )
+      setSignal(false)
+      refresh()
+    } catch (e) {
+      setSignal(true)
+      setMessage(e instanceof Error ? e.message : String(e))
+    } finally {
+      setViewportStatus(null)
+    }
+  }
+
   async function handleDeleteSample(sampleId: string) {
     if (!activeProjectId) return
     try {
@@ -896,11 +932,16 @@ export default function App() {
           throw new Error('Volume payload is shorter than its dimensions')
         }
         if (cancelled) return
-        const [minimum, maximum] = volumeIntensityRange(
-          decoded.voxels.subarray(0, requiredVoxels),
-        )
-        setWindowCenter((minimum + maximum) / 2)
-        setWindowWidth(Math.max(maximum - minimum, 1))
+        if (decoded.type === 'int16') {
+          setWindowCenter(HU_BONE_WINDOW_CENTER)
+          setWindowWidth(HU_BONE_WINDOW_WIDTH)
+        } else {
+          const [minimum, maximum] = volumeIntensityRange(
+            decoded.voxels.subarray(0, requiredVoxels),
+          )
+          setWindowCenter((minimum + maximum) / 2)
+          setWindowWidth(Math.max(maximum - minimum, 1))
+        }
         setSliceVolume({ documentId, voxels: decoded.voxels, sizes })
         setCrosshairIjk([
           Math.floor(sizes[0] / 2),
@@ -951,6 +992,7 @@ export default function App() {
           onSave={() => void onSave()}
           onNewCase={() => setNewCaseOpen(true)}
           onImportSample={() => setImportSampleOpen(true)}
+          onImportDicom={() => setImportDicomOpen(true)}
           onNewProject={() => setNewProjectOpen(true)}
           onOpenPackage={() => {
             setMessage('Opening local package file picker…')
@@ -985,6 +1027,10 @@ export default function App() {
               onImportSample={(caseId) => {
                 setSelectedCaseId(caseId)
                 setImportSampleOpen(true)
+              }}
+              onImportDicom={(caseId) => {
+                setSelectedCaseId(caseId)
+                setImportDicomOpen(true)
               }}
               onDeleteCase={(caseId) => void handleDeleteCase(caseId)}
               onDeleteSample={(sampleId) => void handleDeleteSample(sampleId)}
@@ -1221,6 +1267,12 @@ export default function App() {
         catalog={catalog}
         selectedCaseName={selectedCase?.name}
         onImport={(catalogId) => void handleImportSample(catalogId)}
+      />
+      <ImportDicomDialog
+        open={importDicomOpen}
+        onOpenChange={setImportDicomOpen}
+        selectedCaseName={selectedCase?.name}
+        onImport={(files, displayName) => void handleImportDicom(files, displayName)}
       />
       <CommandPalette
         open={commandPaletteOpen}

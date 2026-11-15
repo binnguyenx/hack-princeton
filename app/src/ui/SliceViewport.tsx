@@ -6,9 +6,11 @@ import {
   mapFittedViewToSliceUv,
   mapSliceUvToFittedView,
   sliceUvToIjk,
+  windowToDisplay,
   type IjkPoint,
   type SliceContentFit,
   type SlicePlaneId,
+  type VoxelLike,
   type VolumeSizes,
 } from '../geometry/slices'
 import type { CanvasMode } from './CanvasWorkspace'
@@ -18,7 +20,7 @@ import { FeatureHint } from './FeatureHint'
 type Props = {
   plane: SlicePlaneId
   label: string
-  voxels: Uint8Array
+  voxels: VoxelLike
   sizes: VolumeSizes
   crosshair: IjkPoint
   mode: CanvasMode
@@ -87,14 +89,7 @@ export function SliceViewport({
       viewSizeRef.current = { width: cssWidth, height: cssHeight }
 
       const slice = extractSlice(voxels, sizes, plane, offset)
-      const low = windowCenter - windowWidth / 2
-      const safeWidth = Math.max(windowWidth, 1)
-      const windowed = new Uint8Array(slice.values.length)
-      for (let index = 0; index < slice.values.length; index += 1) {
-        windowed[index] = Math.round(
-          Math.max(0, Math.min(255, ((slice.values[index]! - low) / safeWidth) * 255)),
-        )
-      }
+      const windowed = windowToDisplay(slice.values, windowCenter, windowWidth)
 
       const fit = computeSliceContentFit(windowed, slice.width, slice.height)
       fitRef.current = fit

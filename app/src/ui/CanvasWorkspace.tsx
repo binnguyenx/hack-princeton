@@ -9,7 +9,12 @@ import { FeatureHint, FeatureHintProvider } from './FeatureHint'
 import { SliceDock } from './SliceDock'
 import { ViewFrame } from './ViewFrame'
 import type { Vec3 } from '../geometry/coordinates'
-import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
+import type {
+  IjkPoint,
+  SlicePlaneId,
+  VoxelLike,
+  VolumeSizes,
+} from '../geometry/slices'
 
 export type CanvasMode = 'view' | 'window-level' | 'place'
 
@@ -25,7 +30,7 @@ type Props = {
   projection?: 'perspective' | 'orthographic'
   operationLabel?: string
   operationControls?: ReactNode
-  voxels?: Uint8Array
+  voxels?: VoxelLike
   volumeSizes?: VolumeSizes
   crosshair?: IjkPoint
   crosshairRas?: Vec3

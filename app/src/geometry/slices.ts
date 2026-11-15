@@ -2,10 +2,12 @@ export type SlicePlaneId = 'axial' | 'sagittal' | 'coronal'
 export type VolumeSizes = readonly [number, number, number]
 export type IjkPoint = [number, number, number]
 
+export type VoxelLike = ArrayLike<number> & { length: number; [index: number]: number }
+
 export type SlicePixels = {
   width: number
   height: number
-  values: Uint8Array
+  values: Float32Array
 }
 
 /** Inclusive-exclusive content window inside a slice plane (slice pixel space). */
@@ -18,16 +20,33 @@ export type SliceContentFit = {
   v1: number
 }
 
-export function volumeIntensityRange(voxels: Uint8Array): [number, number] {
+export function volumeIntensityRange(voxels: VoxelLike): [number, number] {
   if (voxels.length === 0) return [0, 0]
-  let minimum = 255
-  let maximum = 0
-  for (const value of voxels) {
+  let minimum = voxels[0]!
+  let maximum = voxels[0]!
+  for (let i = 1; i < voxels.length; i += 1) {
+    const value = voxels[i]!
     if (value < minimum) minimum = value
     if (value > maximum) maximum = value
-    if (minimum === 0 && maximum === 255) break
   }
   return [minimum, maximum]
+}
+
+/** Map HU or uint intensities through Window/Level into display 0–255. */
+export function windowToDisplay(
+  values: VoxelLike,
+  windowCenter: number,
+  windowWidth: number,
+): Uint8Array {
+  const low = windowCenter - windowWidth / 2
+  const safeWidth = Math.max(windowWidth, 1)
+  const out = new Uint8Array(values.length)
+  for (let index = 0; index < values.length; index += 1) {
+    out[index] = Math.round(
+      Math.max(0, Math.min(255, ((values[index]! - low) / safeWidth) * 255)),
+    )
+  }
+  return out
 }
 
 function voxelIndex(x: number, y: number, z: number, sizes: VolumeSizes): number {
@@ -35,7 +54,7 @@ function voxelIndex(x: number, y: number, z: number, sizes: VolumeSizes): number
 }
 
 export function extractSlice(
-  voxels: Uint8Array,
+  voxels: VoxelLike,
   sizes: VolumeSizes,
   plane: SlicePlaneId,
   offset: number,
@@ -43,7 +62,7 @@ export function extractSlice(
   const [sizeX, sizeY, sizeZ] = sizes
   const width = plane === 'sagittal' ? sizeY : sizeX
   const height = plane === 'axial' ? sizeY : sizeZ
-  const values = new Uint8Array(width * height)
+  const values = new Float32Array(width * height)
   const clampedOffset = Math.max(
     0,
     Math.min(
@@ -72,7 +91,7 @@ export function extractSlice(
  * Empty / near-full FOV falls back to the whole plane so air-only slices stay stable.
  */
 export function computeSliceContentFit(
-  values: Uint8Array,
+  values: VoxelLike,
   width: number,
   height: number,
   threshold?: number,

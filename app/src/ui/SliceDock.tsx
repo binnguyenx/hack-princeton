@@ -1,6 +1,11 @@
 import { ChevronDown, ChevronUp, Link2 } from 'lucide-react'
 import type { Vec3 } from '../geometry/coordinates'
-import type { IjkPoint, SlicePlaneId, VolumeSizes } from '../geometry/slices'
+import type {
+  IjkPoint,
+  SlicePlaneId,
+  VoxelLike,
+  VolumeSizes,
+} from '../geometry/slices'
 import type { CanvasMode } from './CanvasWorkspace'
 import { CANVAS_HINTS } from './canvasFeatureHints'
 import { FeatureHint } from './FeatureHint'
@@ -10,7 +15,7 @@ import { ViewFrame } from './ViewFrame'
 type Props = {
   collapsed: boolean
   onCollapsedChange: (collapsed: boolean) => void
-  voxels?: Uint8Array
+  voxels?: VoxelLike
   sizes?: VolumeSizes
   crosshair: IjkPoint
   crosshairRas: Vec3

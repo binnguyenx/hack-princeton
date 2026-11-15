@@ -8,6 +8,7 @@ export type AppHeaderProps = {
   onSave?: () => void
   onNewCase?: () => void
   onImportSample?: () => void
+  onImportDicom?: () => void
   onNewProject?: () => void
   onOpenPackage?: () => void
   onNavigateHome?: () => void
@@ -20,6 +21,7 @@ export function AppHeader({
   onSave,
   onNewCase,
   onImportSample,
+  onImportDicom,
   onNewProject,
   onOpenPackage,
   onNavigateHome,
@@ -80,6 +82,20 @@ export function AppHeader({
           >
             <FileUp size={14} />
             Import Sample
+          </Button>
+        ) : null}
+
+        {onImportDicom && projectName ? (
+          <Button
+            type="button"
+            variant="soft"
+            color="gray"
+            size="1"
+            onClick={onImportDicom}
+            title="Import CT DICOM series as intensity Sample"
+          >
+            <FolderOpen size={14} />
+            Import CT
           </Button>
         ) : null}
 

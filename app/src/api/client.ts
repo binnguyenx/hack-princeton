@@ -87,6 +87,27 @@ export const apiClient = {
     )
   },
 
+  async importDicomSample(
+    projectId: string,
+    caseId: string,
+    args: {
+      files: File[]
+      displayName?: string
+      license?: string
+    },
+  ): Promise<ApiSample & { license?: string }> {
+    const fd = new FormData()
+    if (args.displayName) fd.set('displayName', args.displayName)
+    if (args.license) fd.set('license', args.license)
+    for (const file of args.files) {
+      fd.append('files', file, file.name)
+    }
+    return request<ApiSample & { license?: string }>(
+      `/projects/${encodeURIComponent(projectId)}/cases/${encodeURIComponent(caseId)}/samples/from-dicom`,
+      { method: 'POST', body: fd },
+    )
+  },
+
   async deleteSample(sampleId: string): Promise<void> {
     return request<void>(`/samples/${encodeURIComponent(sampleId)}`, { method: 'DELETE' })
   },

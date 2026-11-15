@@ -63,6 +63,9 @@ export function volumeToIsoMesh(
   }
   const [sx, sy, sz] = spatial.sizes
   const { voxels } = decodeNrrdVoxels(volumeBytes)
+  if (!(voxels instanceof Uint8Array)) {
+    throw new Error('Volume iso mesh requires uint8 voxels')
+  }
   const expected = sx * sy * sz
   if (voxels.length < expected) {
     throw new Error(`Voxel buffer short: ${voxels.length} < ${expected}`)

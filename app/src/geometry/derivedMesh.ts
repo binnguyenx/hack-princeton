@@ -3,21 +3,26 @@ import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js'
 import type { SpatialMeta } from '../domain/types'
 import { decodeNrrdVoxels } from './nrrdVoxels'
 
+/** Cranial CT bone iso threshold (HU). Air/soft tissue below this stay empty. */
+export const HU_BONE_ISO_THRESHOLD = 300
+
 /**
- * Display mesh via downsampled binary voxels → simple Marching-cubes-ish
- * surface using Three BufferGeometry (avoid THREE.MarchingCubes field quirks).
+ * Display mesh via downsampled voxels → Marching Cubes.
+ * Uint8 curated masks: any nonzero voxel is solid.
+ * Int16 HU CT: voxels ≥ HU_BONE_ISO_THRESHOLD are solid.
  */
 export function volumeToDisplayMesh(
   volumeBytes: Uint8Array,
   spatial: SpatialMeta,
-  options?: { resolution?: number },
+  options?: { resolution?: number; huBoneThreshold?: number },
 ): THREE.Mesh {
   if (!spatial?.sizes || spatial.sizes.length < 3) {
     throw new Error('spatial.sizes required (got ' + JSON.stringify(spatial) + ')')
   }
   const resolution = options?.resolution ?? 96
+  const huThreshold = options?.huBoneThreshold ?? HU_BONE_ISO_THRESHOLD
   const [sx, sy, sz] = spatial.sizes
-  const { voxels } = decodeNrrdVoxels(volumeBytes)
+  const { voxels, type } = decodeNrrdVoxels(volumeBytes)
   const expected = sx * sy * sz
   if (voxels.length < expected) {
     throw new Error(`Voxel buffer short: ${voxels.length} < ${expected}`)
@@ -38,8 +43,10 @@ export function volumeToDisplayMesh(
     const xi = Math.min(sx - 1, Math.max(0, Math.round(fx * (sx - 1))))
     const yi = Math.min(sy - 1, Math.max(0, Math.round(fy * (sy - 1))))
     const zi = Math.min(sz - 1, Math.max(0, Math.round(fz * (sz - 1))))
-    const v = voxels[xi + yi * sx + zi * sx * sy]
-    return v > 0 ? 0 : 255
+    const index = xi + yi * sx + zi * sx * sy
+    const value = voxels[index] ?? 0
+    const occupied = type === 'int16' ? value >= huThreshold : value > 0
+    return occupied ? 0 : 255
   }
 
   let hasSolid = false

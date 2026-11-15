@@ -34,6 +34,7 @@ export type CaseTableViewProps = {
   onOpenCandidateIn3D: (candidateId: string) => void
   onCreateCandidate: (sampleId: string) => void
   onImportSample: (caseId: string) => void
+  onImportDicom?: (caseId: string) => void
   onDeleteCase: (caseId: string) => void
   onDeleteSample: (sampleId: string) => void
   onDeleteCandidate: (candidateId: string) => void
@@ -51,6 +52,7 @@ export function CaseTableView({
   onOpenCandidateIn3D,
   onCreateCandidate,
   onImportSample,
+  onImportDicom,
   onDeleteCase,
   onDeleteSample,
   onDeleteCandidate,
@@ -172,6 +174,21 @@ export function CaseTableView({
                           <FileUp size={12} />
                           Import Sample
                         </Button>
+                        {onImportDicom ? (
+                          <Button
+                            type="button"
+                            variant="soft"
+                            color="gray"
+                            size="1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onImportDicom(c.id)
+                            }}
+                          >
+                            <FolderOpen size={12} />
+                            Import CT
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           variant="soft"

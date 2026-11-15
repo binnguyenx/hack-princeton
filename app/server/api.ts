@@ -19,8 +19,12 @@ import {
   removeSample,
   restoreRevision,
 } from './storageSqlite'
+import { importDicomSample } from './dicomImport'
 
-const upload = multer({ storage: multer.memoryStorage() })
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 64 * 1024 * 1024, files: 800 },
+})
 
 function one(v: string | string[] | undefined): string {
   if (typeof v === 'string') return v
@@ -33,6 +37,9 @@ function statusFor(err: unknown): number {
   if (/ENOENT/i.test(msg)) return 404
   if (/not found/i.test(msg)) return 404
   if (/required/i.test(msg)) return 400
+  if (/multiple series|SeriesInstanceUID|No files|No readable DICOM|max allowed/i.test(msg)) {
+    return 400
+  }
   if (/verified/i.test(msg)) return 409
   return 500
 }
@@ -122,6 +129,37 @@ export function createApiRouter(): Router {
       jsonError(res, err)
     }
   })
+
+  router.post(
+    '/projects/:id/cases/:caseId/samples/from-dicom',
+    upload.array('files', 800),
+    async (req, res) => {
+      try {
+        const files = (req.files as Express.Multer.File[] | undefined) ?? []
+        if (!files.length) {
+          res.status(400).json({ error: 'files are required' })
+          return
+        }
+        const body = req.body as Record<string, string>
+        const projectId = one(req.params.id as unknown as string | string[])
+        const caseId = one(req.params.caseId as unknown as string | string[])
+        const sample = await importDicomSample({
+          projectId,
+          caseId,
+          displayName: one((body as unknown as Record<string, string | string[]>).displayName),
+          license: one((body as unknown as Record<string, string | string[]>).license) || undefined,
+          files: files.map((f) => ({ originalname: f.originalname, buffer: f.buffer })),
+        })
+        res.status(201).json({
+          sampleId: sample.id,
+          spatiallyVerified: sample.spatiallyVerified,
+          license: sample.license,
+        })
+      } catch (err) {
+        jsonError(res, err)
+      }
+    },
+  )
 
   router.get('/samples/:id/volume', async (req, res) => {
     try {

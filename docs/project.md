@@ -39,6 +39,7 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [Canvas workspace](../features/3d-bone-editor/canvas-workspace/intent.md) | shipped | Unified canvas tools + viewport behavior, GLB-first rendering, restore/apply integrity, and clean-state UI contracts. |
 | [Canvas workspace Slicer relaunch](../features/3d-bone-editor/canvas-workspace-improve/intent.md) | shipped | Cross-reference Workbench: Slicer mouse nav, synchronized Axial/Sagittal/Coronal dock, Window/Level + Place modes, RAS truth, WebGL rebuild recovery. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
+| [ct-intensity-sample-import](../features/ct-intensity-sample-import/intent.md) | shipped | Import a CT DICOM series as greyscale int16 HU NRRD Sample (SimpleITK server convert + `from-dicom` API + Import CT UI); canvas Window/Level supports HU bone defaults; uint8 curated path unchanged. |
 
 Status values: proposed, foundation accepted, in progress, shipped, retired.
 
@@ -51,6 +52,8 @@ Status values: proposed, foundation accepted, in progress, shipped, retired.
 5. The current AI `plan.md` is the completed operation-service/mock record; completed fixture, schema, and storage plans are archived under the feature's `plans/` directory. Write a separate plan before graph, API, model, or real-adapter coding. Review the proposed retry requirements before including them.
 6. Inside the AI feature, after shared schemas and storage, the synchronous operation service and reconstruction mock are available for the next graph/API slice. See `docs/ai/workflow.md`.
 
+
+8. CT intensity sample import (`features/ct-intensity-sample-import/`): shipped — DICOM→intensity-NRRD Sample create on the existing store; bone segmentation / ML predict remain out of scope.
 
 ## Design system
 

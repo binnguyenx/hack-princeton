@@ -326,10 +326,13 @@ export interface AddSampleArgs {
   spatiallyVerified: boolean
   meta: SpatialMeta
   bytes: Buffer | Uint8Array
+  /** Defaults to curated-era `unknown` so existing callers stay unchanged. */
+  license?: string
 }
 
 export async function addSample(args: AddSampleArgs): Promise<Sample> {
   const { projectId, caseId, displayName, spatiallyVerified, meta, bytes } = args
+  const license = args.license?.trim() || 'unknown'
   await ensureRoots()
   const db = new DatabaseSync(dbPath())
   try {
@@ -368,7 +371,7 @@ export async function addSample(args: AddSampleArgs): Promise<Sample> {
           sampleId,
           caseId,
           label,
-          'unknown',
+          license,
           spatiallyVerified ? 1 : 0,
           sourceObjectId,
           volumeId,
@@ -386,7 +389,7 @@ export async function addSample(args: AddSampleArgs): Promise<Sample> {
         id: sampleId,
         caseId,
         displayName: label,
-        license: 'unknown',
+        license,
         spatiallyVerified,
         sourceAnatomy: {
           objectId: sourceObjectId,
