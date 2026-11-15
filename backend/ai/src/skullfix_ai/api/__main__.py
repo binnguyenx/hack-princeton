@@ -22,7 +22,11 @@ def _load_dotenv(path: Path) -> None:
 
 
 def main():
-    _load_dotenv(Path(__file__).resolve().parents[3] / '.env')
+    ai_root = Path(__file__).resolve().parents[3]
+    repo_root = ai_root.parents[1]
+    # Prefer backend/ai/.env; fall back to repo-root .env for unset keys.
+    _load_dotenv(ai_root / '.env')
+    _load_dotenv(repo_root / '.env')
     parser = argparse.ArgumentParser(description='Run the application API against an explicit storage root')
     parser.add_argument('--storage-root', default=os.environ.get('HACK_STORAGE_ROOT'))
     parser.add_argument('--frontend-dir', type=Path)
@@ -38,9 +42,15 @@ def main():
     if not args.storage_root:
         parser.error('--storage-root or an explicit HACK_STORAGE_ROOT is required')
     if args.chat_provider != 'gemini':
-        parser.error('Only --chat-provider gemini is supported')
+        parser.error(
+            f"chat provider {args.chat_provider!r} is not supported; "
+            "set SKULLFIX_CHAT_PROVIDER=gemini (or unset it)"
+        )
     if not has_key:
-        parser.error('Gemini chat requires GOOGLE_API_KEY or GEMINI_API_KEY (set in backend/ai/.env or the environment)')
+        parser.error(
+            'Gemini chat requires GOOGLE_API_KEY or GEMINI_API_KEY '
+            '(set in backend/ai/.env, repo-root .env, or the environment)'
+        )
     from skullfix_ai.agent.gemini_graph import GeminiChatAgent
     chat_agent = GeminiChatAgent()
     options = {}
