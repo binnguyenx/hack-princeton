@@ -2,20 +2,30 @@ import * as THREE from 'three'
 import type { EmphasisLevel } from './types'
 
 const EMPHASIS_SCALE = { none: 1, hover: 1.12, selected: 1.2 } as const
-const HOVER_COLOR = 0x5b8cff
-const SELECTED_COLOR = 0x93b4ff
+/** Fraction of the way toward white; hue and saturation stay the annotation's own. */
+const EMPHASIS_LIGHTEN = { none: 0, hover: 0.25, selected: 0.45 } as const
+
+function emphasisColor(base: number, level: EmphasisLevel): number {
+  const amount = EMPHASIS_LIGHTEN[level]
+  if (amount === 0) return base
+  const hsl = new THREE.Color(base).getHSL({ h: 0, s: 0, l: 0 })
+  return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l + (1 - hsl.l) * amount).getHex()
+}
+
+function applyEmphasisColor(child: THREE.Object3D, mat: { color: THREE.Color }, level: EmphasisLevel): void {
+  if (child.userData._baseColor === undefined) child.userData._baseColor = mat.color.getHex()
+  mat.color.setHex(emphasisColor(child.userData._baseColor as number, level))
+}
 
 /**
  * Apply group emphasis to every object belonging to an annotation.
- * Glyphs scale; line/mesh materials brighten. Idempotent per level.
+ * Glyphs scale; line/mesh materials lighten in their own hue. Idempotent per level.
  */
 export function emphasizeObjects(
   objs: THREE.Object3D[],
   level: EmphasisLevel,
 ): void {
   const scale = EMPHASIS_SCALE[level]
-  const color =
-    level === 'selected' ? SELECTED_COLOR : level === 'hover' ? HOVER_COLOR : null
 
   for (const obj of objs) {
     obj.traverse((child) => {
@@ -27,23 +37,13 @@ export function emphasizeObjects(
         child.scale.set(base.x * scale, base.y * scale, base.z * scale)
         const mat = child.material
         if (mat && 'color' in mat && mat.color instanceof THREE.Color) {
-          if (!child.userData._baseColor) {
-            child.userData._baseColor = mat.color.getHex()
-          }
-          mat.color.setHex(
-            color ?? (child.userData._baseColor as number),
-          )
+          applyEmphasisColor(child, mat as { color: THREE.Color }, level)
         }
       }
       if (child instanceof THREE.Line || child instanceof THREE.LineSegments) {
         const mat = child.material
         if (mat && 'color' in mat && mat.color instanceof THREE.Color) {
-          if (!child.userData._baseColor) {
-            child.userData._baseColor = mat.color.getHex()
-          }
-          mat.color.setHex(
-            color ?? (child.userData._baseColor as number),
-          )
+          applyEmphasisColor(child, mat as { color: THREE.Color }, level)
           if ('linewidth' in mat === false && child.scale) {
             // slight scale on line group for visibility
             if (!child.userData._baseScale) {

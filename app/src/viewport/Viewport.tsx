@@ -1,4 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  captureCamera,
+  drawCallouts,
+  isCapturePreset,
+  renderToPng,
+  withHidden,
+} from './reportCapture'
+import type { ViewShot as ReportViewShot } from '../report/captureShots'
+import {
+  beginHandleDrag,
+  extentHandleLayout,
+  planeFrame,
+  type ExtentHandleId,
+  type HandleKind,
+} from './annotationBehaviors/extentDrag'
+import {
+  createExtentDragSession,
+  type ExtentDragSession,
+} from './annotationBehaviors/extentDragSession'
+import { annotationColorHex, type AnnotationColorKey } from '../domain/annotationPalette'
 import * as THREE from 'three'
 import type { ViewportOverlay } from '../api/chat'
 import { buildOverlayObject, disposeOverlayObject, severityColors, voxelFrameOf } from '../geometry/aiOverlay'
@@ -14,7 +34,6 @@ import {
 } from './AnnotationOverlay'
 import {
   annotationIdFromIntersection,
-  applyOrientedExtentDrag,
   collectPickables,
   isOrientedExtentType,
   syncGroupEmphasis,
@@ -46,6 +65,10 @@ type Props = {
   selectedAnnotationId?: string | null
   onSelectAnnotation?: (id: string | null) => void
   onAnnotationAction?: (action: AnnotationAction) => void
+  /** Offscreen report captures (ai-case-report R7–R9); never moves the user's camera. */
+  reportCaptureApiRef?: { current: ReportCaptureApi | null }
+  /** Escape path for an in-progress plane/ROI drag (App's single shortcut owner calls cancel first). */
+  manipulationApiRef?: { current: { cancel: () => boolean } | null }
   /** Plane/ROI gizmo edit. `commit` true on pointer-up (persist); false while dragging. */
   onExtentEdit?: (
     id: string,
@@ -91,11 +114,18 @@ type Props = {
   draftPreview?: {
     type: Annotation['type']
     points: Array<[number, number, number]>
+    /** Placement colour (annotation-color-system R7); unset uses the type default. */
+    color?: AnnotationColorKey | null
   } | null
   /** Read-only AI geometric finding drawn on the mesh (heat map + primary marker). */
   aiOverlay?: ViewportOverlay | null
   onAiOverlayDismiss?: () => void
 }
+
+const CAPTURE_WIDTH = 1200
+const CAPTURE_HEIGHT = 900
+
+export type ReportCaptureApi = { captureView: (shot: ReportViewShot) => Promise<Blob> }
 
 type Runtime = {
   renderer: THREE.WebGLRenderer
@@ -288,6 +318,8 @@ export function Viewport({
   onSelectAnnotation,
   onAnnotationAction,
   onExtentEdit,
+  manipulationApiRef,
+  reportCaptureApiRef,
   objectId,
   status,
   viewPreset,
@@ -658,7 +690,7 @@ export function Viewport({
       displayMesh,
       (id) => onStaleHighlightRef.current?.(id),
       draftPreview
-        ? { type: draftPreview.type, points: draftPreview.points }
+        ? { type: draftPreview.type, points: draftPreview.points, color: draftPreview.color }
         : null,
       boundingBoxMm,
       measureLabelIds,
@@ -755,11 +787,28 @@ export function Viewport({
   }, [rendererNonce, annotations])
 
   // OrientedExtent gizmos for selected plane / ROI (View or Place idle).
+  // Drags are solved from the pointer ray (mechanical-last-parts R88–R95, D12).
   // `gizmoAnnAlive` forces teardown when the selected id is deleted but selection lags.
   const gizmoAnnAlive = Boolean(
     selectedAnnotationId &&
       annotations.some((a) => a.id === selectedAnnotationId),
   )
+  const bboxRef = useRef(boundingBoxMm)
+  useEffect(() => {
+    bboxRef.current = boundingBoxMm
+  }, [boundingBoxMm])
+  /** Re-places handles for the current geometry (set by the gizmo effect, null when none). */
+  const relayoutGizmosRef = useRef<((target: Annotation) => void) | null>(null)
+  const dragSessionRef = useRef<ExtentDragSession | null>(null)
+  useEffect(() => {
+    if (!manipulationApiRef) return
+    manipulationApiRef.current = {
+      cancel: () => dragSessionRef.current?.cancel() ?? false,
+    }
+    return () => {
+      manipulationApiRef.current = null
+    }
+  }, [manipulationApiRef])
   useEffect(() => {
     const runtime = sceneRef.current
     if (!runtime) return
@@ -771,6 +820,7 @@ export function Viewport({
         })
       }
       gizmoObjectsRef.current = []
+      relayoutGizmosRef.current = null
     }
     disposeGizmos()
 
@@ -785,193 +835,122 @@ export function Viewport({
       return
     }
     const annId = ann.id
+    const canvas = runtime.renderer.domElement
 
-    const placeOrigin = (target: Annotation) => {
-      const origin = new THREE.Vector3(...(target.points[0] ?? [0, 0, 0]))
-      if (target.type === 'roi') {
-        const min = (target.meta.min as RasPoint | undefined) ?? target.points[0]
-        const max = (target.meta.max as RasPoint | undefined) ?? target.points[1]
-        if (min && max) {
-          origin.set(
-            (min[0] + max[0]) / 2,
-            (min[1] + max[1]) / 2,
-            (min[2] + max[2]) / 2,
-          )
+    // Handle sizes are in screen-relative units: each handle rescales every frame (R94).
+    const HANDLE_SCREEN_FRACTION = 0.018
+    const handleColor = (kind: HandleKind) =>
+      annotationColorHex(kind === 'resize' ? 'amber' : 'accent')
+    const geometryFor = (kind: HandleKind) =>
+      kind === 'resize'
+        ? new THREE.BoxGeometry(1.6, 1.6, 1.6)
+        : new THREE.SphereGeometry(kind === 'move' ? 1.1 : 0.9, 16, 12)
+
+    const layout = extentHandleLayout(ann, bboxRef.current)
+    const handles: THREE.Object3D[] = []
+    const byId = new Map<ExtentHandleId, THREE.Mesh>()
+    for (const h of layout) {
+      const visual = new THREE.Mesh(
+        geometryFor(h.kind),
+        new THREE.MeshBasicMaterial({ color: handleColor(h.kind), depthTest: false, transparent: true, opacity: 0.95 }),
+      )
+      // Larger invisible hit target so knobs are easy to grab on a skull.
+      const hit = new THREE.Mesh(
+        new THREE.SphereGeometry(2.2, 8, 6),
+        new THREE.MeshBasicMaterial({ visible: false, depthTest: false }),
+      )
+      visual.add(hit)
+      visual.position.set(...h.position)
+      visual.renderOrder = 20
+      visual.name = `gizmo-${h.id}-${annId}`
+      visual.userData.handleId = h.id
+      visual.userData.handleKind = h.kind
+      visual.userData.annotationId = `gizmo-${annId}`
+      hit.userData.annotationId = `gizmo-${annId}`
+      visual.onBeforeRender = (_r, _s, camera) => {
+        const scale =
+          camera instanceof THREE.OrthographicCamera
+            ? ((camera.top - camera.bottom) / camera.zoom) * HANDLE_SCREEN_FRACTION
+            : camera.position.distanceTo(visual.position) *
+              Math.tan(THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov / 2)) *
+              2 *
+              HANDLE_SCREEN_FRACTION
+        if (Math.abs(visual.scale.x - scale) > 1e-6) {
+          visual.scale.setScalar(scale)
+          visual.updateMatrixWorld(true)
         }
       }
-      return origin
+      handles.push(visual)
+      byId.set(h.id, visual)
     }
-
-    const origin = placeOrigin(ann)
-    // Large hit targets — thin tori are nearly impossible to pick on a skull.
-    const bbox = boundingBoxMm
-    const extent =
-      bbox && bbox.length >= 3
-        ? Math.max(...bbox.map((v) => Math.abs(v)), 40)
-        : 80
-    const ringR = Math.max(extent * 0.12, 18)
-    const knobR = Math.max(ringR * 0.22, 5)
-    const scaleSize = Math.max(knobR * 1.4, 8)
-    const scaleOffset = ringR * 1.45
-    const handles: THREE.Object3D[] = []
-
-    const mark = (obj: THREE.Object3D, mode: 'rotate' | 'scale', name: string) => {
-      obj.userData.gizmoMode = mode
-      obj.userData.annotationId = `gizmo-${annId}`
-      obj.renderOrder = 20
-      obj.name = name
-      handles.push(obj)
-    }
-
+    // Plane: thin ring through the tilt knobs, aligned with the plane (visual only).
+    let ring: THREE.Mesh | null = null
     if (ann.type === 'plane') {
-      // Visible ring + fat invisible hit torus + 4 sphere knobs.
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x2f6bff,
-        depthTest: false,
-        transparent: true,
-        opacity: 0.95,
-      })
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(ringR, Math.max(ringR * 0.06, 1.5), 12, 48),
-        ringMat,
+      const f = planeFrame(ann, bboxRef.current)
+      ring = new THREE.Mesh(
+        new THREE.TorusGeometry(f.ringRadius, Math.max(f.ringRadius * 0.015, 0.4), 8, 64),
+        new THREE.MeshBasicMaterial({ color: annotationColorHex('accent'), depthTest: false, transparent: true, opacity: 0.7 }),
       )
-      ring.position.copy(origin)
-      mark(ring, 'rotate', `gizmo-rotate-vis-${annId}`)
-
-      const hitRing = new THREE.Mesh(
-        new THREE.TorusGeometry(ringR, Math.max(ringR * 0.28, 6), 8, 32),
-        new THREE.MeshBasicMaterial({
-          visible: false,
-          depthTest: false,
-        }),
-      )
-      hitRing.position.copy(origin)
-      mark(hitRing, 'rotate', `gizmo-rotate-hit-${annId}`)
-
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2
-        const knob = new THREE.Mesh(
-          new THREE.SphereGeometry(knobR, 16, 12),
-          new THREE.MeshBasicMaterial({
-            color: 0x5b8cff,
-            depthTest: false,
-          }),
-        )
-        knob.position.set(
-          origin.x + Math.cos(a) * ringR,
-          origin.y + Math.sin(a) * ringR,
-          origin.z,
-        )
-        mark(knob, 'rotate', `gizmo-rotate-knob-${annId}-${i}`)
-      }
+      ring.raycast = () => {}
+      ring.renderOrder = 19
+      ring.name = `gizmo-ring-${annId}`
+      handles.push(ring)
     }
 
-    // Amber scale knobs — for ROI use face centers so it never looks like a plane ring.
-    const scaleMat = new THREE.MeshBasicMaterial({
-      color: 0xf59e0b,
-      depthTest: false,
-    })
-    if (ann.type === 'roi') {
-      const min = (ann.meta.min as RasPoint | undefined) ?? ann.points[0]
-      const max = (ann.meta.max as RasPoint | undefined) ?? ann.points[1]
-      if (min && max) {
-        const cx = (min[0] + max[0]) / 2
-        const cy = (min[1] + max[1]) / 2
-        const cz = (min[2] + max[2]) / 2
-        const faces: RasPoint[] = [
-          [max[0], cy, cz],
-          [min[0], cy, cz],
-          [cx, max[1], cz],
-          [cx, min[1], cz],
-          [cx, cy, max[2]],
-          [cx, cy, min[2]],
-        ]
-        faces.forEach((p, i) => {
-          const knob = new THREE.Mesh(
-            new THREE.BoxGeometry(scaleSize, scaleSize, scaleSize),
-            scaleMat.clone(),
-          )
-          knob.position.set(p[0], p[1], p[2])
-          mark(knob, 'scale', `gizmo-scale-face-${annId}-${i}`)
-        })
+    const relayout = (target: Annotation) => {
+      for (const h of extentHandleLayout(target, bboxRef.current)) {
+        byId.get(h.id)?.position.set(...h.position)
       }
-    } else {
-      const scaleHandle = new THREE.Mesh(
-        new THREE.BoxGeometry(scaleSize, scaleSize, scaleSize),
-        scaleMat,
-      )
-      scaleHandle.position.copy(origin).add(new THREE.Vector3(scaleOffset, 0, 0))
-      mark(scaleHandle, 'scale', `gizmo-scale-${annId}`)
+      if (ring && target.type === 'plane') {
+        const f = planeFrame(target, bboxRef.current)
+        ring.position.copy(f.origin)
+        ring.quaternion.copy(f.quaternion)
+      }
     }
-
+    relayout(ann)
     for (const h of handles) runtime.scene.add(h)
     gizmoObjectsRef.current = handles
+    relayoutGizmosRef.current = relayout
 
-    const canvas = runtime.renderer.domElement
     const raycaster = new THREE.Raycaster()
-    // Prefer gizmo knobs over anatomy when both are under the cursor.
-    raycaster.params.Points = { threshold: 2 }
     const pointer = new THREE.Vector2()
-    let dragging: {
-      mode: 'rotate' | 'scale'
-      lastX: number
-      lastY: number
-      snapshot: Annotation
-    } | null = null
+    const rayAt = (event: PointerEvent): THREE.Ray => {
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, runtime.camera)
+      return raycaster.ray.clone()
+    }
+    const handleUnder = (event: PointerEvent): THREE.Mesh | null => {
+      rayAt(event)
+      const hits = raycaster.intersectObjects(handles, true)
+      let obj: THREE.Object3D | null = hits[0]?.object ?? null
+      while (obj && !obj.userData.handleId) obj = obj.parent
+      return (obj as THREE.Mesh | null) ?? null
+    }
 
-    const syncHandlePositions = (target: Annotation) => {
-      const nextOrigin = placeOrigin(target)
-      for (const h of handles) {
-        if (String(h.name).includes('rotate-vis') || String(h.name).includes('rotate-hit')) {
-          h.position.copy(nextOrigin)
-        } else if (String(h.name).includes('rotate-knob')) {
-          const idx = Number(String(h.name).split('-').pop())
-          if (Number.isFinite(idx)) {
-            const a = (idx / 4) * Math.PI * 2
-            h.position.set(
-              nextOrigin.x + Math.cos(a) * ringR,
-              nextOrigin.y + Math.sin(a) * ringR,
-              nextOrigin.z,
-            )
-          }
-        } else if (String(h.name).includes('gizmo-scale-') && target.type !== 'roi') {
-          h.position.copy(nextOrigin).add(new THREE.Vector3(scaleOffset, 0, 0))
-        } else if (String(h.name).includes('scale-face') && target.type === 'roi') {
-          const min = (target.meta.min as RasPoint | undefined) ?? target.points[0]
-          const max = (target.meta.max as RasPoint | undefined) ?? target.points[1]
-          if (!min || !max) continue
-          const cx = (min[0] + max[0]) / 2
-          const cy = (min[1] + max[1]) / 2
-          const cz = (min[2] + max[2]) / 2
-          const faces: RasPoint[] = [
-            [max[0], cy, cz],
-            [min[0], cy, cz],
-            [cx, max[1], cz],
-            [cx, min[1], cz],
-            [cx, cy, max[2]],
-            [cx, cy, min[2]],
-          ]
-          const idx = Number(String(h.name).split('-').pop())
-          if (Number.isFinite(idx) && faces[idx]) {
-            h.position.set(faces[idx][0], faces[idx][1], faces[idx][2])
-          }
-        }
-      }
+    let draggingPointer: number | null = null
+    let hovered: THREE.Mesh | null = null
+    const CURSOR: Record<HandleKind, string> = { move: 'move', rotate: 'grab', resize: 'ew-resize' }
+    const setHover = (next: THREE.Mesh | null) => {
+      if (hovered === next) return
+      if (hovered) (hovered.material as THREE.MeshBasicMaterial).opacity = 0.95
+      hovered = next
+      if (hovered) (hovered.material as THREE.MeshBasicMaterial).opacity = 0.6
+      canvas.style.cursor = hovered ? CURSOR[hovered.userData.handleKind as HandleKind] : ''
+    }
+    const finish = () => {
+      dragSessionRef.current = null
+      draggingPointer = null
+      runtime.controls.enabled = true
+      canvas.style.cursor = hovered ? CURSOR[hovered.userData.handleKind as HandleKind] : ''
     }
 
     const onDown = (event: PointerEvent) => {
       if (event.button !== 0 || event.ctrlKey || event.metaKey) return
       // Gizmos stay active in Place mode so plane/ROI can be edited after drop.
-      const rect = canvas.getBoundingClientRect()
-      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-      raycaster.setFromCamera(pointer, runtime.camera)
-      const hits = raycaster.intersectObjects(gizmoObjectsRef.current, true)
-      if (hits.length === 0) return
-      let modeObj: THREE.Object3D | null = hits[0].object
-      while (modeObj && !modeObj.userData.gizmoMode) modeObj = modeObj.parent
-      const mode = modeObj?.userData.gizmoMode as 'rotate' | 'scale' | undefined
-      if (!mode) return
+      const handle = handleUnder(event)
+      if (!handle) return
       const live = selectRef.current.annotations.find((a) => a.id === annId)
       if (!live || live.locked) return
       const cfg = selectRef.current
@@ -992,57 +971,98 @@ export function Viewport({
       event.preventDefault()
       runtime.controls.enabled = false
       canvas.setPointerCapture(event.pointerId)
-      dragging = {
-        mode,
-        lastX: event.clientX,
-        lastY: event.clientY,
-        snapshot: live,
-      }
+      draggingPointer = event.pointerId
+      const original: Annotation = { ...live, points: live.points.map((p) => [...p] as RasPoint), meta: { ...live.meta } }
+      dragSessionRef.current = createExtentDragSession({
+        original,
+        drag: beginHandleDrag(live, handle.userData.handleId as ExtentHandleId, rayAt(event), bboxRef.current),
+        onLive: (edit) => {
+          relayout({ ...original, points: edit.points, meta: edit.meta })
+          selectRef.current.onExtentEdit?.(annId, { points: edit.points, meta: edit.meta }, false)
+        },
+        onCommit: (edit) => {
+          selectRef.current.onExtentEdit?.(annId, { points: edit.points, meta: edit.meta }, true)
+        },
+      })
+      canvas.style.cursor = handle.userData.handleKind === 'rotate' ? 'grabbing' : canvas.style.cursor
     }
     const onMove = (event: PointerEvent) => {
-      if (!dragging) return
-      event.stopImmediatePropagation()
-      const dx = event.clientX - dragging.lastX
-      const dy = event.clientY - dragging.lastY
-      dragging.lastX = event.clientX
-      dragging.lastY = event.clientY
-      const edit = applyOrientedExtentDrag(dragging.snapshot, dragging.mode, {
-        x: dx,
-        y: dy,
-      })
-      dragging.snapshot = {
-        ...dragging.snapshot,
-        points: edit.points,
-        meta: edit.meta,
+      const session = dragSessionRef.current
+      if (session && draggingPointer === event.pointerId) {
+        event.stopImmediatePropagation()
+        session.move(rayAt(event))
+        return
       }
-      syncHandlePositions(dragging.snapshot)
-      selectRef.current.onExtentEdit?.(annId, edit, false)
+      if (!session && event.buttons === 0) setHover(handleUnder(event))
     }
-    const onUp = () => {
-      if (!dragging) return
-      const final = dragging.snapshot
-      dragging = null
-      runtime.controls.enabled = true
-      selectRef.current.onExtentEdit?.(
-        annId,
-        { points: final.points, meta: final.meta },
-        true,
-      )
+    const onUp = (event: PointerEvent) => {
+      const session = dragSessionRef.current
+      if (!session || draggingPointer !== event.pointerId) return
+      session.end()
+      finish()
+    }
+    const onCancel = (event: PointerEvent) => {
+      const session = dragSessionRef.current
+      if (!session || draggingPointer !== event.pointerId) return
+      session.cancel()
+      finish()
     }
 
     canvas.addEventListener('pointerdown', onDown, true)
     canvas.addEventListener('pointermove', onMove, true)
     canvas.addEventListener('pointerup', onUp, true)
-    canvas.addEventListener('pointercancel', onUp, true)
+    canvas.addEventListener('pointercancel', onCancel, true)
     return () => {
       canvas.removeEventListener('pointerdown', onDown, true)
       canvas.removeEventListener('pointermove', onMove, true)
       canvas.removeEventListener('pointerup', onUp, true)
-      canvas.removeEventListener('pointercancel', onUp, true)
+      canvas.removeEventListener('pointercancel', onCancel, true)
+      // Selection changed or the annotation went away mid-drag: never leave a half edit behind.
+      dragSessionRef.current?.cancel()
+      dragSessionRef.current = null
       runtime.controls.enabled = true
+      canvas.style.cursor = ''
       disposeGizmos()
     }
-  }, [selectedAnnotationId, gizmoAnnAlive, rendererNonce, boundingBoxMm])
+  }, [selectedAnnotationId, gizmoAnnAlive, rendererNonce])
+
+  // Case report captures: own camera + render target; gizmos and grid hidden only for the render call.
+  useEffect(() => {
+    if (!reportCaptureApiRef) return
+    reportCaptureApiRef.current = {
+      captureView: async (shot) => {
+        const runtime = sceneRef.current
+        if (!runtime) throw new Error('The 3D view is not ready')
+        const box = new THREE.Box3().setFromObject(runtime.content)
+        if (box.isEmpty()) throw new Error('Nothing is loaded in the 3D view')
+        const preset = isCapturePreset(shot.preset) ? shot.preset : 'hero_oblique'
+        const camera = captureCamera(preset, box, CAPTURE_WIDTH, CAPTURE_HEIGHT)
+        const annotationsById = new Map(selectRef.current.annotations.map((a) => [a.id, a]))
+        const callouts = shot.kind === 'annotated_view'
+          ? shot.callouts.flatMap((c) => {
+              const annotation = annotationsById.get(c.annotation_id)
+              return annotation ? [{ annotation, label: c.label }] : []
+            })
+          : []
+        const hidden = [...gizmoObjectsRef.current, ...(runtime.grid ? [runtime.grid] : [])]
+        return withHidden(hidden, () =>
+          renderToPng(runtime.renderer, runtime.scene, camera, CAPTURE_WIDTH, CAPTURE_HEIGHT, (ctx) =>
+            drawCallouts(ctx, callouts, camera, CAPTURE_WIDTH, CAPTURE_HEIGHT),
+          ),
+        )
+      },
+    }
+    return () => {
+      reportCaptureApiRef.current = null
+    }
+  }, [reportCaptureApiRef])
+
+  // Geometry changed outside a drag (list row buttons, undo, bbox): move handles, keep listeners (R93).
+  useEffect(() => {
+    if (dragSessionRef.current?.active) return
+    const target = annotations.find((a) => a.id === selectedAnnotationId)
+    if (target) relayoutGizmosRef.current?.(target)
+  }, [annotations, selectedAnnotationId, boundingBoxMm])
 
   useEffect(() => {
     const runtime = sceneRef.current

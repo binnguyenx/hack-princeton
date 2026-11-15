@@ -120,6 +120,20 @@ Supporting (not main brand colors):
 
 Do not add purple gradients, lavender fills, or extra brand hues. Rest of the UI stays black / white / gray.
 
+### Annotation palette (canvas only)
+
+Annotation geometry needs to be told apart on the skull, so annotations get a small categorical palette. These colours are allowed **only** for annotation geometry in the 3D canvas and slice views, their colour swatches (placement strip, annotation list), and case-report captures. They are never used for app chrome, buttons, text or status. `signal` stays reserved for danger.
+
+| Key | Hex | Default for |
+|-|-|-|
+| `accent` | `#2F6BFF` | every annotation type except ROI |
+| `amber` | `#F59E0B` | ROI |
+| `emerald` | `#10B981` | — |
+| `rose` | `#F43F5E` | — |
+| `slate` | `#64748B` | — |
+
+Source of truth in code: `app/src/domain/annotationPalette.ts`. Hover and selection emphasis lighten an annotation's own colour; they never switch it to another hue.
+
 ## Typography
 
 Geometric system workhorse: SF Pro Text / Segoe UI / system-ui. Hierarchy by **weight**, not color noise.

@@ -1,7 +1,8 @@
-"""Native LangGraph tool-calling chat over read-only workspace tools (AWS Bedrock by default, or Gemini).
+"""Deep Agents tool-calling chat over read-only workspace tools (AWS Bedrock by default, or Gemini).
 
-StateGraph(MessagesState) -> agent -> tools_condition -> ToolNode -> agent ... -> END.
-Conversation turns are checkpointed in-process with InMemorySaver, keyed by the
+`deepagents.create_deep_agent` with the workspace tools plus read-only subagents spawned via `task`
+(features/ai-deep-agent-research). Deep Agents' filesystem tools and its general-purpose subagent are
+excluded. Conversation turns are checkpointed in-process with InMemorySaver, keyed by the
 conversation id plus the full selection identity, so a context change never
 inherits another selection's turns. Nothing here can write application data.
 """
@@ -19,17 +20,25 @@ from typing import Callable, Iterable, Iterator
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, MessagesState, StateGraph
-from langgraph.prebuilt import ToolNode, tools_condition
 
 from skullfix_ai.schemas.workspace import AppObjectContext, AppProjectManifest
 from skullfix_ai.tools.clinical_calc_tools import build_clinical_calc_tools
 from skullfix_ai.tools.knowledge_tools import build_knowledge_tools
 from skullfix_ai.tools.langchain_read_tools import build_read_only_tools
+from skullfix_ai.tools.research_tools import (SOURCE_NAMES, TOOL_FOR_SOURCE, build_research_tools,
+                                              research_subagent)
 
 LOGGER = logging.getLogger("skullfix_ai.chat")
 GEMINI_MODEL = "gemini-3.1-flash-lite"
 MAX_GRAPH_STEPS = 12
+# Today's 12-step agent/tools loop allows 6 model calls per turn; the deep agent keeps that budget (R8).
+MAX_MODEL_CALLS = 6
+# Backstop only: Deep Agents adds middleware nodes, so graph steps no longer equal model calls.
+DEEP_RECURSION_LIMIT = 60
+# Deep Agents built-ins that a read-only workspace assistant must not offer (R3).
+EXCLUDED_DEEP_AGENT_TOOLS = frozenset({"ls", "read_file", "write_file", "edit_file", "delete", "glob", "grep",
+                                       "write_todos", "execute"})
+SUBAGENT_LABELS = {"research": "Research", "case_report": "Case report"}
 
 SYSTEM_PROMPT = (Path(__file__).with_name('system_prompt.md').read_text(encoding='utf-8').strip())
 
@@ -45,17 +54,36 @@ TOOL_PHRASES = {
     "measure_workspace_volumes": "the volume measurement",
     "measure_defect_rim_thickness": "the rim thickness measurement",
     "measure_implant_rim_fit": "the rim fit measurement",
+    "task": "a subagent",
+    "search_wikipedia": "a Wikipedia search",
+    "search_arxiv": "an arXiv search",
+    "search_pubmed": "a PubMed search",
+    "list_case_annotations": "the annotation list",
+    "read_session_transcript": "the conversation",
+    "submit_report_plan": "the report plan",
 }
 FALLBACK_DISCLAIMER = ("**Outside verified workspace protocols:** this topic is not covered by the workspace's "
                        "clinical knowledge base, so the answer below relies on general medical knowledge. "
                        "Verify it against current literature and your institutional guidance.")
 
 
+def tool_name_pattern(name: str) -> str:
+    """Regex for a leaked tool identifier.
+
+    snake_case names are never prose, so they match bare. A name that is also an ordinary word
+    (e.g. ``task``) only matches when written as code: in backticks or followed by ``()``.
+    """
+    word = re.escape(name)
+    if "_" in name:
+        return rf"`?\b{word}\b(?:\(\))?`?"
+    return rf"`{word}(?:\(\))?`|\b{word}\(\)"
+
+
 def scrub_tool_names(text: str, names) -> str:
-    """Replace internal tool identifiers (bare or in backticks/with parentheses) by plain language."""
+    """Replace internal tool identifiers by plain language (see ``tool_name_pattern``)."""
     for name in sorted(names, key=len, reverse=True):
         phrase = TOOL_PHRASES.get(name, "a workspace check")
-        text = re.sub(rf"`?\b{re.escape(name)}\b(?:\(\))?`?", phrase, text)
+        text = re.sub(tool_name_pattern(name), phrase, text)
     return text
 
 
@@ -70,6 +98,9 @@ STEP_LABELS = {
     "measure_workspace_volumes": "Measuring volumes from the scan",
     "measure_defect_rim_thickness": "Measuring bone thickness around the defect rim",
     "measure_implant_rim_fit": "Measuring implant fit at the defect rim",
+    "list_case_annotations": "Reading the case annotations",
+    "read_session_transcript": "Reading the conversation",
+    "submit_report_plan": "Drafting the report sections",
 }
 
 
@@ -126,6 +157,52 @@ def knowledge_outcome(messages) -> str | None:
     if not statuses:
         return None
     return "FOUND" if "FOUND" in statuses else "NOT_FOUND"
+
+
+def _clip(text: str, limit: int) -> str:
+    text = " ".join(str(text or "").split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def subagent_label(name: str | None) -> str:
+    return SUBAGENT_LABELS.get(name or "", "Specialist")
+
+
+def subagent_step_label(call: dict) -> str:
+    """Plain-language label for a tool call made inside a subagent."""
+    name = call.get("name", "")
+    for source, tool_name in TOOL_FOR_SOURCE.items():
+        if name == tool_name:
+            query = _clip((call.get("args") or {}).get("query", ""), 80)
+            return f"Searching {SOURCE_NAMES[source]} for “{query}”…"
+    return STEP_LABELS.get(name, "Working") + "…"
+
+
+def subagent_result_label(message: ToolMessage) -> str:
+    for source, tool_name in TOOL_FOR_SOURCE.items():
+        if message.name == tool_name:
+            label = SOURCE_NAMES[source]
+            try:
+                result = json.loads(message.content)
+            except (TypeError, ValueError):
+                return f"{label}: done"
+            status = result.get("status") if isinstance(result, dict) else None
+            if status == "FOUND":
+                count = len(result.get("results") or [])
+                return f"{label}: {count} result{'s' if count != 1 else ''}"
+            if status == "NO_RESULTS":
+                return f"{label}: no results"
+            return f"{label}: unavailable"
+    return step_result_label(message)
+
+
+def subagent_returned_text(name: str | None, content: str) -> str:
+    sources = len(set(re.findall(r"https?://\S+", content or "")))
+    first = next((line for line in (content or "").splitlines() if line.strip()), "")
+    lead = f"{subagent_label(name)} subagent returned"
+    if sources:
+        lead += f" {sources} source{'s' if sources != 1 else ''}"
+    return f"{lead}: {_clip(first, 140)}" if first else lead
 
 
 def make_gemini_model() -> BaseChatModel:
@@ -208,6 +285,75 @@ def chat_agent_for(provider: str, **options) -> "GeminiChatAgent":
     return GeminiChatAgent(factory, mode=mode, readiness=readiness, **options)
 
 
+def tool_error_middleware():
+    """Tool exceptions go back to the model as error ToolMessages, exactly as the previous
+    ToolNode(handle_tool_errors=True) did, instead of failing the turn (R6, R9)."""
+    from langchain.agents.middleware import AgentMiddleware
+    from langgraph.prebuilt.tool_node import TOOL_CALL_ERROR_TEMPLATE
+
+    class ToolErrorsToModel(AgentMiddleware):
+        def wrap_tool_call(self, request, handler):
+            try:
+                return handler(request)
+            except Exception as error:
+                call = request.tool_call
+                return ToolMessage(content=TOOL_CALL_ERROR_TEMPLATE.format(error=repr(error)),
+                                   name=call["name"], tool_call_id=call["id"], status="error")
+
+    return ToolErrorsToModel()
+
+
+class TranscriptCheckpointer(InMemorySaver):
+    """In-process checkpointer whose `get()` still exposes the full `messages` list.
+
+    Deep Agents stores `messages` as a delta channel, so a raw checkpoint no longer carries the
+    transcript. Callers that read `agent.checkpointer.get(...)` (the eval harness, operators) keep
+    seeing `channel_values["messages"]` as before (R5). LangGraph itself uses `get_tuple`, unchanged.
+    """
+
+    def get(self, config):
+        checkpoint = super().get(config)
+        if checkpoint is None:
+            return None
+        values = checkpoint.get("channel_values", {})
+        if "messages" not in values:
+            messages = self._reader().get_state(config).values.get("messages", [])
+            checkpoint = {**checkpoint, "channel_values": {**values, "messages": messages}}
+        return checkpoint
+
+    def _reader(self):
+        from deepagents.graph import DeepAgentState
+        from langgraph.graph import START, StateGraph
+
+        graph = StateGraph(DeepAgentState)
+        graph.add_node("read", lambda state: {})
+        graph.add_edge(START, "read")
+        return graph.compile(checkpointer=self)
+
+
+_PROFILED_PROVIDERS: set[str] = set()
+_PROFILE_LOCK = threading.Lock()
+
+
+def _ensure_read_only_profile(model: BaseChatModel) -> None:
+    """Register a Deep Agents harness profile for this model's provider: no filesystem tools, no
+    general-purpose subagent (R3). Profiles are looked up by provider, so register once per provider."""
+    from deepagents import GeneralPurposeSubagentProfile, HarnessProfile, register_harness_profile
+
+    try:
+        provider = (model._get_ls_params() or {}).get("ls_provider")
+    except Exception:
+        provider = None
+    provider = provider or type(model).__name__.lower()
+    with _PROFILE_LOCK:
+        if provider in _PROFILED_PROVIDERS:
+            return
+        register_harness_profile(provider, HarnessProfile(
+            excluded_tools=EXCLUDED_DEEP_AGENT_TOOLS,
+            general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
+        _PROFILED_PROVIDERS.add(provider)
+
+
 class ChatModelUnavailable(Exception):
     """Provider or configuration failure; surfaced without provider details."""
 
@@ -219,8 +365,11 @@ class GeminiChatAgent:
 
     def __init__(self, model_factory: Callable[[], BaseChatModel] = make_gemini_model, *, checkpointer=None,
                  proposal_tool_factories: Iterable[Callable] = (), mode: str | None = None,
-                 readiness: Callable[[], tuple[bool, str | None]] | None = None):
+                 readiness: Callable[[], tuple[bool, str | None]] | None = None,
+                 research_wrappers: dict | None = None):
         self._model_factory = model_factory
+        # Literature API wrappers for the research subagent (None = real clients, built lazily).
+        self._research_wrappers = research_wrappers
         self._readiness = readiness
         if mode is not None:
             self.mode = mode
@@ -228,7 +377,7 @@ class GeminiChatAgent:
         self._proposal_tool_factories = tuple(proposal_tool_factories)
         self._model: BaseChatModel | None = None
         self._lock = threading.Lock()
-        self.checkpointer = checkpointer if checkpointer is not None else InMemorySaver()
+        self.checkpointer = checkpointer if checkpointer is not None else TranscriptCheckpointer()
 
     def ready(self) -> tuple[bool, str | None]:
         """Provider readiness without a model call; agents built from a bare factory are always ready."""
@@ -244,11 +393,14 @@ class GeminiChatAgent:
             return self._model
 
     def build_graph(self, context: AppObjectContext, manifest: AppProjectManifest, capabilities=None, sink=None,
-                    geometry=None):
-        return self._build(context, manifest, capabilities, sink, geometry)[0]
+                    geometry=None, reports=None):
+        return self._build(context, manifest, capabilities, sink, geometry, reports)[0]
 
-    def _build(self, context, manifest, capabilities=None, sink=None, geometry=None):
-        """Compile the per-turn graph; also return the bound tool names (kept local, not on self)."""
+    def _build(self, context, manifest, capabilities=None, sink=None, geometry=None, reports=None):
+        """Compile the per-turn deep agent; also return the bound tool names (kept local, not on self)."""
+        from deepagents import create_deep_agent
+        from langchain.agents.middleware import ModelCallLimitMiddleware
+
         tools = [*build_read_only_tools(context, manifest), *build_knowledge_tools(),
                  *build_clinical_calc_tools(capabilities)]
         if geometry is not None:
@@ -256,19 +408,29 @@ class GeminiChatAgent:
             tools += build_geometry_tools(geometry)
         if sink is not None:
             tools += [factory(sink, context) for factory in self._proposal_tool_factories]
-        llm = self._chat_model().bind_tools(tools)
+        research_tools = build_research_tools(self._research_wrappers)
+        subagents = [research_subagent(research_tools)]
+        if reports is not None:
+            # Case report subagent (ai-case-report R1, R2): read-only workspace tools + report tools.
+            from skullfix_ai.agent.report_subagent import case_report_subagent
+
+            workspace = [*build_read_only_tools(context, manifest)]
+            if geometry is not None:
+                from skullfix_ai.tools.geometry_tools import build_geometry_tools
+                workspace += build_geometry_tools(geometry)
+            subagents.append(case_report_subagent(reports, workspace))
+        model = self._chat_model()
+        _ensure_read_only_profile(model)
         system = SYSTEM_PROMPT if capabilities is None else f"{SYSTEM_PROMPT}\n\n{capabilities.prompt_block()}"
-
-        def agent(state: MessagesState):
-            return {"messages": [llm.invoke([SystemMessage(system), *state["messages"]])]}
-
-        graph = StateGraph(MessagesState)
-        graph.add_node("agent", agent)
-        graph.add_node("tools", ToolNode(tools, handle_tool_errors=True))  # tool failures go back to the model as errors
-        graph.add_edge(START, "agent")
-        graph.add_conditional_edges("agent", tools_condition)
-        graph.add_edge("tools", "agent")
-        return graph.compile(checkpointer=self.checkpointer), {tool.name for tool in tools}
+        graph = create_deep_agent(
+            model=model, tools=tools, system_prompt=system, subagents=subagents,
+            middleware=[ModelCallLimitMiddleware(run_limit=MAX_MODEL_CALLS, exit_behavior="error"),
+                        tool_error_middleware()],
+            checkpointer=self.checkpointer)
+        names = {tool.name for tool in tools} | {tool.name for tool in research_tools} | {"task"}
+        for spec in subagents[1:]:
+            names |= {getattr(item, "name", "") for item in spec.get("tools", [])}
+        return graph, names
 
     @staticmethod
     def thread_id(conversation_id: str, context: AppObjectContext) -> str:
@@ -276,7 +438,8 @@ class GeminiChatAgent:
                          context.selected_object_id, context.revision_id or "-"])
 
     def stream_turn(self, *, conversation_id: str, message: str, history: Iterable, context: AppObjectContext,
-                    manifest: AppProjectManifest, capabilities=None, sink=None, geometry=None) -> Iterator[dict]:
+                    manifest: AppProjectManifest, capabilities=None, sink=None, geometry=None,
+                    reports=None) -> Iterator[dict]:
         """Run one turn, yielding thinking events, then one ``final`` event.
 
         Thinking events are ``{"type": "thinking", "id", "kind": "step" | "reasoning", "text"}``.
@@ -285,10 +448,10 @@ class GeminiChatAgent:
         can be scrubbed across chunk boundaries. The final event is
         ``{"type": "final", "text", "tools"}``.
         """
-        compiled, bound = self._build(context, manifest, capabilities, sink, geometry)
+        compiled, bound = self._build(context, manifest, capabilities, sink, geometry, reports)
         names = {*TOOL_PHRASES, *bound}
         config = {"configurable": {"thread_id": self.thread_id(conversation_id, context)},
-                  "recursion_limit": MAX_GRAPH_STEPS}
+                  "recursion_limit": DEEP_RECURSION_LIMIT}
         new_messages = []
         if not compiled.get_state(config).values.get("messages"):
             # Server restarted or first turn: seed client turns as conversation text only.
@@ -298,11 +461,29 @@ class GeminiChatAgent:
         before = len(compiled.get_state(config).values.get("messages", []))
         reasoning: dict[str, str] = {}
         steps = 0
+        # task tool_call_id -> subagent name, in spawn order; subgraph namespace -> task tool_call_id.
+        spawned: dict[str, str] = {}
+        namespace_task: dict[str, str] = {}
+
+        def task_for(namespace) -> str | None:
+            key = namespace[0] if namespace else ""
+            if key not in namespace_task:
+                taken = set(namespace_task.values())
+                pending = [call_id for call_id in spawned if call_id not in taken]
+                if not pending:
+                    return None
+                namespace_task[key] = pending[0]
+            return namespace_task[key]
+
         try:
-            for mode, payload in compiled.stream({"messages": new_messages}, config, stream_mode=["messages", "updates"]):
+            for namespace, mode, payload in compiled.stream({"messages": new_messages}, config,
+                                                            stream_mode=["messages", "updates"], subgraphs=True):
+                if namespace:
+                    yield from self._subagent_events(task_for(namespace), spawned, mode, payload)
+                    continue
                 if mode == "messages":
                     chunk, metadata = payload
-                    if metadata.get("langgraph_node") != "agent" or not isinstance(chunk, (AIMessage, AIMessageChunk)):
+                    if metadata.get("langgraph_node") != "model" or not isinstance(chunk, (AIMessage, AIMessageChunk)):
                         continue
                     piece = reasoning_text(chunk)
                     if piece:
@@ -312,13 +493,29 @@ class GeminiChatAgent:
                                "text": scrub_tool_names(reasoning[key], names)}
                     continue
                 for node, update in (payload or {}).items():
-                    for item in (update or {}).get("messages", []):
-                        if node == "agent" and isinstance(item, AIMessage):
+                    for item in (update or {}).get("messages", []) if isinstance(update, dict) else []:
+                        if node == "model" and isinstance(item, AIMessage):
                             for call in item.tool_calls:
+                                if call["name"] == "task":
+                                    sub = (call.get("args") or {}).get("subagent_type") or ""
+                                    spawned[call.get("id") or f"task-{len(spawned)}"] = sub
+                                    yield {"type": "thinking", "id": f"subagent-{call.get('id')}", "kind": "subagent",
+                                           "subagent": sub, "phase": "spawned",
+                                           "text": f"Spawned {subagent_label(sub).lower()} subagent: "
+                                                   f"{_clip((call.get('args') or {}).get('description', ''), 120)}"}
+                                    continue
                                 steps += 1
                                 yield {"type": "thinking", "id": f"step-{call.get('id') or steps}", "kind": "step",
                                        "text": STEP_LABELS.get(call["name"], "Running a workspace check") + "…"}
                         elif node == "tools" and isinstance(item, ToolMessage):
+                            if item.name == "task":
+                                sub = spawned.get(item.tool_call_id, "")
+                                failed = getattr(item, "status", None) == "error"
+                                yield {"type": "thinking", "id": f"subagent-{item.tool_call_id}-done", "kind": "subagent",
+                                       "subagent": sub, "phase": "failed" if failed else "returned",
+                                       "text": (f"{subagent_label(sub)} subagent could not finish" if failed
+                                                else scrub_tool_names(subagent_returned_text(sub, str(item.content)), names))}
+                                continue
                             yield {"type": "thinking", "id": f"step-{item.tool_call_id}", "kind": "step",
                                    "text": step_result_label(item)}
         except ChatModelUnavailable:
@@ -336,7 +533,24 @@ class GeminiChatAgent:
             text = f"{FALLBACK_DISCLAIMER}\n\n{text}"
         yield {"type": "final", "text": text, "tools": called,
                "staged_proposal": sink.latest_pending() if sink is not None else None,
-               "viewport_overlay": geometry.latest_overlay() if geometry is not None else None}
+               "viewport_overlay": geometry.latest_overlay() if geometry is not None else None,
+               "report_job": reports.latest_job() if reports is not None else None}
+
+    @staticmethod
+    def _subagent_events(task_id: str | None, spawned: dict, mode: str, payload) -> Iterator[dict]:
+        """Steps a subagent takes, as `subagent` thinking events grouped under its task id (R17)."""
+        if mode != "updates" or task_id is None:
+            return
+        sub = spawned.get(task_id, "")
+        for node, update in (payload or {}).items():
+            for item in (update or {}).get("messages", []) if isinstance(update, dict) else []:
+                if node == "model" and isinstance(item, AIMessage):
+                    for call in item.tool_calls:
+                        yield {"type": "thinking", "id": f"subagent-{task_id}-{call.get('id')}", "kind": "subagent",
+                               "subagent": sub, "phase": "step", "text": subagent_step_label(call)}
+                elif node == "tools" and isinstance(item, ToolMessage):
+                    yield {"type": "thinking", "id": f"subagent-{task_id}-{item.tool_call_id}", "kind": "subagent",
+                           "subagent": sub, "phase": "step", "text": subagent_result_label(item)}
 
     def reply(self, *, conversation_id: str, message: str, history: Iterable, context: AppObjectContext,
               manifest: AppProjectManifest) -> tuple[str, list[str]]:

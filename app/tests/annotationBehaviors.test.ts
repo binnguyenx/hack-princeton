@@ -146,3 +146,23 @@ describe('Annotation shape for emphasis wiring', () => {
     expect(ann.id).toBe('x')
   })
 })
+
+describe('emphasis keeps the annotation colour hue (annotation-color-system S7)', () => {
+  it('hover and selection brighten a rose glyph and line without changing hue, and none restores it', () => {
+    const rose = 0xf43f5e
+    const glyph = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial({ color: rose }))
+    const line = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: rose }))
+    const hueOf = (hex: number) => new THREE.Color(hex).getHSL({ h: 0, s: 0, l: 0 }).h
+    for (const level of ['hover', 'selected'] as const) {
+      emphasizeObjects([glyph, line], level)
+      for (const obj of [glyph, line]) {
+        const hex = ((obj as THREE.Mesh).material as THREE.MeshBasicMaterial).color.getHex()
+        expect(hex).not.toBe(rose)
+        expect(Math.abs(hueOf(hex) - hueOf(rose))).toBeLessThan(0.01)
+      }
+    }
+    emphasizeObjects([glyph, line], 'none')
+    expect((glyph.material as THREE.MeshBasicMaterial).color.getHex()).toBe(rose)
+    expect((line.material as THREE.LineBasicMaterial).color.getHex()).toBe(rose)
+  })
+})

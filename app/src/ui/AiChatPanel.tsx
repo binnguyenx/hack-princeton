@@ -9,11 +9,12 @@
  *  - Accessible labels and keyboard support
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   Bot,
   ChevronRight,
   Eye,
+  FileText,
   RotateCcw,
   Send,
   Sparkles,
@@ -24,10 +25,12 @@ import {
   type ChatMode,
   type ChatRequestContext,
   type ChatTurn,
+  type ReportJob,
   type StagedProposal,
   type ThinkingItem,
   type ViewportOverlay,
 } from '../api/chat'
+import { runReportJob, type ReportProgress, type ShotRenderer } from '../report/captureShots'
 
 /** Selection identity from the workspace (camelCase, as App builds it). */
 export type ChatContext = {
@@ -58,7 +61,12 @@ interface Props {
   activeOverlayId?: string | null
   /** Show (overlay) or hide (null) an AI finding in the 3D viewport. */
   onOverlayChange?: (overlay: ViewportOverlay | null) => void
+  /** Offscreen captures for case reports (ai-case-report R7); without it reports cannot be built here. */
+  reportRenderer?: ShotRenderer
 }
+
+type ReportState = { phase: 'queued' } | ReportProgress
+type SessionMessage = ChatMessage & { failed?: boolean; report?: { job: ReportJob; state: ReportState } }
 
 const PROVIDER_LABELS: Record<string, string> = { 'gemini-read-only': 'Gemini', 'bedrock-read-only': 'Bedrock' }
 
@@ -70,8 +78,9 @@ export function AiChatPanel(props: Props) {
   return <ChatSession key={chatContextKey(chatContext)} {...props} chatContext={chatContext} />
 }
 
-function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspaceChanged, activeOverlayId, onOverlayChange }: SessionProps) {
-  const [messages, setMessages] = useState<(ChatMessage & { failed?: boolean })[]>([])
+function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspaceChanged, activeOverlayId, onOverlayChange,
+  reportRenderer }: SessionProps) {
+  const [messages, setMessages] = useState<SessionMessage[]>([])
   const [input, setInput] = useState('')
   const [threadId, setThreadId] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -105,6 +114,20 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
     return () => clearTimeout(timer)
   }, [open])
 
+  /** Capture → upload → PDF for a report plan; progress goes to the card and the case report group (R15–R17). */
+  const startReport = useCallback((messageId: string, job: ReportJob) => {
+    const update = (state: ReportState) => setMessages(previous => previous.map(message => {
+      if (message.id !== messageId) return message
+      return { ...message, report: { job, state }, thinking: withReportProgress(message.thinking, state) }
+    }))
+    update({ phase: 'queued' })
+    if (!reportRenderer) {
+      update({ phase: 'failed', error: 'Report capture is not available in this view.' })
+      return
+    }
+    void runReportJob(job, reportRenderer, progress => update(progress))
+  }, [reportRenderer])
+
   const handleSendText = useCallback(async (textToSend: string) => {
     const text = textToSend.trim()
     if (!text || text.length > 4000 || busy.current || !threadId || !chatContext) return
@@ -118,6 +141,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
     setMessages(previous => [...previous,
       { id: humanId, role: 'human', content: text, createdAt: new Date().toISOString() },
       { id: aiId, role: 'ai', content: '', streaming: true, createdAt: new Date().toISOString() }])
+    let reportJob: ReportJob | null = null
     const history: ChatTurn[] = messages.filter(message => message.id !== 'welcome' && !message.failed && !message.streaming)
       .map(message => ({ role: message.role === 'human' ? 'human' : 'assistant', content: message.content }))
     try {
@@ -133,6 +157,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
           const overlay = event.data
           setMessages(previous => previous.map(message => message.id === aiId ? { ...message, overlay } : message))
         }
+        if (event.event === 'report') reportJob = event.data
         if (event.event === 'proposal') {
           const proposal = event.data
           setMessages(previous => previous.map(message => message.id === aiId ? { ...message, proposal } : message))
@@ -144,6 +169,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
         }
         if (event.event === 'end') setMessages(previous => previous.map(message => message.id === aiId ? { ...message, streaming: false } : message))
       }
+      if (reportJob && token === flight.current && !abort.signal.aborted) startReport(aiId, reportJob)
     } catch (error) {
       if (token !== flight.current || abort.signal.aborted) return
       setError(error instanceof Error ? error.message : 'Read-only chat unavailable.')
@@ -153,7 +179,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
     } finally {
       if (token === flight.current) { busy.current = false; setIsStreaming(false); controller.current = null }
     }
-  }, [threadId, chatContext, messages])
+  }, [threadId, chatContext, messages, startReport])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -243,6 +269,9 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspac
                   {activeOverlayId === msg.overlay.overlay_id ? 'Hide overlay' : 'Show in viewport'}
                 </button>
               )}
+              {msg.report && !msg.streaming && (
+                <ReportCard report={msg.report} onRetry={() => startReport(msg.id, msg.report!.job)} />
+              )}
               {msg.proposal && !msg.streaming && (
                 <ProposalCard proposal={msg.proposal} chatContext={chatContext} onWorkspaceChanged={onWorkspaceChanged} />
               )}
@@ -309,7 +338,7 @@ function MessageBody({ content }: { content: string }) {
           if (part.startsWith('**') && part.endsWith('**')) {
             return <strong key={pIdx}>{part.slice(2, -2)}</strong>
           }
-          return <span key={pIdx}>{part}</span>
+          return <span key={pIdx}>{withLinks(part)}</span>
         })
 
         if (/^[•\-*]\s/.test(line)) {
@@ -331,6 +360,127 @@ function MessageBody({ content }: { content: string }) {
   )
 }
 
+const MARKDOWN_LINK = /\[([^\]]+)\]\(([^)\s]+)\)/g
+
+/** Markdown links become new-tab links only for http(s) URLs (ai-deep-agent-research R19); anything else stays text. */
+function withLinks(text: string): ReactNode[] {
+  const out: ReactNode[] = []
+  let last = 0
+  for (const match of text.matchAll(MARKDOWN_LINK)) {
+    const [whole, label, href] = match
+    const at = match.index ?? 0
+    if (at > last) out.push(text.slice(last, at))
+    out.push(/^https?:\/\//i.test(href)
+      ? <a key={at} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+      : whole)
+    last = at + whole.length
+  }
+  if (last < text.length) out.push(text.slice(last))
+  return out
+}
+
+type SubagentItem = Extract<ThinkingItem, { kind: 'subagent' }>
+type TraceEntry =
+  | { type: 'item'; item: ThinkingItem }
+  | { type: 'subagent'; key: string; subagent: string; items: SubagentItem[] }
+
+const SUBAGENT_TITLES: Record<string, string> = { research: 'Research', case_report: 'Case report' }
+
+function subagentTitle(name: string): string {
+  return `${SUBAGENT_TITLES[name] ?? 'Specialist'} subagent`
+}
+
+/** Group each subagent run (its spawn line id is the prefix of its later lines) into one entry, in order. */
+function traceEntries(items: ThinkingItem[]): TraceEntry[] {
+  const entries: TraceEntry[] = []
+  const runs = new Map<string, Extract<TraceEntry, { type: 'subagent' }>>()
+  for (const item of items) {
+    if (item.kind !== 'subagent') {
+      entries.push({ type: 'item', item })
+      continue
+    }
+    let run = item.phase === 'spawned' ? undefined
+      : [...runs.values()].find(r => item.id.startsWith(`${r.key}-`))
+    if (!run) {
+      run = { type: 'subagent', key: item.phase === 'spawned' ? item.id : `subagent-${item.subagent}`, subagent: item.subagent, items: [] }
+      runs.set(run.key, run)
+      entries.push(run)
+    }
+    run.items.push(item)
+  }
+  return entries
+}
+
+function SubagentGroup({ run, live }: { run: Extract<TraceEntry, { type: 'subagent' }>; live: boolean }) {
+  const done = [...run.items].reverse().find(item => item.phase === 'returned' || item.phase === 'failed')
+  const status: 'returned' | 'failed' | 'running' | 'stopped' =
+    done?.phase === 'returned' || done?.phase === 'failed' ? done.phase : live ? 'running' : 'stopped'
+  const statusText = { returned: 'returned', failed: 'failed', running: 'running…', stopped: 'stopped' }[status]
+  return (
+    <li className={`ai-chat-subagent ai-chat-subagent--${status}`} data-subagent={run.subagent} data-status={status}>
+      <div className="ai-chat-subagent-header">
+        <span className="ai-chat-subagent-title">{subagentTitle(run.subagent)}</span>
+        <span className="ai-chat-subagent-status">{statusText}</span>
+      </div>
+      <ul className="ai-chat-subagent-steps">
+        {run.items.map(item => (
+          <li key={item.id} className={`ai-chat-thinking-item ai-chat-subagent-item--${item.phase}`}>{item.text}</li>
+        ))}
+      </ul>
+    </li>
+  )
+}
+
+/** Client-side capture/build steps join the case report subagent's group in the trace (R15). */
+function withReportProgress(items: ThinkingItem[] | undefined, state: ReportState): ThinkingItem[] | undefined {
+  const list = items ?? []
+  const spawned = [...list].reverse().find(item => item.kind === 'subagent' && item.subagent === 'case_report' && item.phase === 'spawned')
+  const key = spawned?.id ?? 'subagent-case_report'
+  const step = (suffix: string, text: string, phase: 'step' | 'failed' = 'step'): ThinkingItem =>
+    ({ id: `${key}-client-${suffix}`, kind: 'subagent', subagent: 'case_report', phase, text })
+  // A retry starts clean: drop the previous attempt's client lines.
+  const kept = state.phase === 'queued' ? list.filter(item => !item.id.startsWith(`${key}-client-`)) : list
+  if (state.phase === 'queued') return kept
+  if (state.phase === 'capturing') return upsertThinking(kept, step('capture', `Capturing views (${state.done}/${state.total})`))
+  if (state.phase === 'building') return upsertThinking(kept, step('build', 'Building PDF'))
+  if (state.phase === 'ready') return upsertThinking(kept, step('ready', `Report ready (${state.pages} pages)`))
+  return upsertThinking(kept, step('failed', state.error, 'failed'))
+}
+
+function ReportCard({ report, onRetry }: { report: { job: ReportJob; state: ReportState }; onRetry: () => void }) {
+  const { job, state } = report
+  return (
+    <div className="ai-chat-report-card" aria-label="Case report">
+      <div className="ai-chat-report-title">
+        <FileText size={14} aria-hidden />
+        <span>{job.title}</span>
+      </div>
+      {state.phase === 'queued' && <div className="ai-chat-report-status">Preparing captures…</div>}
+      {state.phase === 'capturing' && (
+        <div className="ai-chat-report-status" role="status">Capturing views ({state.done}/{state.total})</div>
+      )}
+      {state.phase === 'building' && <div className="ai-chat-report-status" role="status">Building PDF…</div>}
+      {state.phase === 'ready' && (
+        <>
+          <div className="ai-chat-report-status">PDF · {state.pages} pages · demonstration only</div>
+          <div className="ai-chat-report-actions">
+            <a className="btn btn--primary btn--xs" href={state.pdfUrl} target="_blank" rel="noopener noreferrer">Open PDF</a>
+            <a className="btn btn--secondary btn--xs" href={state.pdfUrl} download={`case-report-${job.reportId.slice(0, 8)}.pdf`}>Download</a>
+          </div>
+        </>
+      )}
+      {state.phase === 'failed' && (
+        <>
+          <div className="ai-chat-report-error" role="alert">{state.error}</div>
+          <div className="ai-chat-report-actions">
+            <button type="button" className="btn btn--secondary btn--xs" onClick={onRetry}>Try again</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 /** Replace an item with the same id (a step's result supersedes its "…" label), else append. */
 function upsertThinking(items: ThinkingItem[] | undefined, item: ThinkingItem): ThinkingItem[] {
   const list = items ?? []
@@ -347,11 +497,12 @@ function formatThoughtDuration(ms?: number): string {
 
 /** Live "Thinking…" trace while waiting; collapses to an expandable summary once answered. */
 function ThinkingTrace({ items, live, thoughtMs }: { items: ThinkingItem[]; live: boolean; thoughtMs?: number }) {
+  const entries = traceEntries(items)
   const list = items.length > 0 && (
     <ul className="ai-chat-thinking-list">
-      {items.map(item => (
-        <li key={item.id} className={`ai-chat-thinking-item ai-chat-thinking-item--${item.kind}`}>{item.text}</li>
-      ))}
+      {entries.map(entry => entry.type === 'subagent'
+        ? <SubagentGroup key={entry.key} run={entry} live={live} />
+        : <li key={entry.item.id} className={`ai-chat-thinking-item ai-chat-thinking-item--${entry.item.kind}`}>{entry.item.text}</li>)}
     </ul>
   )
   if (live) {
@@ -367,12 +518,14 @@ function ThinkingTrace({ items, live, thoughtMs }: { items: ThinkingItem[]; live
   }
   if (!items.length) return null
   const steps = items.filter(item => item.kind === 'step').length
+  const subagents = entries.filter(entry => entry.type === 'subagent').length
   return (
     <details className="ai-chat-thinking">
       <summary className="ai-chat-thinking-label">
         <ChevronRight size={12} className="ai-chat-thinking-chevron" aria-hidden />
         {formatThoughtDuration(thoughtMs)}
         {steps > 0 && ` · ${steps} ${steps === 1 ? 'step' : 'steps'}`}
+        {subagents > 0 && ` · ${subagents} ${subagents === 1 ? 'subagent' : 'subagents'}`}
       </summary>
       {list}
     </details>

@@ -397,3 +397,59 @@ describe('AnnotationOverlay builders', () => {
     expect(staleId).toBeNull()
   })
 })
+
+function colorsOf(objs: THREE.Object3D[]): number[] {
+  const out: number[] = []
+  for (const obj of objs) {
+    obj.traverse((child) => {
+      const mat = (child as THREE.Mesh).material as THREE.Material & { color?: THREE.Color }
+      if (mat && mat.color instanceof THREE.Color && !(child instanceof THREE.Sprite)) out.push(mat.color.getHex())
+    })
+  }
+  return out
+}
+
+describe('annotation colours (annotation-color-system)', () => {
+  it('S1: a line coloured emerald draws its segment and both endpoint glyphs in #10B981', () => {
+    const scene = new THREE.Scene()
+    const prev = { current: new Map<string, THREE.Object3D[]>() }
+    const line = ann({ type: 'line', points: [[0, 0, 0], [10, 0, 0]], meta: { color: 'emerald' } })
+    syncAnnotationObjects(scene, [line], prev)
+    const colors = colorsOf(prev.current.get('ann-1') ?? [])
+    expect(colors.length).toBeGreaterThanOrEqual(3)
+    expect(new Set(colors)).toEqual(new Set([0x10b981]))
+  })
+
+  it('S2: an ROI with no colour stays amber', () => {
+    expect(new Set(colorsOf(buildROIBox(ann({ type: 'roi', points: [[0, 0, 0], [10, 10, 10]] }))))).toEqual(
+      new Set([0xf59e0b]),
+    )
+  })
+
+  it('a plane coloured slate draws its fill, outline and origin glyph in slate', () => {
+    const objs = buildPlane(ann({ type: 'plane', points: [[0, 0, 0]], meta: { color: 'slate', normal: [0, 0, 1] } }))
+    expect(new Set(colorsOf(objs))).toEqual(new Set([0x64748b]))
+  })
+
+  it('angle arms and vertex, closed curves and highlight overlays use the annotation colour', () => {
+    const angle = buildAngleArc(ann({ type: 'angle', points: [[1, 0, 0], [0, 0, 0], [0, 1, 0]], meta: { color: 'rose' } }))
+    expect(new Set(colorsOf(angle))).toEqual(new Set([0xf43f5e]))
+    const curve = buildCurvePolyline(ann({ type: 'closed_curve', points: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], meta: { color: 'amber' } }), true)
+    expect(colorsOf(curve ? [curve] : [])).toEqual([0xf59e0b])
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial())
+    const hl = buildHighlightOverlay(ann({ type: 'highlight', points: [[0, 0, 0]], meta: { color: 'slate', triangleIndices: [0] } }), mesh)
+    expect(colorsOf(hl ? [hl] : [])).toEqual([0x64748b])
+  })
+
+  it('R7: the placement preview uses the colour selected for placement', () => {
+    const scene = new THREE.Scene()
+    const prev = { current: new Map<string, THREE.Object3D[]>() }
+    syncAnnotationObjects(scene, [], prev, null, undefined, {
+      type: 'line',
+      points: [[0, 0, 0]],
+      hoverCursor: [5, 0, 0],
+      color: 'emerald',
+    })
+    expect(new Set(colorsOf(prev.current.get('__preview__') ?? []))).toEqual(new Set([0x10b981]))
+  })
+})

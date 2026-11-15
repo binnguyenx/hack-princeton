@@ -244,3 +244,121 @@ describe('chat conversation scope guards', () => {
     expect(screen.queryByText('Inspect skull')).toBeNull()
   })
 })
+
+describe('subagent trace and source links (ai-deep-agent-research R18, R19)', () => {
+  async function answer(explanation: string, thinking: Parameters<typeof ndjsonResponse>[1]) {
+    vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+      const request = JSON.parse(options.body)
+      return ndjsonResponse({ request_id: request.request_id, conversation_id: request.conversation_id, mode: 'gemini-read-only',
+        outcome: { status: 'completed', explanation, context: { ...context, selected_object_id: 'source', revision_id: null },
+          observation: { scope: 'application-read' } } }, thinking)
+    }))
+    render(<AiChatPanel chatContext={panelContext} open={true} onOpenChange={vi.fn()} />)
+    const input = await waitFor(() => {
+      const box = screen.getByLabelText('Message for AI assistant') as HTMLTextAreaElement
+      expect(box.disabled).toBe(false)
+      return box
+    })
+    fireEvent.change(input, { target: { value: 'Papers on PEEK?' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send message to AI assistant' }))
+  }
+
+  it('S9: groups a research subagent run with its steps and result, counted separately in the summary', async () => {
+    await answer('PEEK had fewer infections [1].', [
+      { id: 'step-k', kind: 'step', text: 'Searching the clinical knowledge base: no verified protocol covers this' },
+      { id: 'subagent-t1', kind: 'subagent', subagent: 'research', phase: 'spawned', text: 'Spawned research subagent: PEEK infection' },
+      { id: 'subagent-t1-s1', kind: 'subagent', subagent: 'research', phase: 'step', text: 'Searching PubMed for “PEEK”…' },
+      { id: 'subagent-t1-s1', kind: 'subagent', subagent: 'research', phase: 'step', text: 'PubMed: 2 results' },
+      { id: 'subagent-t1-done', kind: 'subagent', subagent: 'research', phase: 'returned', text: 'Research subagent returned 2 sources: PEEK…' },
+    ])
+    await waitFor(() => expect(screen.getByText('PEEK had fewer infections [1].')).toBeTruthy())
+    const summary = screen.getByText(/1 step · 1 subagent/)
+    const group = summary.closest('details')!.querySelector('[data-subagent="research"]') as HTMLElement
+    expect(group).toBeTruthy()
+    expect(group.textContent).toContain('Research subagent')
+    expect(group.textContent).toContain('PubMed: 2 results')
+    expect(group.textContent).toContain('returned 2 sources')
+    expect(group.textContent).not.toContain('Searching PubMed for “PEEK”…')
+    expect(group.getAttribute('data-status')).toBe('returned')
+  })
+
+  it('S8: http(s) markdown links open in a new tab; other schemes stay plain text', async () => {
+    await answer('See [PubMed](https://pubmed.ncbi.nlm.nih.gov/1/) and [x](javascript:alert(1)).', [])
+    const link = await waitFor(() => screen.getByRole('link', { name: 'PubMed' }))
+    expect(link.getAttribute('href')).toBe('https://pubmed.ncbi.nlm.nih.gov/1/')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('rel')).toContain('noopener')
+    expect(screen.queryByRole('link', { name: 'x' })).toBeNull()
+    expect(screen.getByText(/\[x\]\(javascript:alert\(1\)\)/)).toBeTruthy()
+  })
+})
+
+describe('case report card (ai-case-report R15–R17, S9)', () => {
+  const job = { report_id: 'rep-1', status: 'needs-captures', title: 'Defect review', shots: [
+    { id: 'shot-01', kind: 'view', section: 'hero', preset: 'left', objects: ['source'], title: '' },
+    { id: 'shot-02', kind: 'slices', section: 'slices', centre: 'defect', title: '' }] }
+  const renderer = {
+    captureView: vi.fn(async () => new Blob(['v'], { type: 'image/png' })),
+    captureSlices: vi.fn(async () => new Blob(['s'], { type: 'image/png' })),
+  }
+
+  function stubServer(uploads: Array<{ status: number; body: unknown }>) {
+    const fetchMock = vi.fn(async (url: string, options: RequestInit) => {
+      if (String(url).includes('/captures')) {
+        const next = uploads.shift()!
+        return new Response(JSON.stringify(next.body), { status: next.status, headers: { 'Content-Type': 'application/json' } })
+      }
+      const request = JSON.parse(String(options.body))
+      return ndjsonResponse({ request_id: request.request_id, conversation_id: request.conversation_id, mode: 'gemini-read-only',
+        outcome: { status: 'completed', explanation: 'Your case report is being prepared.',
+          context: { ...context, selected_object_id: 'source', revision_id: null }, observation: { scope: 'application-read' } },
+        report_job: { ...job, conversation_id: request.conversation_id } }, [
+        { id: 'subagent-t1', kind: 'subagent', subagent: 'case_report', phase: 'spawned', text: 'Spawned case report subagent: report' },
+        { id: 'subagent-t1-r1', kind: 'subagent', subagent: 'case_report', phase: 'step', text: 'Reading the conversation…' },
+        { id: 'subagent-t1-done', kind: 'subagent', subagent: 'case_report', phase: 'returned', text: 'Case report subagent returned: Submitted.' }])
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  async function ask() {
+    render(<AiChatPanel chatContext={panelContext} open={true} onOpenChange={vi.fn()} reportRenderer={renderer} />)
+    const input = await waitFor(() => {
+      const box = screen.getByLabelText('Message for AI assistant') as HTMLTextAreaElement
+      expect(box.disabled).toBe(false)
+      return box
+    })
+    fireEvent.change(input, { target: { value: 'Make a case report' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send message to AI assistant' }))
+  }
+
+  const ready = { status: 200, body: { report: { report_id: 'rep-1', conversation_id: 'x', status: 'ready', title: 'Defect review', pages: 7, error: null } } }
+
+  it('captures, builds and shows Open PDF / Download, with progress in the case report group', async () => {
+    stubServer([ready])
+    await ask()
+    const open = await waitFor(() => screen.getByRole('link', { name: 'Open PDF' }))
+    expect(open.getAttribute('href')).toBe('/api/ai/reports/rep-1.pdf')
+    expect(open.getAttribute('target')).toBe('_blank')
+    expect(screen.getByRole('link', { name: 'Download' }).getAttribute('download')).toBeTruthy()
+    expect(screen.getByLabelText('Case report').textContent).toContain('7 pages')
+    const group = document.querySelector('[data-subagent="case_report"]') as HTMLElement
+    expect(group.textContent).toContain('Capturing views (2/2)')
+    expect(group.textContent).toContain('Report ready')
+    expect(renderer.captureView).toHaveBeenCalled()
+    expect(renderer.captureSlices).toHaveBeenCalled()
+  })
+
+  it('a failed build shows the error and Try again re-runs capture and build without another chat request', async () => {
+    const fetchMock = stubServer([{ status: 500, body: { error: 'The PDF could not be built.', code: 'pdf-build-failed' } }, ready])
+    await ask()
+    await waitFor(() => expect(screen.getByLabelText('Case report').textContent).toContain('The PDF could not be built'))
+    expect((document.querySelector('[data-subagent="case_report"]') as HTMLElement).getAttribute('data-status')).toBe('failed')
+    const chatCalls = () => fetchMock.mock.calls.filter(([url]) => !String(url).includes('/captures')).length
+    expect(chatCalls()).toBe(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Open PDF' })).toBeTruthy())
+    expect(chatCalls()).toBe(1)
+  })
+})
+

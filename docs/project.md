@@ -24,7 +24,7 @@ Draft product intent (not yet an accepted feature folder): `hackprinceton_intent
 
 ## Sample data
 
-Curated SkullBreak cases for manual inspection and later training: [`data/`](../data/README.md) (`samples/` committed; `raw/` zip gitignored). Inspection steps for humans and agents are in that README.
+Curated SkullBreak and MUG500+ (real craniotomy) cases for manual inspection, demos and later training: [`data/`](../data/README.md) (`samples/` committed; `raw/` zip gitignored). Inspection steps for humans and agents are in that README.
 
 ## Features
 
@@ -40,7 +40,10 @@ Curated SkullBreak cases for manual inspection and later training: [`data/`](../
 | [Canvas workspace Slicer relaunch](../features/3d-bone-editor/canvas-workspace-improve/intent.md) | shipped | Cross-reference Workbench: Slicer mouse nav, synchronized Axial/Sagittal/Coronal dock, Window/Level + Place modes, RAS truth, WebGL rebuild recovery. Advanced layer/keyboard/stereo parity deferred in plan Deviations. |
 | [Canvas bookmark bar](../features/3d-bone-editor/canvas-bookmark-bar/intent.md) | shipped | VS Code–like document tabs: +, sample picker with `q=` search, switch/close, dirty Save/Discard, last-tab reopens picker; session-only tabs. |
 | [Business UI polish](../features/3d-bone-editor/business-ui-polish/intent.md) | shipped | Radix-first redesign of management surfaces with consistency hardening and UI-glitch regression tests. |
-| [Mechanical last parts](../features/3d-bone-editor/mechanical-last-parts/intent.md) | shipped | Revision-scoped annotations/measurement (Place stack, panel, overlays); behavior classes for select/RMB, angle place, plane/ROI gizmos. |
+| [Mechanical last parts](../features/3d-bone-editor/mechanical-last-parts/intent.md) | shipped | Revision-scoped annotations/measurement (Place stack, panel, overlays); behavior classes for select/RMB, angle place, plane/ROI gizmos. 2026-11-15: ray-based plane move/tilt/size and ROI face/move handles, Escape/cancel revert (R88–R95; manual browser check pending). |
+| [ai-deep-agent-research](../features/ai-deep-agent-research/intent.md) | shipped | Assistant runs on LangChain Deep Agents (no filesystem tools, same tools/stream/memory as before) with a read-only research subagent (Wikipedia, arXiv, PubMed) whose spawn, searches and cited result show in the thinking trace. Live-model eval still to run. |
+| [ai-case-report](../features/ai-case-report/intent.md) | in progress | Case report subagent plans a University of South Florida case report; the browser captures views and slice panels offscreen; the server builds the PDF (reportlab), kept per chat session. Built and unit/integration-tested; browser capture awaits a manual check. |
+| [annotation-color-system](../features/annotation-color-system/intent.md) | shipped | Shared 5-colour palette (canvas only, DESIGN.md) for every annotation type, at placement and per row; emphasis keeps hue; persistence unchanged. |
 | [Canvas interaction contracts](../features/canvas-interaction-contracts/intent.md) | shipped | A shared ownership contract for canvas navigation, placement, selection, and direct manipulation; future agents call supported semantic tool APIs rather than simulating canvas input. |
 | [ml-model](../features/ml-model/intent.md) | in progress | Training and evaluation pipeline for direct 3D missing-cranial-bone completion on SageMaker. |
 
