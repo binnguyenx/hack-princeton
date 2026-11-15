@@ -1,6 +1,6 @@
 # Spec: Mechanical last parts — annotation, measurement, and spatial markup
 
-Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-15
+Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14 (Close on `integrate/canvas-mechanical`)
 
 ## Summary
 
@@ -313,9 +313,9 @@ Pure functions, no side effects, fully testable without a DOM:
 | State construction | `app/src/state/store.ts`, `app/src/ops/session.ts` (createProject, seedEmptyProject), `app/src/App.tsx` (setStoreFromManifest), `app/src/io/projectPackage.ts` (loadProjectPackage) |
 | File-based persistence | `app/src/io/projectPackage.ts` — ProjectManifest.annotations, saveProjectPackage, loadProjectPackage |
 | Ops | `app/src/ops/session.ts`, `app/src/ops/index.ts` |
-| Storage | `app/server/storageSqlite.ts` — annotations table, listAnnotations, createAnnotation, updateAnnotation, deleteAnnotation; projectManifest joined query |
-| API routes | `app/server/api.ts` |
-| API client | `app/src/api/client.ts` |
+| Storage (HTTP) | `backend/ai/src/skullfix_ai/application/sqlite.py` — `annotations` table + list/create/update/delete; joined into project manifest |
+| API routes | `backend/ai/src/skullfix_ai/api/routes/annotations.py` — `GET/POST /api/revisions/{id}/annotations`, `PATCH/DELETE /api/annotations/{id}` |
+| API client | `app/src/api/client.ts` (`listAnnotations` / `createAnnotation` / `updateAnnotation` / `deleteAnnotation`) |
 | App orchestration | `app/src/App.tsx` — annotation handlers, state passing |
 | Placement UX | `app/src/ui/CanvasWorkspace.tsx` — activeAnnotationType prop, ContextStrip type selector, in-progress placement local state |
 | Annotation panel | `app/src/ui/Inspector.tsx`, `app/src/ui/AnnotationList.tsx`, `app/src/ui/annotationActions.ts`, `app/src/ui/annotationActionMenu.tsx` |
@@ -357,6 +357,7 @@ Pure functions, no side effects, fully testable without a DOM:
 
 ## Flagged concerns
 
+- **Express `annotationStorage.test.ts`:** still imports deleted `app/server/storageSqlite`; FastAPI coverage is `backend/ai/tests/integration/api/test_annotations.py`. Port or drop the Node storage test when convenient.
 - **Carry-forward on revision create:** annotations do not automatically carry to a new revision. This is correct for review integrity but may feel awkward in an iterative workflow. Recorded in D1; deferred.
 
 - **Highlight triangle index stability:** indices are stable only as long as the display mesh for a revision does not change. R64 and S21 define the graceful degradation behavior.

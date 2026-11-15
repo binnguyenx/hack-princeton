@@ -55,6 +55,7 @@ import {
   applyPlacementPoint,
   defaultAnnotationName,
 } from './geometry/annotationPlacement'
+import { resolveHighlightStroke } from './geometry/highlightPaint'
 import type { PlacementApi } from './ui/CanvasWorkspace'
 import {
   fetchPreparedSample,
@@ -1892,7 +1893,22 @@ export default function App() {
                   brushRadiusMm={brushRadiusMm}
                   onBrushRadiusChange={setBrushRadiusMm}
                   highlightColor={highlightColor}
-                  onHighlightColorChange={setHighlightColor}
+                  onHighlightColorChange={(color) => {
+                    // Color change starts a new brush; keep prior stack entries.
+                    highlightStackIdRef.current = null
+                    const draft = placementApiRef.current?.getDraft()
+                    if (draft) {
+                      placementApiRef.current?.setDraft({
+                        points: draft.points,
+                        meta: {
+                          ...draft.meta,
+                          color,
+                          triangleIndices: [],
+                        },
+                      })
+                    }
+                    setHighlightColor(color)
+                  }}
                   onCrosshairChange={setCrosshairIjk}
                   onWindowChange={(center, width) => {
                     setWindowCenter(center)
@@ -2141,24 +2157,34 @@ export default function App() {
                           points: [[0, 0, 0]] as RasPoint[],
                           meta: {},
                         }
-                      const prev =
-                        (draft.meta.triangleIndices as number[] | undefined) ??
-                        []
-                      const merged = [
-                        ...new Set([...prev, ...triangleIndices]),
-                      ]
+                      const stack = annotationStackRef.current
+                      const activeId = highlightStackIdRef.current
+                      const activeEntry =
+                        activeId == null
+                          ? null
+                          : (stack.entries().find((e) => e.id === activeId) ??
+                            null)
+                      const resolved = resolveHighlightStroke({
+                        activeEntry,
+                        strokeIndices: triangleIndices,
+                        color: highlightColor,
+                        draftTriangleIndices: Array.isArray(
+                          draft.meta.triangleIndices,
+                        )
+                          ? (draft.meta.triangleIndices as number[])
+                          : [],
+                      })
                       const points =
                         draft.points.length > 0
                           ? draft.points
                           : ([[0, 0, 0]] as RasPoint[])
                       const meta = {
                         ...draft.meta,
-                        color: highlightColor,
+                        color: resolved.color,
                         brushRadiusMm,
-                        triangleIndices: merged,
+                        triangleIndices: resolved.triangleIndices,
                       }
                       placementApiRef.current?.setDraft({ points, meta })
-                      const stack = annotationStackRef.current
                       const payload = {
                         type: 'highlight' as const,
                         name: defaultAnnotationName('highlight'),
@@ -2166,8 +2192,9 @@ export default function App() {
                         meta,
                         revisionId: candidate.currentRevisionId,
                       }
-                      if (highlightStackIdRef.current) {
-                        stack.upsertCreate(highlightStackIdRef.current, payload)
+                      if (resolved.mode === 'upsert' && resolved.id) {
+                        stack.upsertCreate(resolved.id, payload)
+                        highlightStackIdRef.current = resolved.id
                       } else {
                         highlightStackIdRef.current = stack.pushCreate(payload)
                       }

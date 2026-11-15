@@ -1,6 +1,6 @@
 # Spec: Canvas bookmark bar (multi-document tabs)
 
-Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14 (Close)
+Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14 (Close on `integrate/canvas-mechanical`)
 
 ## Summary
 
@@ -69,7 +69,7 @@ Session `dirty` remains the single workspace flag (not per-tab). Today some muta
 - Dirty clear: `app/src/ops/session.ts` (`clearDirty`)
 - Wiring: `app/src/App.tsx`, `app/src/api/client.ts` (`searchProjectSamples`), `app/src/App.css`
 - Live API: `backend/ai/src/skullfix_ai/api/routes/application.py` (`GET /projects/{id}/samples`), `backend/ai/src/skullfix_ai/application/sqlite.py` (`search_project_samples`)
-- Tests: `app/tests/documentTabClose.test.ts`, `app/tests/ui/documentTaskbar.test.tsx`, `app/tests/ui/samplePickerDialog.test.tsx`, `app/tests/ui/confirmCloseDocumentDialog.test.tsx`, `backend/ai/tests/integration/application/test_repository.py` (search cases)
+- Tests: `app/tests/documentTabs.test.ts`, `app/tests/documentTabClose.test.ts`, `app/tests/ui/documentTaskbar.test.tsx`, `app/tests/ui/samplePickerDialog.test.tsx`, `app/tests/ui/confirmCloseDocumentDialog.test.tsx`, `backend/ai/tests/integration/application/test_repository.py` (`test_search_project_samples_filters_by_display_name_and_case_name`)
 
 ## Decisions
 

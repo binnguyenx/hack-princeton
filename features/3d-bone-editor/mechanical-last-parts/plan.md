@@ -1,8 +1,8 @@
  # Plan: Mechanical last parts — annotation, measurement, and spatial markup
 
-   Spec: [spec.md](spec.md) · Status: done · Date: 2026-11-15
+   Spec: [spec.md](spec.md) · Status: done · Date: 2026-11-14
 
-> Historical: implemented 2026-11-14. See Deviations.
+> Historical: implemented 2026-11-14; Close re-verified on `integrate/canvas-mechanical`. See Deviations.
 
    ## Approach
 
@@ -646,6 +646,12 @@
      A→vertex→B with segmented preview + ContextStrip hint. Plane/ROI use torus/box gizmos writing
      through stack or local+API update; full gizmo E2E skipped this slice (unit math + overlay
      emphasis cover proof). Landmark remains Place-hidden.
+   - **Integrate with canvas-bookmark-bar + FastAPI sync (2026-11-14):** Merged onto
+     `integrate/canvas-mechanical` after Express `app/server/*` deletion. Annotation HTTP CRUD
+     ported to FastAPI (`annotations` table + `api/routes/annotations.py`); proof:
+     `backend/ai/tests/integration/api/test_annotations.py`. Node `annotationStorage.test.ts`
+     still imports deleted Express storage — superseded by the Python API suite. Playwright
+     full Phase 1/2 suites not re-run at Close (prior Deviation on E2E depth still applies).
 
    ---
 

@@ -15,6 +15,7 @@ from .routes.measurements import create_measurement_router
 from .routes.voxel_operations import create_voxel_router
 from skullfix_ai.application.voxel_operations import BinaryVoxelAdapter
 from .routes.landmarks import create_landmark_router
+from .routes.annotations import create_annotation_router
 from .routes.packages import create_package_router
 
 ALL_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
@@ -59,6 +60,7 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app.include_router(create_placement_router())
     app.include_router(create_package_router())
     app.include_router(create_landmark_router())
+    app.include_router(create_annotation_router())
     app.include_router(create_measurement_router())
     app.state.voxel_adapter = BinaryVoxelAdapter()
     app.include_router(create_voxel_router())

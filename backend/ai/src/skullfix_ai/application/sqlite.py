@@ -101,6 +101,19 @@ DDL = """
       created_at TEXT NOT NULL,
       FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS annotations (
+      id TEXT PRIMARY KEY,
+      revision_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      points_json TEXT NOT NULL,
+      meta_json TEXT NOT NULL,
+      locked INTEGER NOT NULL DEFAULT 0,
+      visible INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (revision_id) REFERENCES candidate_revisions(id) ON DELETE CASCADE
+    );
   """
 
 
@@ -266,7 +279,144 @@ class ApplicationRepository:
         points = records(db, [sample['id'] for sample in samples])
         if points:
             result['landmarks'] = points
+        annotations = [
+            self._annotation_row(r)
+            for r in db.execute(
+                "SELECT a.id, a.revision_id, a.type, a.name, a.points_json, a.meta_json, "
+                "a.locked, a.visible, a.created_at FROM annotations a "
+                "JOIN candidate_revisions r ON r.id=a.revision_id "
+                "JOIN candidates c ON c.id=r.candidate_id "
+                "JOIN samples s ON s.id=c.sample_id "
+                "JOIN cases k ON k.id=s.case_id "
+                "WHERE k.project_id=? ORDER BY a.created_at, a.id",
+                (project_id,),
+            )
+        ]
+        if annotations:
+            result["annotations"] = annotations
         return result
+
+    @staticmethod
+    def _annotation_row(row):
+        return {
+            "id": row["id"],
+            "revisionId": row["revision_id"],
+            "type": row["type"],
+            "name": row["name"],
+            "points": json.loads(row["points_json"]),
+            "meta": json.loads(row["meta_json"]),
+            "locked": row["locked"] == 1,
+            "visible": row["visible"] == 1,
+            "createdAt": row["created_at"],
+        }
+
+    def list_annotations(self, revision_id):
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT id, revision_id, type, name, points_json, meta_json, locked, visible, created_at "
+                "FROM annotations WHERE revision_id=? ORDER BY created_at, id",
+                (revision_id,),
+            )
+            return [self._annotation_row(r) for r in rows]
+
+    def create_annotation(self, revision_id, fields):
+        annotation_type = fields.get("type")
+        name = fields.get("name")
+        points = fields.get("points")
+        if not annotation_type or not name or not isinstance(points, list):
+            raise ValueError("type, name, and points are required")
+        with self._db() as db:
+            if db.execute(
+                "SELECT id FROM candidate_revisions WHERE id=?", (revision_id,)
+            ).fetchone() is None:
+                raise ValueError(f"Revision {revision_id} not found")
+            identity = str(uuid4())
+            created_at = fields.get("createdAt") or _now()
+            locked = 1 if fields.get("locked") else 0
+            visible = 0 if fields.get("visible") is False else 1
+            meta = fields.get("meta") if isinstance(fields.get("meta"), dict) else {}
+            with self._transaction(db):
+                db.execute(
+                    "INSERT INTO annotations("
+                    "id, revision_id, type, name, points_json, meta_json, locked, visible, created_at"
+                    ") VALUES(?,?,?,?,?,?,?,?,?)",
+                    (
+                        identity,
+                        revision_id,
+                        annotation_type,
+                        name,
+                        _json(points),
+                        _json(meta),
+                        locked,
+                        visible,
+                        created_at,
+                    ),
+                )
+            return {
+                "id": identity,
+                "revisionId": revision_id,
+                "type": annotation_type,
+                "name": name,
+                "points": points,
+                "meta": meta,
+                "locked": locked == 1,
+                "visible": visible == 1,
+                "createdAt": created_at,
+            }
+
+    def update_annotation(self, annotation_id, partial):
+        with self._db() as db:
+            row = db.execute(
+                "SELECT id, revision_id, type, name, points_json, meta_json, locked, visible, created_at "
+                "FROM annotations WHERE id=?",
+                (annotation_id,),
+            ).fetchone()
+            if row is None:
+                raise ValueError(f"Annotation {annotation_id} not found")
+            name = partial["name"] if "name" in partial and partial["name"] is not None else row["name"]
+            points_json = (
+                _json(partial["points"])
+                if "points" in partial and partial["points"] is not None
+                else row["points_json"]
+            )
+            meta_json = (
+                _json(partial["meta"])
+                if "meta" in partial and isinstance(partial["meta"], dict)
+                else row["meta_json"]
+            )
+            locked = (
+                (1 if partial["locked"] else 0)
+                if "locked" in partial and partial["locked"] is not None
+                else row["locked"]
+            )
+            visible = (
+                (1 if partial["visible"] else 0)
+                if "visible" in partial and partial["visible"] is not None
+                else row["visible"]
+            )
+            with self._transaction(db):
+                db.execute(
+                    "UPDATE annotations SET name=?, points_json=?, meta_json=?, locked=?, visible=? WHERE id=?",
+                    (name, points_json, meta_json, locked, visible, annotation_id),
+                )
+            return self._annotation_row(
+                {
+                    "id": row["id"],
+                    "revision_id": row["revision_id"],
+                    "type": row["type"],
+                    "name": name,
+                    "points_json": points_json,
+                    "meta_json": meta_json,
+                    "locked": locked,
+                    "visible": visible,
+                    "created_at": row["created_at"],
+                }
+            )
+
+    def delete_annotation(self, annotation_id):
+        with self._db() as db:
+            with self._transaction(db):
+                db.execute("DELETE FROM annotations WHERE id=?", (annotation_id,))
 
     def read_package_snapshot(self, project_id):
         """One read-only metadata snapshot; missing/corrupt blobs abort the export."""
