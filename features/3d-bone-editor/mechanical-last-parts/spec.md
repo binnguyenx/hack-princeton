@@ -1,6 +1,6 @@
 # Spec: Mechanical last parts — annotation, measurement, and spatial markup
 
-Intent: [intent.md](intent.md) · Status: draft · Last updated: 2026-11-15
+Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14
 
 ## Summary
 
@@ -311,11 +311,11 @@ Pure functions, no side effects, fully testable without a DOM:
 | API client | `app/src/api/client.ts` |
 | App orchestration | `app/src/App.tsx` — annotation handlers, state passing |
 | Placement UX | `app/src/ui/CanvasWorkspace.tsx` — activeAnnotationType prop, ContextStrip type selector, in-progress placement local state |
-| Annotation panel | `app/src/ui/Inspector.tsx` — AnnotationList section |
-| Viewport overlay | `app/src/viewport/AnnotationOverlay.tsx` (new) |
-| Measurement math | `app/src/geometry/annotationMeasure.ts` (new) |
-| Unit tests | `app/tests/annotationMeasure.test.ts` (new), `app/tests/annotationOps.test.ts` (new), `app/tests/ui/inspector.test.tsx` (extended) |
-| E2E tests | `app/e2e/annotation-phase1.spec.ts` (new), `app/e2e/annotation-phase2.spec.ts` (new) |
+| Annotation panel | `app/src/ui/Inspector.tsx`, `app/src/ui/AnnotationList.tsx`, `app/src/ui/annotationActions.ts` |
+| Viewport overlay | `app/src/viewport/AnnotationOverlay.ts` (builders + `syncAnnotationObjects`) |
+| Measurement math | `app/src/geometry/annotationMeasure.ts` |
+| Unit tests | `app/tests/annotationMeasure.test.ts`, `app/tests/annotationOps.test.ts`, `app/tests/annotationStorage.test.ts`, `app/tests/annotationOverlay.test.ts`, `app/tests/ui/inspector.annotation.test.tsx`, `app/tests/ui/canvasWorkspace.test.tsx` |
+| E2E tests | `app/e2e/annotation-phase1.spec.ts`, `app/e2e/annotation-phase2.spec.ts` |
 
 ---
 

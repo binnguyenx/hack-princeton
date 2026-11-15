@@ -1,6 +1,6 @@
 # UI journeys: annotation, measurement, and spatial markup
 
-Spec: [spec.md](spec.md) · Status: draft · Last updated: 2026-11-15
+Spec: [spec.md](spec.md) · Status: accepted · Last updated: 2026-11-14
 
 ---
 
