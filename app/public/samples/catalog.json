@@ -1,5 +1,26 @@
 [
   {
+    "id": "mug500-b0004-frontoparietal",
+    "label": "mug500-b0004-frontoparietal",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/mug500-b0004-frontoparietal",
+    "license": "CC BY 4.0"
+  },
+  {
+    "id": "mug500-b0010-hemicraniectomy",
+    "label": "mug500-b0010-hemicraniectomy",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/mug500-b0010-hemicraniectomy",
+    "license": "CC BY 4.0"
+  },
+  {
+    "id": "mug500-b0022-frontotemporal",
+    "label": "mug500-b0022-frontotemporal",
+    "primaryVolume": "defective_skull.nrrd",
+    "baseUrl": "/samples/mug500-b0022-frontotemporal",
+    "license": "CC BY 4.0"
+  },
+  {
     "id": "skullbreak-000-parietotemporal",
     "label": "skullbreak-000-parietotemporal",
     "primaryVolume": "defective_skull.nrrd",

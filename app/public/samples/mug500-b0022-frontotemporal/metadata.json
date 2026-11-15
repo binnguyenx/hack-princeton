@@ -1,0 +1,47 @@
+{
+  "sampleId": "mug500-b0022-frontotemporal",
+  "source": "MUG500+ craniotomy skulls (Li et al., Data in Brief 2021)",
+  "license": "CC BY 4.0",
+  "sourceArchive": "figshare 10.6084/m9.figshare.9616319 \u2014 \"craniotomy skull.zip\"",
+  "sourceCaseId": "B0022",
+  "defectType": "frontotemporal",
+  "defectOrigin": "real surgical craniotomy (not synthetic)",
+  "primaryVolume": "defective_skull.nrrd",
+  "files": {
+    "defective_skull.nrrd": {
+      "sha256": "e08f01bd6ebcf5f35bd5895e0cc65e9fc95ea30f3270135c592ad0ab5ad20882",
+      "byteSize": 427481
+    },
+    "implant.nrrd": {
+      "sha256": "317449b85145a828c8270ccf36370373e4393d7c03a6bbc64bb0dc4f3affea4e",
+      "byteSize": 51295
+    }
+  },
+  "derivation": {
+    "defective_skull.nrrd": "B0022.nrrd re-encoded int16 -> uint8 binary mask, gzip; header geometry unchanged",
+    "implant.nrrd": "B0022_implant.stl (expert-designed, RAS mm) flipped to LPS and voxelized onto the skull grid"
+  },
+  "spatial": {
+    "units": "mm",
+    "space": "left-posterior-superior",
+    "dimension": 3,
+    "sizes": [
+      512,
+      512,
+      167
+    ],
+    "spacings": [
+      0.44140625,
+      0.44140625,
+      1.0
+    ],
+    "bboxMm": [
+      226.0,
+      226.0,
+      167.0
+    ],
+    "orientationNote": "left-posterior-superior; space origin preserved from source"
+  },
+  "r3ToleranceMm": 0.001,
+  "r3ToleranceSpacing": 0.001
+}

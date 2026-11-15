@@ -5,9 +5,9 @@ Bone volumes for manual inspection and future training. **Not** the app project 
 | Path | What | In git? |
 |-|-|-|
 | [`raw/`](raw/) | Full SkullBreak training zip (local download) | No (zip ignored); README + SHA-256 yes |
-| [`samples/`](samples/) | Three curated cases for day-to-day work | Yes |
+| [`samples/`](samples/) | Curated SkullBreak and MUG500+ cases for day-to-day work | Yes |
 
-License: **CC BY-NC-SA 4.0**. Non-commercial; keep attribution. See each sample README and [`raw/README.md`](raw/README.md).
+License: SkullBreak samples are **CC BY-NC-SA 4.0** (non-commercial). MUG500+ samples are **CC BY 4.0**. Keep attribution either way. See each sample README and [`raw/README.md`](raw/README.md).
 
 ## Inspect (humans)
 
@@ -20,8 +20,8 @@ License: **CC BY-NC-SA 4.0**. Non-commercial; keep attribution. See each sample 
 ## Inspect (agents)
 
 1. Read this file and `samples/README.md` before assuming paths.
-2. List samples: `ls data/samples/` — expect three `skullbreak-*` directories plus `README.md`.
-3. Per sample, expect exactly: `README.md`, `complete_skull.nrrd`, `defective_skull.nrrd`, `implant.nrrd`.
+2. List samples: `ls data/samples/`. Expect `skullbreak-*` and `mug500-*` directories plus `README.md`.
+3. Per SkullBreak defect sample, expect `README.md`, `metadata.json`, `complete_skull.nrrd`, `defective_skull.nrrd`, `implant.nrrd`. MUG500+ samples have no `complete_skull.nrrd` (real patients, no intact ground truth).
 4. Verify NRRD magic without a GUI:
 
 ```bash
