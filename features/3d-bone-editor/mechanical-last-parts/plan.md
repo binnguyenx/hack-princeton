@@ -622,8 +622,8 @@
    - **AnnotationOverlay shape:** Implemented as `AnnotationOverlay.ts` exporting pure builders +
      `syncAnnotationObjects` (imperative scene sync from `Viewport` `useEffect`), not a React child
      component. Matches the plan’s Step 7 preferred seam.
-   - **Mid-placement type switch:** Uses `window.confirm` instead of the inline ContextStrip confirm
-     from ui-journeys J-A5. Behaviorally equivalent; polish later if needed.
+   - **Mid-placement type switch:** Silent discard on other-type click; double-click active type exits
+     Place (R40/R41). Dirty-dot on Place strip replaces workbench status-bar draft copy.
    - **E2E depth:** Playwright covers Place-mode type selector smoke (Phase 1+2), source-anatomy gate,
      and API landmark create. Full interactive drag/measurement loops (S2–S8, S10–S12, S14–S18, S21)
      are proven by unit/storage/component suites (`annotationMeasure`, `annotationOps`,
@@ -632,6 +632,20 @@
    - **Unplanned helper:** `app/src/ui/annotationActions.ts` and `app/src/ui/AnnotationList.tsx`
      extract panel types/UI from `Inspector.tsx` for testability (still listed under Inspector in
      Where it lives).
+   - **Draft-commit gestures (2026-11-15):** Spec amended R78–R81 / R41 — placement is ephemeral until
+     ContextStrip **Commit**; shared `canvasGestures` classifier; Place keeps orbit and does not
+     unmount the slice dock. Proof: `npm test -- canvasGestures annotationPlacement canvasWorkspace
+     inspector.annotation` + `npm run build`.
+   - **Place chrome (2026-11-15):** Removed black `canvas-workbench-status` footer; draft feedback is
+     `tab-dirty-indicator` on Place label.
+   - **Uncommitted stack (2026-11-15):** Replaced ContextStrip Commit/Cancel with stack + Mod+S flush
+     and Mod+Z undo (R78). Distance line places via double-click; third point resets (R25). Document
+     tab close shows dirty circle until hover.
+   - **Behavior classes (2026-11-15):** Added `annotationBehaviors/` (Selectable / PointSet /
+     OrientedExtent) + shared `annotationActionMenu` for panel `⋯` and viewport RMB. Angle place is
+     A→vertex→B with segmented preview + ContextStrip hint. Plane/ROI use torus/box gizmos writing
+     through stack or local+API update; full gizmo E2E skipped this slice (unit math + overlay
+     emphasis cover proof). Landmark remains Place-hidden.
 
    ---
 

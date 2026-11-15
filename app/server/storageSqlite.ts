@@ -12,9 +12,12 @@ import {
 } from 'node:fs/promises'
 import { DatabaseSync } from 'node:sqlite'
 import type {
+  Annotation,
+  AnnotationType,
   Case,
   Mat4,
   ProjectSummary,
+  RasPoint,
   Sample,
   SpatialMeta,
 } from '../src/domain/types'
@@ -139,8 +142,47 @@ function initDb(db: DatabaseSync): void {
       FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
       FOREIGN KEY (volume_id) REFERENCES volume_assets(id)
     );
+
+    CREATE TABLE IF NOT EXISTS annotations (
+      id TEXT PRIMARY KEY,
+      revision_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      points_json TEXT NOT NULL,
+      meta_json TEXT NOT NULL,
+      locked INTEGER NOT NULL DEFAULT 0,
+      visible INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (revision_id) REFERENCES candidate_revisions(id) ON DELETE CASCADE
+    );
   `)
   db.prepare('INSERT OR IGNORE INTO users(id, display_name) VALUES(?, ?)').run('local-dev', 'Local Dev')
+}
+
+type AnnotationRow = {
+  id: string
+  revision_id: string
+  type: string
+  name: string
+  points_json: string
+  meta_json: string
+  locked: number
+  visible: number
+  created_at: string
+}
+
+function rowToAnnotation(row: AnnotationRow): Annotation {
+  return {
+    id: row.id,
+    revisionId: row.revision_id,
+    type: row.type as AnnotationType,
+    name: row.name,
+    points: JSON.parse(row.points_json) as RasPoint[],
+    meta: JSON.parse(row.meta_json) as Record<string, unknown>,
+    locked: row.locked === 1,
+    visible: row.visible === 1,
+    createdAt: row.created_at,
+  }
 }
 
 async function withDb<T>(run: (db: DatabaseSync) => T): Promise<T> {
@@ -222,6 +264,19 @@ function projectManifest(db: DatabaseSync, projectId: string): ProjectManifest {
       pose_json: string
       volume_hash: string
     }>
+  const annotations = db
+    .prepare(`
+      SELECT a.id, a.revision_id, a.type, a.name, a.points_json, a.meta_json,
+             a.locked, a.visible, a.created_at
+      FROM annotations a
+      JOIN candidate_revisions r ON r.id = a.revision_id
+      JOIN candidates c ON c.id = r.candidate_id
+      JOIN samples s ON s.id = c.sample_id
+      JOIN cases k ON k.id = s.case_id
+      WHERE k.project_id = ?
+      ORDER BY a.created_at, a.id
+    `)
+    .all(projectId) as AnnotationRow[]
 
   return {
     formatVersion: 1,
@@ -256,6 +311,7 @@ function projectManifest(db: DatabaseSync, projectId: string): ProjectManifest {
       pose: JSON.parse(r.pose_json) as Mat4,
       volumeHash: r.volume_hash,
     })),
+    annotations: annotations.map(rowToAnnotation),
     viewState: emptyViewState(),
     openDocuments: [],
     activeDocumentId: null,
@@ -291,6 +347,115 @@ export async function createProject(name: string): Promise<ProjectSummary> {
 
 export async function getProjectManifest(projectId: string): Promise<ProjectManifest> {
   return withDb((db) => projectManifest(db, projectId))
+}
+
+export type CreateAnnotationFields = {
+  revisionId: string
+  type: AnnotationType
+  name: string
+  points: RasPoint[]
+  meta: Record<string, unknown>
+  locked?: boolean
+  visible?: boolean
+  createdAt?: string
+}
+
+export type UpdateAnnotationFields = {
+  name?: string
+  points?: RasPoint[]
+  meta?: Record<string, unknown>
+  locked?: boolean
+  visible?: boolean
+}
+
+export async function listAnnotations(revisionId: string): Promise<Annotation[]> {
+  return withDb((db) => {
+    const rows = db
+      .prepare(
+        `SELECT id, revision_id, type, name, points_json, meta_json, locked, visible, created_at
+         FROM annotations WHERE revision_id = ? ORDER BY created_at, id`,
+      )
+      .all(revisionId) as AnnotationRow[]
+    return rows.map(rowToAnnotation)
+  })
+}
+
+export async function createAnnotation(fields: CreateAnnotationFields): Promise<Annotation> {
+  return withDb((db) => {
+    const rev = db
+      .prepare('SELECT id FROM candidate_revisions WHERE id = ?')
+      .get(fields.revisionId) as { id: string } | undefined
+    if (!rev) throw new Error(`Revision ${fields.revisionId} not found`)
+    const id = randomUUID()
+    const createdAt = fields.createdAt ?? now()
+    const locked = fields.locked ? 1 : 0
+    const visible = fields.visible === false ? 0 : 1
+    db.prepare(`
+      INSERT INTO annotations(
+        id, revision_id, type, name, points_json, meta_json, locked, visible, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      fields.revisionId,
+      fields.type,
+      fields.name,
+      JSON.stringify(fields.points),
+      JSON.stringify(fields.meta ?? {}),
+      locked,
+      visible,
+      createdAt,
+    )
+    return {
+      id,
+      revisionId: fields.revisionId,
+      type: fields.type,
+      name: fields.name,
+      points: fields.points,
+      meta: fields.meta ?? {},
+      locked: locked === 1,
+      visible: visible === 1,
+      createdAt,
+    }
+  })
+}
+
+export async function updateAnnotation(
+  id: string,
+  partial: UpdateAnnotationFields,
+): Promise<Annotation> {
+  return withDb((db) => {
+    const row = db
+      .prepare(
+        `SELECT id, revision_id, type, name, points_json, meta_json, locked, visible, created_at
+         FROM annotations WHERE id = ?`,
+      )
+      .get(id) as AnnotationRow | undefined
+    if (!row) throw new Error(`Annotation ${id} not found`)
+    const name = partial.name ?? row.name
+    const pointsJson =
+      partial.points !== undefined ? JSON.stringify(partial.points) : row.points_json
+    const metaJson = partial.meta !== undefined ? JSON.stringify(partial.meta) : row.meta_json
+    const locked = partial.locked !== undefined ? (partial.locked ? 1 : 0) : row.locked
+    const visible = partial.visible !== undefined ? (partial.visible ? 1 : 0) : row.visible
+    db.prepare(
+      `UPDATE annotations SET name = ?, points_json = ?, meta_json = ?, locked = ?, visible = ?
+       WHERE id = ?`,
+    ).run(name, pointsJson, metaJson, locked, visible, id)
+    return rowToAnnotation({
+      ...row,
+      name,
+      points_json: pointsJson,
+      meta_json: metaJson,
+      locked,
+      visible,
+    })
+  })
+}
+
+export async function deleteAnnotation(id: string): Promise<void> {
+  return withDb((db) => {
+    db.prepare('DELETE FROM annotations WHERE id = ?').run(id)
+  })
 }
 
 export async function addCase(projectId: string, name: string): Promise<Case> {

@@ -48,7 +48,7 @@ Extends the ownership table from `canvas-workspace-improve/ui-journeys.md`:
 | Scope | Primary home | Annotation examples |
 |---|---|---|
 | Pointer mode | Mode rail | Place (already there) |
-| Active annotation type | Context strip | Landmark, Distance Line, Closed Curve, Text Note, Angle, Plane, Open Curve, ROI, Surface Highlight |
+| Active annotation type | Context strip | Text Note, Distance Line, Closed Curve, Plane, Open Curve, ROI, Surface Highlight (Landmark/Angle Place-hidden) |
 | In-progress placement state | Context strip | "2 of 3 points placed · Enter to close · Esc to cancel" |
 | Measurement result of active annotation | Context strip | "Length: 48.2 mm" live during drag |
 | Committed annotations | Inspector drawer → Annotations section | all annotation types |
@@ -108,7 +108,7 @@ Lives in `ContextStrip`, rendered only when Place mode is active.
 ```
 [ Landmark ]  [ Distance Line ]  [ Closed Curve ]  [ Text Note ]
                     ── Phase 2 ──
-[ Angle ]  [ Plane ▾ ]  [ Open Curve ]  [ ROI ]  [ Highlight ▾ ]
+[ Plane ▾ ]  [ Open Curve ]  [ ROI ]  [ Highlight ▾ ]
 ```
 
 Each button uses the existing `canvas-mode-button` / `is-active` class pattern from `CanvasWorkspace.tsx` — idle ghost, active accent wash (`#E8EFFF`) with accent ink (`#2F6BFF`). The Phase 1 / Phase 2 separator is a 1px `border` horizontal rule with a `meta` text label "Phase 2" (0.75rem, `ink-muted`) — same treatment as section separators in management tables.
@@ -117,10 +117,11 @@ Sub-selectors (Plane method, Highlight brush) appear as inline controls immediat
 
 **Behavior:**
 
-- Exactly one type is active at a time. Switching types while an in-progress multi-point placement is running shows an inline confirmation prompt in `ContextStrip`: "Cancel current placement and switch?" with **Switch** (accent) and **Keep placing** (secondary). This prompt does not use a Radix `Dialog` modal — it is an inline strip message, because the action is low-consequence and reversible (no data has been committed yet).
-- The active type name appears as a `section` weight label at the left of `ContextStrip`: "Place: Landmark" / "Place: Distance Line" etc.
-- The in-progress placement status also lives in `ContextStrip` to the right of the type selector: "1 of 2 points placed · click to place second point · Esc to cancel". This disappears once the annotation is committed.
-- The live measurement, if one is computable, appears rightmost in `ContextStrip`: "Distance: 32.4 mm" updating on cursor move. It uses `section` weight, `accent` color.
+- Exactly one type is active at a time. Clicking another type discards the ephemeral draft (stack unchanged). Double-clicking the active type exits Place to View.
+- Ready drafts queue on the uncommitted stack; Mod+S flushes to API; Mod+Z undoes the last uncommitted entry. Dirty state: document tab close control becomes a circle (hover reveals X). No ContextStrip Commit/Cancel.
+- Distance line: double-click places A then B (stack); a further double-click resets to a new A (never three points on one line).
+- The live measurement, if one is computable for the draft, appears rightmost in `ContextStrip`: "Distance: 32.4 mm" updating on cursor move. It uses `section` weight, `accent` color.
+- Gestures: tap adds/selects draft points on `data-canvas-surface` views only; empty-space drag orbits; Alt/Option+drag pans; wheel zooms; Esc cancels draft; Enter commits when ready. Slice dock stays mounted while Place is active.
 
 ---
 
@@ -264,8 +265,8 @@ This inline confirm replaces the row content temporarily (Radix `Collapsible` an
 2. `ContextStrip` shows the type selector. Last-used type is pre-selected (default: Landmark on first use).
 3. User confirms Landmark is selected. `ContextStrip` reads: **Place: Landmark** · "Click in the 3D view or any slice to place. Esc to cancel."
 4. User moves cursor over the 3D view. A preview sphere (accent, 50% opacity) tracks the cursor position in world space. `ContextStrip` right side shows: **R 12.4 · A -5.8 · S 24.1 mm** (live RAS of the cursor, same precision as the crosshair).
-5. User clicks. The sphere becomes fully opaque (committed). The name label appears ("Landmark 1").
-6. Place mode remains active (one-shot returns to View after one landmark per convention R41). The annotations panel gains a new row.
+5. User taps. A draft sphere appears (accent, 50% opacity). ContextStrip shows **Commit** enabled and **Cancel**.
+6. User clicks **Commit** (or Enter). The sphere becomes fully opaque; the name label appears. The annotations panel gains a new row. Place stays on Landmark (R41).
 7. The InspectorDrawer opens to the Annotations section if it was closed. The new row is scrolled into view and momentarily highlighted (accent wash, 400ms, then fades).
 
 **Failure:** If the click lands outside any loaded geometry or volume (a pick miss), no annotation is created. `ContextStrip` shows inline: "No geometry at that position — try again." The mode stays active.
@@ -278,8 +279,8 @@ This inline confirm replaces the row content temporarily (Radix `Collapsible` an
 2. `ContextStrip`: **Place: Distance Line** · "Click to place first point."
 3. Click places Point A (sphere, fully opaque). `ContextStrip` updates: "Click to place second point. Esc to cancel."
 4. As user moves cursor, a dashed preview line extends from A to cursor. `ContextStrip` right: "Distance: 32.4 mm" (live Euclidean).
-5. Click places Point B. The line becomes solid. The midpoint label appears: "32.4 mm". Annotation committed.
-6. Place mode stays active (persistent for distance line). The type remains Distance Line, ready for the next one.
+5. Tap places Point B. Draft is ready; ContextStrip enables **Commit**. Preview line stays dashed until Commit.
+6. User commits. The line becomes solid; midpoint label appears. Place stays on Distance Line.
 
 **Escape behavior:** pressing Esc while only A is placed removes A and cancels the in-progress placement. ContextStrip returns to the type selector state. Already-committed annotations are unaffected.
 
@@ -294,8 +295,8 @@ This inline confirm replaces the row content temporarily (Radix `Collapsible` an
 3. Each click adds a control point sphere. The connecting segments draw immediately.
 4. The in-progress status tracks: "4 points · Double-click or Enter to close · Esc to cancel."
 5. A "ghost" closing segment (dashed, 50% accent) always shows from the last placed point back to the first, so the user can see how the closure will look.
-6. Double-click or Enter closes the curve. The ghost segment becomes solid. The length label appears at the centroid of the curve.
-7. Annotation committed. Place mode remains active.
+6. When ≥3 points exist, **Commit** (or Enter) closes and persists the curve. The ghost segment becomes solid. The length label appears at the centroid.
+7. Place mode remains active on Closed Curve.
 
 **Minimum 3 points:** if the user double-clicks or presses Enter with fewer than 3 points, `ContextStrip` shows: "Need at least 3 points to close — keep clicking." The state does not change.
 
@@ -308,8 +309,8 @@ This inline confirm replaces the row content temporarily (Radix `Collapsible` an
 3. Click places the anchor sphere.
 4. Immediately, an inline text input activates: a small floating input box appears directly beside the glyph in the viewport (positioned by projecting the 3D point to screen space). The input has a minimum width of 160px, `elevated` background, `ink` text, `border`, `rounded.sm`. Focus is set automatically.
 5. User types the note. The callout label previews in real time.
-6. Blur or Enter commits. Escape cancels (removes the placed anchor).
-7. Place mode returns to View after text note commit (one-shot per R41).
+6. User edits the draft body, then **Commit** (or Enter when ready). Escape cancels the draft.
+7. Place mode stays on Text Note (R41).
 
 The floating input is a viewport overlay div positioned via `getBoundingClientRect`-style projection, not a Three.js object. It sits in the DOM above the canvas, z-index above `AnnotationOverlay`. On scroll / camera move, it re-projects on each animation frame while the input is active.
 

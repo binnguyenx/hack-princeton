@@ -4,20 +4,27 @@ export * from './projectRegistry'
 export * from './importPrepared'
 
 import {
+  addAnnotation,
   closeDocument,
   createCandidate,
   createCase,
   createProject,
+  deleteAnnotation,
   listProjects,
   navigateCamera,
   openDocument,
   readState,
+  renameAnnotation,
   restoreRevision,
   selectObject,
   setActiveDocument,
+  setAnnotationLocked,
+  setAnnotationVisible,
   setInspectionPlane,
   setVisibility,
   transformCandidate,
+  updateAnnotationMeta,
+  updateAnnotationPoints,
 } from './session'
 import { importPreparedSample } from './importPrepared'
 
@@ -37,4 +44,11 @@ export const publicOps = {
   setActiveDocument,
   transformCandidate,
   restoreRevision,
+  addAnnotation,
+  renameAnnotation,
+  setAnnotationVisible,
+  setAnnotationLocked,
+  updateAnnotationPoints,
+  updateAnnotationMeta,
+  deleteAnnotation,
 }

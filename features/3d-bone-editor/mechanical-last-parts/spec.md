@@ -1,6 +1,6 @@
 # Spec: Mechanical last parts — annotation, measurement, and spatial markup
 
-Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14
+Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-15
 
 ## Summary
 
@@ -30,12 +30,16 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 - R12. Deleting an annotation removes it from the database, the viewport, and the panel immediately. Deletion is not undoable. The user must confirm deletion for any annotation that has an attached measurement result (i.e. enough control points to produce a value).
 - R13. Measurement values displayed in the viewport and panel are always derived from the current control-point positions in RAS space. They are computed at render time, never stored in the database. They update live as a point is dragged during placement.
 - R14. Each measurement reports its value and unit explicitly: mm for distances and lengths, degrees (°) for angles (Phase 2), mm² for plane area (Phase 2), mm³ for ROI volume (Phase 2). A value is shown as `—` and labelled "Insufficient points" rather than zero when the annotation does not yet have enough control points to produce a result.
-- R15. Annotation placement reuses the existing Place mode infrastructure. Selecting an annotation type activates Place mode with that type as the active target. Escape cancels an in-progress placement without deleting already-placed points on a multi-point type.
+- R15. Annotation placement reuses the existing Place mode infrastructure. Selecting an annotation type activates Place mode with that type as the active target. Placement builds an ephemeral **draft** (local only). Escape discards the in-progress draft points without touching the uncommitted stack. Ready drafts are pushed onto the uncommitted stack (no ContextStrip Commit/Cancel). Already-saved annotations are unaffected.
 - R16. The annotation panel is a named section inside `InspectorDrawer` titled "Annotations". It does not reserve permanent viewport width when empty (canvas-workspace-improve R78).
 - R17. In the 3D view, each annotation renders its control-point glyphs and connecting geometry (line segment, curve polyline, etc.) as a Three.js overlay above the existing scene. `AnnotationOverlay` receives the annotations array as a prop from `App.tsx`, which passes it to `CanvasWorkspace`, which passes it to `Viewport`. `Viewport` mounts `AnnotationOverlay` as a child component that accesses the same Three.js scene via a shared ref or context. This overlay does not alter source or candidate volume bytes.
 - R18. In slice views, each annotation projects its control points onto the displayed slice plane. Points more than one slice-spacing away from the displayed plane are shown as projected outlines at reduced opacity (matching 3D Slicer's projection visibility behavior).
 - R19. Each annotation type has exactly one persistent placement entry point in `ContextStrip` when Place mode is active. No duplicate persistent controls elsewhere in the UI.
 - R20. The cascade deletion chain through `candidates → candidate_revisions → annotations` relies on `ON DELETE CASCADE` FKs. `deleteCandidate`, `removeSample`, `removeCase`, and `deleteProject` in `storageSqlite.ts` do not need annotation-specific delete code because the cascade handles it, provided the `annotations` table is created with the FK before any of those operations run. The `initDb` function must create the `annotations` table before the cascade-dependent tables are referenced, or add it to the existing `CREATE TABLE IF NOT EXISTS` block.
+- R78. **Uncommitted stack:** When a draft becomes `ready`, it is pushed onto an in-session uncommitted stack (viewport/panel preview as pending). Ops → API → SQLite writes happen only on **Mod+S** (`file.saveProject` flush). **Mod+Z** (`edit.undo`) undoes the last uncommitted stack entry only; after a successful flush those entries are not undoable via this stack. Reaching the required point count does not write to the database.
+- R79. **Gesture vocabulary** (trackpad / one-button mouse) is implemented by a shared classifier (`canvasGestures`): `tap`, `hold`, `drag`, `modifierDrag` (Alt/Option+drag pans), `wheel`/`pinch` (zoom always), `hover`, `cancel` (Esc), `dblclick`. Movement threshold 4px; hold threshold 280ms. Place mode never globally disables orbit: empty-space drag orbits; for most types tap on anatomy adds a draft point; **distance line** places points only on double-click. Drag on a draft handle adjusts it.
+- R80. Gestures apply only when the event target is inside an element marked `data-canvas-surface="viewport"` or `data-canvas-surface="slice"`. Clicks on ModeRail, ContextStrip, ViewFrame header, Inspector, Chat, or slice-dock chrome are ignored by the placement classifier.
+- R81. While Place mode is active, the axial/sagittal/coronal slice dock remains mounted and interactive. Place must not unmount, collapse, or maximize-away the dock. Annotation WebGL drawing is clipped to the active view body (`overflow: hidden` + renderer scissor); overlays must not paint over ContextStrip or frame headers.
 
 ---
 
@@ -50,7 +54,7 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 
 #### Distance line
 
-- R25. A distance line requires exactly two RAS control points. The first click places point A; the second completes the line. While only one point is placed, the line segment previews from A to the current cursor position.
+- R25. A distance line requires exactly two RAS control points, placed by **double-click**. The first double-click places point A; the second completes the line and queues it on the uncommitted stack. A third double-click **resets** the line to a single new point A (never three points on one line). While only one point is placed, the line segment previews from A to the current cursor position. Single tap does not place distance-line points.
 - R26. The distance value is `|B − A|` in RAS millimetres computed as the Euclidean norm. It renders as a label at the midpoint of the line segment in both 3D and slice views.
 - R27. Either endpoint can be repositioned by click-and-drag after placement. The distance label updates live during drag.
 - R28. The panel row shows: name, distance in mm to two decimal places, lock, visibility, delete.
@@ -73,20 +77,23 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 
 #### Phase 1 placement UX
 
-- R39. When Place mode is active, `ContextStrip` shows four buttons: **Landmark**, **Distance Line**, **Closed Curve**, **Text Note**. The active annotation type is highlighted. Only one type is active at a time.
-- R40. Switching annotation type while a multi-point placement is in progress discards the in-progress placement after a confirmation prompt. Already-committed annotations are unaffected.
-- R41. Place mode returns to View mode after a landmark or text note is committed (one-shot). Distance line and closed curve keep Place mode active until the user explicitly exits or presses Escape with no in-progress placement (persistent).
+- R39. When Place mode is active, `ContextStrip` Phase 1 buttons are **Text Note**, **Distance Line**, **Closed Curve** (Landmark removed from Place UI; existing landmark records still render). The active annotation type is highlighted. Only one type is active at a time.
+- R84. Closed and open curves keep accumulating points past their minimum. A normal tap adds a point. A double-click on the most recently placed point finishes and queues the curve; Place shows no Finish curve button. Enter remains the keyboard completion path.
+- R40. Switching annotation type (click another type in `ContextStrip`) while a draft is in progress discards the ephemeral draft immediately with no confirmation prompt; the uncommitted stack is unchanged. Unsaved work is signaled on the active document tab: the close control shows a dirty **circle** (hover reveals X). Optional Place-strip dirty-dot may mirror the same state. No workbench status-bar draft copy.
+- R41. After a ready draft is stacked, Place mode stays active with the same annotation type. Escape with an empty draft exits to View. Escape with a non-empty draft discards the draft and stays in Place. Place may stay idle with a type selected; double-clicking a type does not exit Place.
+- R82. Distance line and closed-curve measure labels in the 3D overlay are hidden by default and shown only while the annotation is hovered or selected (panel row or viewport pick).
+- R83. Annotation panel rows show a compact type + measure summary; visibility, lock, and delete live under a `⋯` Radix dropdown menu (not inline icon buttons).
+- R85. Annotation interaction is organized by **behavior classes** under `app/src/viewport/annotationBehaviors/` (`SelectableBehavior`, `PointSetBehavior`, `OrientedExtentBehavior`), not per-type hardcoding in App/UI. Registry: `behaviorFor(type)`.
+- R86. Right-click on a picked annotation in the 3D viewport opens the same Hide / Lock / Delete actions as the panel `⋯` menu. Hide toggles 3D visibility only; the Annotations panel row remains.
+- R87. Selecting an annotation row (or picking it in the viewport) emphasizes **all** objects belonging to that annotation (glyphs, segments, plane/ROI geometry) together. Hover uses the same group emphasis at a lighter level.
 
 ---
 
 ### Phase 2 — Angle, plane, open curve, ROI, surface highlight
 
-#### Angle
+#### Angle (Place-hidden)
 
-- R42. An angle markup requires exactly three RAS control points: vertex B and two arm points A and C. Click order: A, B, C. The angle is `acos(( (A−B)·(C−B) ) / ( |A−B| × |C−B| ))` in degrees.
-- R43. The two arm segments and the arc indicator render in the 3D and slice views. The degree value renders at vertex B.
-- R44. Any of the three points can be repositioned by drag; the degree value updates live.
-- R45. The panel row shows: name, angle in degrees to one decimal place, lock, visibility, delete.
+- R42–R45. Angle remains in the domain/storage model for existing data, but **Place no longer offers Angle** (removed from the ContextStrip type selector as too fragile for current use). Panel/overlay may still display a stored angle if present.
 
 #### Plane
 
@@ -94,7 +101,7 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 - R47. The plane renders as a semi-transparent rectangle centered on the origin, sized to the bounding box of visible anatomy padded by 10 mm.
 - R48. The area measurement is the area of the intersection of the plane with the bounding box of all loaded geometry in mm².
 - R49. A placed plane can optionally drive a cross-section slice: clicking **Show in slice dock** in the panel row adds the plane's orientation and offset as a new linked slice in `SliceDock`. Closing that slice removes only the slice entry, not the plane annotation.
-- R50. Plane control points can be repositioned by drag; the rectangle and any driven slice update live.
+- R50. After placement, plane orientation and size are edited via `OrientedExtentBehavior` 3D gizmos (rotate normal / scale pad); changes write through the uncommitted stack or API update path. Driven slices update live.
 - R51. The panel row shows: name, plane normal vector, area in mm², Show-in-slice-dock toggle, lock, visibility, delete.
 
 #### Open curve
@@ -106,14 +113,14 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 #### Bounding-box ROI
 
 - R55. A bounding-box ROI is placed by clicking two diagonally opposite corners, defining an axis-aligned box in RAS space.
-- R56. After placement the ROI is resizable by drag on face and corner handles.
+- R56. After placement the ROI orientation/size are edited via `OrientedExtentBehavior` 3D gizmos (scale edges/corners; optional yaw); writes go through the same stack/API path as other annotations.
 - R57. The displayed volume is the product of the three box edge lengths in mm³.
 - R58. The ROI box is serialized as `{ min: [x,y,z], max: [x,y,z] }` in `meta_json` and can be passed as an input constraint to a future generation operation through the shared ops layer.
 - R59. The panel row shows: name, bounding box extents (L-R × P-A × I-S in mm), volume in mm³, lock, visibility, delete.
 
 #### Surface highlight
 
-- R60. Surface highlight is a painted region on a candidate mesh surface. The user enters Paint mode (a submode of Place mode available only when a candidate geometry is active) and left-click-drags a brush over the mesh.
+- R60. Surface highlight is a painted region on a candidate mesh surface. The user enters Paint mode (a submode of Place mode available only when a candidate geometry is active) and left-click-drags a brush over the mesh. A completed stroke updates the queued highlight once on pointer-up; pointer moves must not rebuild stack or overlay state.
 - R61. The brush is a sphere of configurable radius (slider in `ContextStrip`, range 2–30 mm, default 10 mm). Each painted stroke accumulates triangles whose centroids fall within the brush sphere at the click position, using the display mesh's triangle index array.
 - R62. Each highlight overlay has a name and a user-selectable accent color chosen from four options in `ContextStrip`: accent blue (default), amber, rose, emerald. Colors map to `DESIGN.md` token equivalents.
 - R63. A highlight overlay renders as a colored semi-transparent overlay (opacity 0.4) on the selected triangles. It is built as a `THREE.Mesh` with a filtered copy of the display mesh's index buffer and a `MeshBasicMaterial` with `transparent: true`. It does not modify the source `BufferGeometry`.
@@ -311,10 +318,13 @@ Pure functions, no side effects, fully testable without a DOM:
 | API client | `app/src/api/client.ts` |
 | App orchestration | `app/src/App.tsx` — annotation handlers, state passing |
 | Placement UX | `app/src/ui/CanvasWorkspace.tsx` — activeAnnotationType prop, ContextStrip type selector, in-progress placement local state |
-| Annotation panel | `app/src/ui/Inspector.tsx`, `app/src/ui/AnnotationList.tsx`, `app/src/ui/annotationActions.ts` |
+| Annotation panel | `app/src/ui/Inspector.tsx`, `app/src/ui/AnnotationList.tsx`, `app/src/ui/annotationActions.ts`, `app/src/ui/annotationActionMenu.tsx` |
 | Viewport overlay | `app/src/viewport/AnnotationOverlay.ts` (builders + `syncAnnotationObjects`) |
+| Behavior classes | `app/src/viewport/annotationBehaviors/` — registry, Selectable emphasis, PointSet hints/angle preview, OrientedExtent gizmo math |
+| Canvas gestures | `app/src/viewport/canvasGestures.ts` |
+| Draft placement math | `app/src/geometry/annotationPlacement.ts` |
 | Measurement math | `app/src/geometry/annotationMeasure.ts` |
-| Unit tests | `app/tests/annotationMeasure.test.ts`, `app/tests/annotationOps.test.ts`, `app/tests/annotationStorage.test.ts`, `app/tests/annotationOverlay.test.ts`, `app/tests/ui/inspector.annotation.test.tsx`, `app/tests/ui/canvasWorkspace.test.tsx` |
+| Unit tests | `app/tests/annotationMeasure.test.ts`, `app/tests/annotationOps.test.ts`, `app/tests/annotationStorage.test.ts`, `app/tests/annotationOverlay.test.ts`, `app/tests/annotationPlacement.test.ts`, `app/tests/annotationBehaviors.test.ts`, `app/tests/canvasGestures.test.ts`, `app/tests/ui/inspector.annotation.test.tsx`, `app/tests/ui/canvasWorkspace.test.tsx` |
 | E2E tests | `app/e2e/annotation-phase1.spec.ts`, `app/e2e/annotation-phase2.spec.ts` |
 
 ---
@@ -337,9 +347,11 @@ Pure functions, no side effects, fully testable without a DOM:
 
 - D8. Four fixed highlight colors from `DESIGN.md`-compatible equivalents. Arbitrary color input would violate the design system's constraint of Base → Ink → Accent; Signal for danger only.
 
-- D9. In-progress multi-point placement state lives in local component state inside `CanvasWorkspace`, not in `EditorState`. It is discarded on Escape or mode change with no API calls or database writes.
+- D9. Draft placement state lives in local component state inside `CanvasWorkspace`, not in `EditorState`. It is discarded on Escape/Cancel or mode change with no API calls or database writes. Persist only on explicit Commit (R78).
 
 - D10. `AnnotationOverlay` is mounted inside `Viewport` with the Three.js scene ref passed through. This keeps all Three.js object lifecycle in one place and avoids a second canvas or scene.
+
+- D11. Place uses a shared gesture classifier and never auto-writes on point-count alone. Slice dock stays mounted during Place (R81).
 
 ---
 

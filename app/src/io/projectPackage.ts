@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { sha256Hex } from '../domain/hash'
 import type {
+  Annotation,
   Candidate,
   CandidateRevision,
   Case,
@@ -26,6 +27,7 @@ export type ProjectManifest = {
   >
   candidates: Candidate[]
   revisions: CandidateRevision[]
+  annotations?: Annotation[]
   viewState: ViewState
   openDocuments?: EditorState['openDocuments']
   activeDocumentId?: string | null
@@ -44,6 +46,7 @@ export async function saveProjectPackage(
     samples: state.samples,
     candidates: state.candidates,
     revisions: state.revisions,
+    annotations: state.annotations,
     viewState: state.view,
     openDocuments: state.openDocuments,
     activeDocumentId: state.activeDocumentId,
@@ -96,6 +99,7 @@ export async function loadProjectPackage(dir: string): Promise<EditorState> {
     samples,
     candidates: manifest.candidates,
     revisions,
+    annotations: manifest.annotations ?? [],
     view: manifest.viewState ?? emptyViewState(),
     volumes,
     dirty: false,

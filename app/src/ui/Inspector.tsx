@@ -6,13 +6,24 @@ import {
   RotateCcw,
   Sliders,
 } from 'lucide-react'
-import type { Candidate, EditorState, Sample } from '../domain/types'
+import type { Annotation, Candidate, EditorState, Sample } from '../domain/types'
+import { AnnotationList } from './AnnotationList'
+import type { AnnotationAction } from './annotationActions'
 
 export type InspectorProps = {
   state: EditorState | null
   activeTool: string
   onRestoreRevision: (candidateId: string, revisionId: string) => void
   restoreDisabled?: boolean
+  annotations?: Annotation[]
+  isCandidateActive?: boolean
+  onAnnotationAction?: (action: AnnotationAction) => void
+  boundingBoxMm?: number[]
+  staleHighlightIds?: Set<string>
+  focusAnnotationId?: string | null
+  onFocusAnnotationConsumed?: () => void
+  selectedAnnotationId?: string | null
+  onSelectAnnotation?: (id: string | null) => void
 }
 
 export function Inspector({
@@ -20,6 +31,15 @@ export function Inspector({
   activeTool,
   onRestoreRevision,
   restoreDisabled,
+  annotations = [],
+  isCandidateActive = false,
+  onAnnotationAction,
+  boundingBoxMm,
+  staleHighlightIds,
+  focusAnnotationId = null,
+  onFocusAnnotationConsumed,
+  selectedAnnotationId = null,
+  onSelectAnnotation,
 }: InspectorProps) {
   const [collapsed, setCollapsed] = useState(false)
 
@@ -188,6 +208,22 @@ export function Inspector({
                   })}
                 </div>
               </div>
+            ) : null}
+
+            {onAnnotationAction ? (
+              <AnnotationList
+                annotations={annotations}
+                isCandidateActive={isCandidateActive}
+                onAnnotationAction={onAnnotationAction}
+                boundingBoxMm={
+                  boundingBoxMm ?? spatial?.bboxMm ?? [40, 40, 40]
+                }
+                staleHighlightIds={staleHighlightIds}
+                focusAnnotationId={focusAnnotationId}
+                onFocusAnnotationConsumed={onFocusAnnotationConsumed}
+                selectedAnnotationId={selectedAnnotationId}
+                onSelectAnnotation={onSelectAnnotation}
+              />
             ) : null}
           </>
         ) : (

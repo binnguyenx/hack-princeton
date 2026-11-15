@@ -1,9 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import type { Mat4 } from '../domain/types'
+import type { Annotation, Mat4, RasPoint } from '../domain/types'
 import { updateCanvasRuntime } from '../debug/bridge'
 import { prepareViewportMaterials } from '../geometry/displayMesh'
+import type { AnnotationAction } from '../ui/annotationActions'
+import { AnnotationViewportActionMenu } from '../ui/annotationActionMenu'
+import {
+  accumulateBrushTriangles,
+  syncAnnotationObjects,
+} from './AnnotationOverlay'
+import {
+  annotationIdFromIntersection,
+  applyOrientedExtentDrag,
+  collectPickables,
+  isOrientedExtentType,
+  syncGroupEmphasis,
+} from './annotationBehaviors'
+import {
+  classifyPointerGesture,
+  isCanvasSurfaceTarget,
+  type PointerSample,
+} from './canvasGestures'
+import { resolveCanvasPointerOwner } from './canvasInteractions'
 import { getSlicerMouseButtons } from './navigationPolicy'
 
 export type ViewPreset =
@@ -18,6 +37,19 @@ export type CameraMotionMode = 'none' | 'spin' | 'rock'
 
 type Props = {
   mesh?: THREE.Object3D | null
+  /** Display mesh for Phase 2 highlight overlays (R63); may match `mesh`. */
+  displayMesh?: THREE.Object3D | null
+  annotations?: Annotation[]
+  /** Panel/viewport selection — shows measure labels for line/closed curve. */
+  selectedAnnotationId?: string | null
+  onSelectAnnotation?: (id: string | null) => void
+  onAnnotationAction?: (action: AnnotationAction) => void
+  /** Plane/ROI gizmo edit. `commit` true on pointer-up (persist); false while dragging. */
+  onExtentEdit?: (
+    id: string,
+    edit: { points: RasPoint[]; meta: Record<string, unknown> },
+    commit: boolean,
+  ) => void
   objectId?: string
   status?: string | null
   viewPreset?: ViewPreset | null
@@ -36,6 +68,28 @@ type Props = {
     position: [number, number, number],
     target: [number, number, number],
   ) => void
+  /** When true, LMB drag paints highlight triangles on displayMesh (R60–R61). */
+  paintHighlight?: boolean
+  brushRadiusMm?: number
+  onPaintTriangles?: (triangleIndices: number[]) => void
+  onStaleHighlight?: (id: string) => void
+  /**
+   * When true (Place mode, non-highlight), a single LMB click raycasts the
+   * display mesh and reports the hit as a world/RAS point.
+   */
+  placePointMode?: boolean
+  /** Distance line: place only on double-click (R25). */
+  placeRequireDblClick?: boolean
+  onPlaceWorldPoint?: (point: [number, number, number]) => void
+  /** Finish curve draft without adding a point (Enter / double-click). */
+  onPlaceFinish?: () => void
+  /** Anatomy extents (mm) for plane rectangle sizing (R47). */
+  boundingBoxMm?: number[]
+  /** Ephemeral Place draft preview (not yet committed). */
+  draftPreview?: {
+    type: Annotation['type']
+    points: Array<[number, number, number]>
+  } | null
 }
 
 type Runtime = {
@@ -223,6 +277,12 @@ function applyPreset(runtime: Runtime, preset: ViewPreset) {
 
 export function Viewport({
   mesh,
+  displayMesh = null,
+  annotations = [],
+  selectedAnnotationId = null,
+  onSelectAnnotation,
+  onAnnotationAction,
+  onExtentEdit,
   objectId,
   status,
   viewPreset,
@@ -237,11 +297,79 @@ export function Viewport({
   rendererNonce = 0,
   onContextStatusChange,
   onCameraChange,
+  paintHighlight = false,
+  brushRadiusMm = 10,
+  onPaintTriangles,
+  onStaleHighlight,
+  placePointMode = false,
+  placeRequireDblClick = false,
+  onPlaceWorldPoint,
+  onPlaceFinish,
+  boundingBoxMm,
+  draftPreview = null,
 }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<Runtime | null>(null)
+  const annotationObjectsRef = useRef(new Map<string, THREE.Object3D[]>())
+  const gizmoObjectsRef = useRef<THREE.Object3D[]>([])
+  const [hoveredAnnotationId, setHoveredAnnotationId] = useState<string | null>(
+    null,
+  )
+  const [contextMenu, setContextMenu] = useState<{
+    id: string
+    x: number
+    y: number
+  } | null>(null)
+  const selectRef = useRef({
+    onSelectAnnotation,
+    onAnnotationAction,
+    onExtentEdit,
+    placePointMode,
+    paintHighlight,
+    selectedAnnotationId,
+    annotations,
+  })
+  selectRef.current = {
+    onSelectAnnotation,
+    onAnnotationAction,
+    onExtentEdit,
+    placePointMode,
+    paintHighlight,
+    selectedAnnotationId,
+    annotations,
+  }
   const cameraChangeRef = useRef(onCameraChange)
   const motionModeRef = useRef(motionMode)
+  const paintRef = useRef({
+    paintHighlight,
+    brushRadiusMm,
+    onPaintTriangles,
+    displayMesh,
+  })
+  const placeRef = useRef({
+    placePointMode,
+    placeRequireDblClick,
+    onPlaceWorldPoint,
+    onPlaceFinish,
+    displayMesh,
+    draftPreview,
+  })
+  placeRef.current = {
+    placePointMode,
+    placeRequireDblClick,
+    onPlaceWorldPoint,
+    onPlaceFinish,
+    displayMesh,
+    draftPreview,
+  }
+  paintRef.current = {
+    paintHighlight,
+    brushRadiusMm,
+    onPaintTriangles,
+    displayMesh,
+  }
+  const onStaleHighlightRef = useRef(onStaleHighlight)
+  onStaleHighlightRef.current = onStaleHighlight
   const contextStatusChangeRef = useRef(onContextStatusChange)
   const [contextStatus, setContextStatus] = useState<'ready' | 'lost' | 'restoring'>(
     'ready',
@@ -331,7 +459,10 @@ export function Viewport({
     const resize = () => {
       const width = mount.clientWidth
       const height = mount.clientHeight
-      renderer.setSize(width, height)
+      renderer.setSize(width, height, false)
+      renderer.setViewport(0, 0, width, height)
+      renderer.setScissor(0, 0, width, height)
+      renderer.setScissorTest(true)
       perspective.aspect = width / Math.max(height, 1)
       perspective.updateProjectionMatrix()
       configureOrthographic(
@@ -472,6 +603,677 @@ export function Viewport({
   useEffect(() => {
     const runtime = sceneRef.current
     if (!runtime) return
+    const measureLabelIds = new Set<string>()
+    if (selectedAnnotationId) measureLabelIds.add(selectedAnnotationId)
+    if (hoveredAnnotationId) measureLabelIds.add(hoveredAnnotationId)
+    syncAnnotationObjects(
+      runtime.scene,
+      annotations,
+      annotationObjectsRef,
+      displayMesh,
+      (id) => onStaleHighlightRef.current?.(id),
+      draftPreview
+        ? { type: draftPreview.type, points: draftPreview.points }
+        : null,
+      boundingBoxMm,
+      measureLabelIds,
+    )
+    syncGroupEmphasis(
+      annotationObjectsRef.current,
+      selectedAnnotationId,
+      hoveredAnnotationId,
+    )
+  }, [
+    annotations,
+    displayMesh,
+    rendererNonce,
+    mesh,
+    objectId,
+    boundingBoxMm,
+    draftPreview,
+    selectedAnnotationId,
+    hoveredAnnotationId,
+  ])
+
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime) return
+    const canvas = runtime.renderer.domElement
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+
+    const pickAnnotationId = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, runtime.camera)
+      const hits = raycaster.intersectObjects(
+        collectPickables(annotationObjectsRef.current),
+        true,
+      )
+      return annotationIdFromIntersection(hits[0])
+    }
+
+    const onMove = (event: PointerEvent) => {
+      if (!isCanvasSurfaceTarget(event.target)) {
+        setHoveredAnnotationId(null)
+        return
+      }
+      const found = pickAnnotationId(event.clientX, event.clientY)
+      setHoveredAnnotationId((prev) => (prev === found ? prev : found))
+    }
+
+    const onLeave = () => setHoveredAnnotationId(null)
+
+    const onClick = (event: MouseEvent) => {
+      if (event.button !== 0) return
+      const cfg = selectRef.current
+      if (cfg.placePointMode || cfg.paintHighlight) return
+      if (!isCanvasSurfaceTarget(event.target)) return
+      const found = pickAnnotationId(event.clientX, event.clientY)
+      if (
+        resolveCanvasPointerOwner({
+          button: event.button,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          placeActive: cfg.placePointMode,
+          highlightActive: cfg.paintHighlight,
+          hitHandle: false,
+          hitAnatomy: false,
+          hitAnnotation: Boolean(found),
+        }) !== 'select'
+      ) return
+      cfg.onSelectAnnotation?.(found)
+    }
+
+    const onContextMenu = (event: MouseEvent) => {
+      if (!isCanvasSurfaceTarget(event.target)) return
+      const found = pickAnnotationId(event.clientX, event.clientY)
+      if (!found) return
+      event.preventDefault()
+      event.stopPropagation()
+      selectRef.current.onSelectAnnotation?.(found)
+      setContextMenu({ id: found, x: event.clientX, y: event.clientY })
+    }
+
+    canvas.addEventListener('pointermove', onMove)
+    canvas.addEventListener('pointerleave', onLeave)
+    canvas.addEventListener('click', onClick)
+    canvas.addEventListener('contextmenu', onContextMenu)
+    return () => {
+      canvas.removeEventListener('pointermove', onMove)
+      canvas.removeEventListener('pointerleave', onLeave)
+      canvas.removeEventListener('click', onClick)
+      canvas.removeEventListener('contextmenu', onContextMenu)
+    }
+  }, [rendererNonce, annotations])
+
+  // OrientedExtent gizmos for selected plane / ROI (View or Place idle).
+  // `gizmoAnnAlive` forces teardown when the selected id is deleted but selection lags.
+  const gizmoAnnAlive = Boolean(
+    selectedAnnotationId &&
+      annotations.some((a) => a.id === selectedAnnotationId),
+  )
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime) return
+    const disposeGizmos = () => {
+      for (const obj of gizmoObjectsRef.current) {
+        runtime.scene.remove(obj)
+        obj.traverse((c) => {
+          if ((c as THREE.Mesh).geometry) (c as THREE.Mesh).geometry.dispose()
+        })
+      }
+      gizmoObjectsRef.current = []
+    }
+    disposeGizmos()
+
+    const selectedId = selectedAnnotationId
+    const ann = selectRef.current.annotations.find((a) => a.id === selectedId)
+    if (
+      !gizmoAnnAlive ||
+      !ann ||
+      ann.locked ||
+      !isOrientedExtentType(ann.type)
+    ) {
+      return
+    }
+    const annId = ann.id
+
+    const placeOrigin = (target: Annotation) => {
+      const origin = new THREE.Vector3(...(target.points[0] ?? [0, 0, 0]))
+      if (target.type === 'roi') {
+        const min = (target.meta.min as RasPoint | undefined) ?? target.points[0]
+        const max = (target.meta.max as RasPoint | undefined) ?? target.points[1]
+        if (min && max) {
+          origin.set(
+            (min[0] + max[0]) / 2,
+            (min[1] + max[1]) / 2,
+            (min[2] + max[2]) / 2,
+          )
+        }
+      }
+      return origin
+    }
+
+    const origin = placeOrigin(ann)
+    // Large hit targets — thin tori are nearly impossible to pick on a skull.
+    const bbox = boundingBoxMm
+    const extent =
+      bbox && bbox.length >= 3
+        ? Math.max(...bbox.map((v) => Math.abs(v)), 40)
+        : 80
+    const ringR = Math.max(extent * 0.12, 18)
+    const knobR = Math.max(ringR * 0.22, 5)
+    const scaleSize = Math.max(knobR * 1.4, 8)
+    const scaleOffset = ringR * 1.45
+    const handles: THREE.Object3D[] = []
+
+    const mark = (obj: THREE.Object3D, mode: 'rotate' | 'scale', name: string) => {
+      obj.userData.gizmoMode = mode
+      obj.userData.annotationId = `gizmo-${annId}`
+      obj.renderOrder = 20
+      obj.name = name
+      handles.push(obj)
+    }
+
+    if (ann.type === 'plane') {
+      // Visible ring + fat invisible hit torus + 4 sphere knobs.
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x2f6bff,
+        depthTest: false,
+        transparent: true,
+        opacity: 0.95,
+      })
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(ringR, Math.max(ringR * 0.06, 1.5), 12, 48),
+        ringMat,
+      )
+      ring.position.copy(origin)
+      mark(ring, 'rotate', `gizmo-rotate-vis-${annId}`)
+
+      const hitRing = new THREE.Mesh(
+        new THREE.TorusGeometry(ringR, Math.max(ringR * 0.28, 6), 8, 32),
+        new THREE.MeshBasicMaterial({
+          visible: false,
+          depthTest: false,
+        }),
+      )
+      hitRing.position.copy(origin)
+      mark(hitRing, 'rotate', `gizmo-rotate-hit-${annId}`)
+
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2
+        const knob = new THREE.Mesh(
+          new THREE.SphereGeometry(knobR, 16, 12),
+          new THREE.MeshBasicMaterial({
+            color: 0x5b8cff,
+            depthTest: false,
+          }),
+        )
+        knob.position.set(
+          origin.x + Math.cos(a) * ringR,
+          origin.y + Math.sin(a) * ringR,
+          origin.z,
+        )
+        mark(knob, 'rotate', `gizmo-rotate-knob-${annId}-${i}`)
+      }
+    }
+
+    // Amber scale knobs — for ROI use face centers so it never looks like a plane ring.
+    const scaleMat = new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
+      depthTest: false,
+    })
+    if (ann.type === 'roi') {
+      const min = (ann.meta.min as RasPoint | undefined) ?? ann.points[0]
+      const max = (ann.meta.max as RasPoint | undefined) ?? ann.points[1]
+      if (min && max) {
+        const cx = (min[0] + max[0]) / 2
+        const cy = (min[1] + max[1]) / 2
+        const cz = (min[2] + max[2]) / 2
+        const faces: RasPoint[] = [
+          [max[0], cy, cz],
+          [min[0], cy, cz],
+          [cx, max[1], cz],
+          [cx, min[1], cz],
+          [cx, cy, max[2]],
+          [cx, cy, min[2]],
+        ]
+        faces.forEach((p, i) => {
+          const knob = new THREE.Mesh(
+            new THREE.BoxGeometry(scaleSize, scaleSize, scaleSize),
+            scaleMat.clone(),
+          )
+          knob.position.set(p[0], p[1], p[2])
+          mark(knob, 'scale', `gizmo-scale-face-${annId}-${i}`)
+        })
+      }
+    } else {
+      const scaleHandle = new THREE.Mesh(
+        new THREE.BoxGeometry(scaleSize, scaleSize, scaleSize),
+        scaleMat,
+      )
+      scaleHandle.position.copy(origin).add(new THREE.Vector3(scaleOffset, 0, 0))
+      mark(scaleHandle, 'scale', `gizmo-scale-${annId}`)
+    }
+
+    for (const h of handles) runtime.scene.add(h)
+    gizmoObjectsRef.current = handles
+
+    const canvas = runtime.renderer.domElement
+    const raycaster = new THREE.Raycaster()
+    // Prefer gizmo knobs over anatomy when both are under the cursor.
+    raycaster.params.Points = { threshold: 2 }
+    const pointer = new THREE.Vector2()
+    let dragging: {
+      mode: 'rotate' | 'scale'
+      lastX: number
+      lastY: number
+      snapshot: Annotation
+    } | null = null
+
+    const syncHandlePositions = (target: Annotation) => {
+      const nextOrigin = placeOrigin(target)
+      for (const h of handles) {
+        if (String(h.name).includes('rotate-vis') || String(h.name).includes('rotate-hit')) {
+          h.position.copy(nextOrigin)
+        } else if (String(h.name).includes('rotate-knob')) {
+          const idx = Number(String(h.name).split('-').pop())
+          if (Number.isFinite(idx)) {
+            const a = (idx / 4) * Math.PI * 2
+            h.position.set(
+              nextOrigin.x + Math.cos(a) * ringR,
+              nextOrigin.y + Math.sin(a) * ringR,
+              nextOrigin.z,
+            )
+          }
+        } else if (String(h.name).includes('gizmo-scale-') && target.type !== 'roi') {
+          h.position.copy(nextOrigin).add(new THREE.Vector3(scaleOffset, 0, 0))
+        } else if (String(h.name).includes('scale-face') && target.type === 'roi') {
+          const min = (target.meta.min as RasPoint | undefined) ?? target.points[0]
+          const max = (target.meta.max as RasPoint | undefined) ?? target.points[1]
+          if (!min || !max) continue
+          const cx = (min[0] + max[0]) / 2
+          const cy = (min[1] + max[1]) / 2
+          const cz = (min[2] + max[2]) / 2
+          const faces: RasPoint[] = [
+            [max[0], cy, cz],
+            [min[0], cy, cz],
+            [cx, max[1], cz],
+            [cx, min[1], cz],
+            [cx, cy, max[2]],
+            [cx, cy, min[2]],
+          ]
+          const idx = Number(String(h.name).split('-').pop())
+          if (Number.isFinite(idx) && faces[idx]) {
+            h.position.set(faces[idx][0], faces[idx][1], faces[idx][2])
+          }
+        }
+      }
+    }
+
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey) return
+      // Gizmos stay active in Place mode so plane/ROI can be edited after drop.
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, runtime.camera)
+      const hits = raycaster.intersectObjects(gizmoObjectsRef.current, true)
+      if (hits.length === 0) return
+      let modeObj: THREE.Object3D | null = hits[0].object
+      while (modeObj && !modeObj.userData.gizmoMode) modeObj = modeObj.parent
+      const mode = modeObj?.userData.gizmoMode as 'rotate' | 'scale' | undefined
+      if (!mode) return
+      const live = selectRef.current.annotations.find((a) => a.id === annId)
+      if (!live || live.locked) return
+      const cfg = selectRef.current
+      if (
+        resolveCanvasPointerOwner({
+          button: event.button,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          placeActive: cfg.placePointMode,
+          highlightActive: cfg.paintHighlight,
+          hitHandle: true,
+          hitAnatomy: false,
+          hitAnnotation: false,
+        }) !== 'manipulate'
+      ) return
+      event.stopImmediatePropagation()
+      event.preventDefault()
+      runtime.controls.enabled = false
+      canvas.setPointerCapture(event.pointerId)
+      dragging = {
+        mode,
+        lastX: event.clientX,
+        lastY: event.clientY,
+        snapshot: live,
+      }
+    }
+    const onMove = (event: PointerEvent) => {
+      if (!dragging) return
+      event.stopImmediatePropagation()
+      const dx = event.clientX - dragging.lastX
+      const dy = event.clientY - dragging.lastY
+      dragging.lastX = event.clientX
+      dragging.lastY = event.clientY
+      const edit = applyOrientedExtentDrag(dragging.snapshot, dragging.mode, {
+        x: dx,
+        y: dy,
+      })
+      dragging.snapshot = {
+        ...dragging.snapshot,
+        points: edit.points,
+        meta: edit.meta,
+      }
+      syncHandlePositions(dragging.snapshot)
+      selectRef.current.onExtentEdit?.(annId, edit, false)
+    }
+    const onUp = () => {
+      if (!dragging) return
+      const final = dragging.snapshot
+      dragging = null
+      runtime.controls.enabled = true
+      selectRef.current.onExtentEdit?.(
+        annId,
+        { points: final.points, meta: final.meta },
+        true,
+      )
+    }
+
+    canvas.addEventListener('pointerdown', onDown, true)
+    canvas.addEventListener('pointermove', onMove, true)
+    canvas.addEventListener('pointerup', onUp, true)
+    canvas.addEventListener('pointercancel', onUp, true)
+    return () => {
+      canvas.removeEventListener('pointerdown', onDown, true)
+      canvas.removeEventListener('pointermove', onMove, true)
+      canvas.removeEventListener('pointerup', onUp, true)
+      canvas.removeEventListener('pointercancel', onUp, true)
+      runtime.controls.enabled = true
+      disposeGizmos()
+    }
+  }, [selectedAnnotationId, gizmoAnnAlive, rendererNonce, boundingBoxMm])
+
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime || !paintHighlight) return
+    const canvas = runtime.renderer.domElement
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    let painting = false
+    const painted = new Set<number>()
+
+    // Hold-drag paint must own LMB for the whole Highlight session.
+    const prevRotate = runtime.controls.enableRotate
+    const prevPan = runtime.controls.enablePan
+    runtime.controls.enableRotate = false
+    runtime.controls.enablePan = false
+
+    const sample = (event: PointerEvent) => {
+      const cfg = paintRef.current
+      const target = cfg.displayMesh
+      if (!target || !cfg.onPaintTriangles) return
+      target.updateMatrixWorld(true)
+      const rect = canvas.getBoundingClientRect()
+      if (rect.width < 1 || rect.height < 1) return
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, runtime.camera)
+      const hits = raycaster.intersectObject(target, true)
+      if (hits.length === 0) return
+      const hit = hits[0]
+      const tris = accumulateBrushTriangles(
+        hit.object,
+        hit.point,
+        cfg.brushRadiusMm,
+      )
+      for (const t of tris) {
+        if (!painted.has(t)) {
+          painted.add(t)
+        }
+      }
+      // Stack/persistence state updates only once per completed stroke.
+      // Updating the full overlay for every pointermove can freeze the canvas.
+    }
+
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey) return
+      if (!isCanvasSurfaceTarget(event.target)) return
+      if (
+        resolveCanvasPointerOwner({
+          button: event.button,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          placeActive: placePointMode,
+          highlightActive: paintRef.current.paintHighlight,
+          hitHandle: false,
+          hitAnatomy: true,
+          hitAnnotation: false,
+        }) !== 'paint'
+      ) return
+      event.stopImmediatePropagation()
+      event.preventDefault()
+      painting = true
+      painted.clear()
+      canvas.setPointerCapture(event.pointerId)
+      sample(event)
+    }
+    const onMove = (event: PointerEvent) => {
+      if (!painting) return
+      event.stopImmediatePropagation()
+      event.preventDefault()
+      sample(event)
+    }
+    const onUp = (event: PointerEvent) => {
+      if (!painting) return
+      painting = false
+      try {
+        canvas.releasePointerCapture(event.pointerId)
+      } catch {
+        /* not capturing */
+      }
+      if (painted.size > 0) {
+        paintRef.current.onPaintTriangles?.([...painted])
+      }
+    }
+
+    canvas.addEventListener('pointerdown', onDown, true)
+    canvas.addEventListener('pointermove', onMove, true)
+    canvas.addEventListener('pointerup', onUp, true)
+    canvas.addEventListener('pointercancel', onUp, true)
+    return () => {
+      canvas.removeEventListener('pointerdown', onDown, true)
+      canvas.removeEventListener('pointermove', onMove, true)
+      canvas.removeEventListener('pointerup', onUp, true)
+      canvas.removeEventListener('pointercancel', onUp, true)
+      runtime.controls.enableRotate = prevRotate
+      runtime.controls.enablePan = prevPan
+      runtime.controls.enabled = true
+    }
+  }, [paintHighlight, placePointMode, rendererNonce])
+
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime || !placePointMode) return
+    const canvas = runtime.renderer.domElement
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    let downSample: PointerSample | null = null
+    // R79: keep orbit enabled; only tap places a draft point.
+
+    const pickWorldPoint = (clientX: number, clientY: number) => {
+      const cfg = placeRef.current
+      const target = cfg.displayMesh
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, runtime.camera)
+      if (target) {
+        const hits = raycaster.intersectObject(target, true)
+        if (hits.length > 0) return { point: hits[0].point.clone(), hitAnatomy: true }
+      }
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+        runtime.camera.getWorldDirection(new THREE.Vector3()).negate(),
+        runtime.controls.target.clone(),
+      )
+      const hit = new THREE.Vector3()
+      if (raycaster.ray.intersectPlane(plane, hit)) return { point: hit, hitAnatomy: false }
+      return null
+    }
+
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey) return
+      if (!isCanvasSurfaceTarget(event.target)) return
+      const cfg = placeRef.current
+      if (!cfg.placePointMode || !cfg.onPlaceWorldPoint) return
+      downSample = {
+        type: 'down',
+        clientX: event.clientX,
+        clientY: event.clientY,
+        timeStamp: event.timeStamp,
+        altKey: event.altKey,
+      }
+    }
+
+    let pendingCurveNodeTap: number | null = null
+    const DBLCLICK_MS = 350
+
+    const onUp = (event: PointerEvent) => {
+      if (!downSample) return
+      const upSample: PointerSample = {
+        type: 'up',
+        clientX: event.clientX,
+        clientY: event.clientY,
+        timeStamp: event.timeStamp,
+        altKey: event.altKey,
+      }
+      const gesture = classifyPointerGesture({ down: downSample, up: upSample })
+      downSample = null
+      const cfg = placeRef.current
+      if (cfg.placeRequireDblClick) return
+      if (gesture.kind !== 'tap') return
+      if (!cfg.onPlaceWorldPoint) return
+
+      if (cfg.onPlaceFinish) {
+        const picked = pickWorldPoint(gesture.clientX, gesture.clientY)
+        if (!picked || !picked.hitAnatomy) return
+        if (
+          resolveCanvasPointerOwner({
+            button: event.button,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            placeActive: cfg.placePointMode,
+            highlightActive: paintHighlight,
+            hitHandle: false,
+            hitAnatomy: picked.hitAnatomy,
+            hitAnnotation: false,
+          }) !== 'place'
+        ) return
+        const lastPoint = cfg.draftPreview?.points.at(-1)
+        const minimumPoints =
+          cfg.draftPreview?.type === 'closed_curve' ? 3 : 2
+        const clickedLastPoint = Boolean(
+          lastPoint &&
+            new THREE.Vector3(...lastPoint).distanceTo(picked.point) <= 5,
+        )
+        if (
+          clickedLastPoint &&
+          (cfg.draftPreview?.points.length ?? 0) >= minimumPoints
+        ) {
+          if (pendingCurveNodeTap != null) {
+            window.clearTimeout(pendingCurveNodeTap)
+            pendingCurveNodeTap = null
+            cfg.onPlaceFinish()
+            return
+          }
+          pendingCurveNodeTap = window.setTimeout(() => {
+            pendingCurveNodeTap = null
+            cfg.onPlaceWorldPoint?.([
+              picked.point.x,
+              picked.point.y,
+              picked.point.z,
+            ])
+          }, DBLCLICK_MS)
+          return
+        }
+        cfg.onPlaceWorldPoint([picked.point.x, picked.point.y, picked.point.z])
+        return
+      }
+
+      const picked = pickWorldPoint(gesture.clientX, gesture.clientY)
+      if (!picked || !picked.hitAnatomy) return
+      if (
+        resolveCanvasPointerOwner({
+          button: event.button,
+          altKey: event.altKey,
+          ctrlKey: event.ctrlKey,
+          metaKey: event.metaKey,
+          placeActive: cfg.placePointMode,
+          highlightActive: paintHighlight,
+          hitHandle: false,
+          hitAnatomy: picked.hitAnatomy,
+          hitAnnotation: false,
+        }) !== 'place'
+      ) return
+      cfg.onPlaceWorldPoint([picked.point.x, picked.point.y, picked.point.z])
+    }
+
+    const onDblClick = (event: MouseEvent) => {
+      const cfg = placeRef.current
+      if (!cfg.placePointMode) return
+      if (!isCanvasSurfaceTarget(event.target)) return
+      if (cfg.placeRequireDblClick) {
+        if (!cfg.onPlaceWorldPoint) return
+        const picked = pickWorldPoint(event.clientX, event.clientY)
+        if (!picked || !picked.hitAnatomy) return
+        if (
+          resolveCanvasPointerOwner({
+            button: event.button,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            metaKey: event.metaKey,
+            placeActive: cfg.placePointMode,
+            highlightActive: paintHighlight,
+            hitHandle: false,
+            hitAnatomy: picked.hitAnatomy,
+            hitAnnotation: false,
+          }) !== 'place'
+        ) return
+        cfg.onPlaceWorldPoint([picked.point.x, picked.point.y, picked.point.z])
+        return
+      }
+      // Backup if the second-tap finish path did not run (e.g. missed timing).
+      if (!cfg.onPlaceFinish) return
+      event.preventDefault()
+      // Pointer-up owns curve completion. Let it decide whether this is a
+      // double-click on the last node so native dblclick cannot finish twice.
+      event.preventDefault()
+    }
+
+    canvas.addEventListener('pointerdown', onDown, true)
+    canvas.addEventListener('pointerup', onUp, true)
+    canvas.addEventListener('dblclick', onDblClick, true)
+    canvas.addEventListener('pointercancel', () => {
+      downSample = null
+    }, true)
+    return () => {
+      if (pendingCurveNodeTap != null) window.clearTimeout(pendingCurveNodeTap)
+      canvas.removeEventListener('pointerdown', onDown, true)
+      canvas.removeEventListener('pointerup', onUp, true)
+      canvas.removeEventListener('dblclick', onDblClick, true)
+    }
+  }, [placePointMode, placeRequireDblClick, paintHighlight, draftPreview, rendererNonce])
+
+  useEffect(() => {
+    const runtime = sceneRef.current
+    if (!runtime) return
     const next =
       projection === 'orthographic' ? runtime.orthographic : runtime.perspective
     if (next === runtime.camera) return
@@ -522,9 +1324,19 @@ export function Viewport({
     })
   }, [lightingIntensity])
 
+  const menuAnn =
+    contextMenu != null
+      ? annotations.find((a) => a.id === contextMenu.id) ?? null
+      : null
+
   return (
     <div className="viewport-frame">
-      <div className="viewport" ref={mountRef} data-testid="viewport" />
+      <div
+        className="viewport"
+        ref={mountRef}
+        data-testid="viewport"
+        data-canvas-surface="viewport"
+      />
       <div className="viewport-orientation-marker" aria-label="RAS orientation marker">
         <span>R</span><span>A</span><span>S</span>
       </div>
@@ -540,6 +1352,25 @@ export function Viewport({
           {contextStatus === 'lost' ? 'Rendering interrupted' : 'Restoring view'}
         </div>
       )}
+      {menuAnn && contextMenu ? (
+        <AnnotationViewportActionMenu
+          ann={menuAnn}
+          open
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onOpenChange={(open) => {
+            if (!open) setContextMenu(null)
+          }}
+          onAnnotationAction={(action) => {
+            onAnnotationAction?.(action)
+            setContextMenu(null)
+          }}
+          onRequestDelete={() => {
+            onAnnotationAction?.({ type: 'delete', id: menuAnn.id })
+            setContextMenu(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

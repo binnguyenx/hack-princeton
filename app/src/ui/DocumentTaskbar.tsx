@@ -38,7 +38,9 @@ export function DocumentTaskbar({
         return (
           <div
             key={`${doc.kind}:${doc.id}`}
-            className={`document-taskbar__tab ${selected ? 'is-active' : ''}`}
+            className={`document-taskbar__tab ${selected ? 'is-active' : ''} ${
+              showDirty ? 'is-dirty' : ''
+            }`}
             role="tab"
             aria-selected={selected}
           >
@@ -54,20 +56,23 @@ export function DocumentTaskbar({
                 <Shield size={12} className="tab-kind-icon tab-kind-icon--sample" />
               )}
               <span className="document-taskbar__text">{labelFor(doc)}</span>
-              {showDirty ? (
-                <span className="tab-dirty-indicator" title="Unsaved changes" />
-              ) : null}
             </button>
             <button
               type="button"
               className="document-taskbar__close"
-              aria-label={`Close ${labelFor(doc)}`}
+              aria-label={
+                showDirty
+                  ? `Unsaved changes — close ${labelFor(doc)}`
+                  : `Close ${labelFor(doc)}`
+              }
+              title={showDirty ? 'Unsaved changes (⌘S to save)' : `Close ${labelFor(doc)}`}
               onClick={(e) => {
                 e.stopPropagation()
                 onClose(doc.kind, doc.id)
               }}
             >
-              <X size={12} />
+              <span className="document-taskbar__dirty-circle" aria-hidden />
+              <X size={12} className="document-taskbar__close-icon" />
             </button>
           </div>
         )

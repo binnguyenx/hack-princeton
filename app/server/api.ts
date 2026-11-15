@@ -1,23 +1,27 @@
 import { Router } from 'express'
 import multer from 'multer'
-import type { Mat4, SpatialMeta } from '../src/domain/types'
+import type { AnnotationType, Mat4, RasPoint, SpatialMeta } from '../src/domain/types'
 import {
   addCase,
   addSample,
   commitTransform,
+  createAnnotation,
   createCandidate,
   createProject,
+  deleteAnnotation,
   deleteCandidate,
   deleteProject,
   findCandidateProject,
   findSampleContext,
   findSampleVolume,
   getProjectManifest,
+  listAnnotations,
   listProjects,
   readVolume,
   removeCase,
   removeSample,
   restoreRevision,
+  updateAnnotation,
 } from './storageSqlite'
 
 const upload = multer({ storage: multer.memoryStorage() })
@@ -198,6 +202,70 @@ export function createApiRouter(): Router {
       }
       void project
       await deleteCandidate(req.params.id)
+      res.status(204).send()
+    } catch (err) {
+      jsonError(res, err)
+    }
+  })
+
+  router.get('/revisions/:revisionId/annotations', async (req, res) => {
+    try {
+      res.json(await listAnnotations(req.params.revisionId))
+    } catch (err) {
+      jsonError(res, err)
+    }
+  })
+
+  router.post('/revisions/:revisionId/annotations', async (req, res) => {
+    try {
+      const body = req.body as {
+        type?: AnnotationType
+        name?: string
+        points?: RasPoint[]
+        meta?: Record<string, unknown>
+        locked?: boolean
+        visible?: boolean
+        createdAt?: string
+      }
+      if (!body.type || !body.name || !Array.isArray(body.points)) {
+        res.status(400).json({ error: 'type, name, and points are required' })
+        return
+      }
+      const created = await createAnnotation({
+        revisionId: req.params.revisionId,
+        type: body.type,
+        name: body.name,
+        points: body.points,
+        meta: body.meta ?? {},
+        locked: body.locked,
+        visible: body.visible,
+        createdAt: body.createdAt,
+      })
+      res.status(201).json(created)
+    } catch (err) {
+      jsonError(res, err)
+    }
+  })
+
+  router.patch('/annotations/:id', async (req, res) => {
+    try {
+      const body = req.body as {
+        name?: string
+        points?: RasPoint[]
+        meta?: Record<string, unknown>
+        locked?: boolean
+        visible?: boolean
+      }
+      const updated = await updateAnnotation(req.params.id, body)
+      res.json(updated)
+    } catch (err) {
+      jsonError(res, err)
+    }
+  })
+
+  router.delete('/annotations/:id', async (req, res) => {
+    try {
+      await deleteAnnotation(req.params.id)
       res.status(204).send()
     } catch (err) {
       jsonError(res, err)
