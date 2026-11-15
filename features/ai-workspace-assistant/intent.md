@@ -95,3 +95,6 @@ Owner authorizes connecting the restored Assistant panel to the existing FastAPI
 ## Final review repair authorization — 2026-11-14
 
 Owner authorizes repairing PR #31 test isolation, document/chat context alignment and repeated follow-up intent. Keep recovery styles/viewport/global selection and the Vite SQLite apiPlugin intact. Use only disposable storage for verification. The initial build excluded publication; the owner subsequently authorizes reviewed commit/push to PR #31. No merge, provider, AI writes or live runtime changes.
+
+## Gemini chat amendment — 2026-11-14
+The owner authorizes implementing the agreed read-only LLM slice and explicitly selects Gemini. Conversation history is session memory only: reset deletes it and reload loses it. Gemini should converse using bounded prior turns, propose registered metadata reads, and explain actual results without invented geometry. Keep credentials backend-only, the UI recovery and Vite SQLite plugin intact. No Bedrock, AI live writes, commit, push, merge or live restart. This scope does not accept other draft proposals.

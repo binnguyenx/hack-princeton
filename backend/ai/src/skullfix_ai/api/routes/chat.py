@@ -1,9 +1,11 @@
-"""Fake-model metadata reads only; no application or sandbox mutation binding."""
+"""Configured fake/Gemini metadata reads only; no application or sandbox mutation binding."""
+import os
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from skullfix_ai.agent.read_only_reply import read_only_reply
+from skullfix_ai.agent.gemini import GeminiModel, ProviderError
 from starlette.concurrency import run_in_threadpool
 
 from skullfix_ai.agent.context import GraphRequest, RepositoryManifestReader
@@ -45,12 +47,16 @@ class ChatRequest(GraphRequest):
 
 
 def _read(repository, payload):
+    provider = os.environ.get('SKULLFIX_AI_CHAT_MODEL', 'fake')
+    if provider not in ('fake', 'gemini'):
+        raise ProviderError('model-config-invalid', 'SKULLFIX_AI_CHAT_MODEL must be fake or gemini.')
+    model = GeminiModel(payload.history) if provider == 'gemini' else FakeToolModel()
     graph = WorkspaceGraph(AppWorkspaceAdapter(RepositoryManifestReader(repository)),
-                           FakeToolModel(), ToolRegistry([metadata_tool()]))
+                           model, ToolRegistry([metadata_tool()]))
     result = graph.invoke(payload)
-    if result.status == 'completed' and result.context is not None:
+    if provider == 'fake' and result.status == 'completed' and result.context is not None:
         result.explanation = read_only_reply(payload.message, payload.history, result.context)
-    return result.model_dump(mode='json')
+    return result.model_dump(mode='json'), provider, getattr(model, 'model_id', 'deterministic')
 
 
 def create_chat_router():
@@ -64,10 +70,14 @@ def create_chat_router():
             payload = ChatRequest.model_validate(request.state.compat_body)
         except ValidationError:
             return JSONResponse({'error': 'Invalid chat request', 'code': 'invalid-chat-request'}, status_code=422)
-        outcome = await run_in_threadpool(_read, request.app.state.repository, payload)
-        return {'mode': 'fake-read-only', 'request_id': payload.request_id,
-                'conversation_id': payload.conversation_id, 'outcome': outcome,
-                'limitations': ['Fake model; reads selected-object metadata only.',
-                                'No geometry execution, live AI writes, provider or persisted chat history.']}
+        try:
+            outcome, provider, model_id = await run_in_threadpool(_read, request.app.state.repository, payload)
+        except ProviderError as error:
+            return JSONResponse({'error': error.message, 'code': error.code}, status_code=503)
+        return {'mode': 'llm-read-only' if provider == 'gemini' else 'fake-read-only',
+                'model': {'provider': provider, 'id': model_id}, 'capability_policy': 'metadata-read-only',
+                'request_id': payload.request_id, 'conversation_id': payload.conversation_id, 'outcome': outcome,
+                'limitations': ['Selected-object metadata only; no geometry execution or live AI writes.',
+                                'Chat history is transient; model prose is not a clinical result.']}
 
     return router

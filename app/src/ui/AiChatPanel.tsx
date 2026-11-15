@@ -40,6 +40,7 @@ export function AiChatPanel(props: Props) {
 
 function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
   const [messages, setMessages] = useState<(ChatMessage & { failed?: boolean })[]>([])
+  const [provider, setProvider] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [threadId, setThreadId] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -57,7 +58,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
       if (cancelled) return
       setThreadId(id)
       setMessages([{ id: 'welcome', role: 'ai',
-        content: "Hello! I'm your cranial reconstruction assistant. This chat uses a fake model to read selected-object metadata. Geometry measurements, reconstruction and AI writes are unavailable.",
+        content: "Hello! I'm your cranial reconstruction assistant. This chat can read selected-object metadata. Conversation history is kept only in this session; reset clears it. Geometry measurements, reconstruction and AI writes are unavailable.",
         createdAt: new Date().toISOString() }])
     }).catch(error => { if (!cancelled) setError(String(error)) })
     return () => { cancelled = true }
@@ -88,6 +89,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
     try {
       for await (const event of langGraphClient.streamResponse(threadId, history, text, chatContext, abort.signal)) {
         if (token !== flight.current || abort.signal.aborted) return
+        if (event.event === 'metadata') setProvider(event.data.provider ?? 'fake')
         if (event.event === 'messages') {
           const content = event.data.at(-1)?.content
           if (content) setMessages(previous => previous.map(message => message.id === aiId ? { ...message, content, streaming: true } : message))
@@ -119,6 +121,7 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
     busy.current = false
     setIsStreaming(false)
     setMessages([])
+    setProvider(null)
     setThreadId(null)
     setError(null)
     setInput('')
@@ -133,15 +136,15 @@ function ChatSession({ open, onOpenChange, contextLabel, chatContext }: Props) {
           <span>AI Assistant</span>
           <span
             className={`ai-chat-badge ${
-              langGraphClient.isMock ? 'ai-chat-badge--mock' : 'ai-chat-badge--live'
+              provider === 'gemini' ? 'ai-chat-badge--live' : 'ai-chat-badge--mock'
             }`}
             title={
-              langGraphClient.isMock
-                ? 'Connected to FastAPI with a read-only fake model'
-                : 'Connected to live LangGraph API'
+              provider === 'gemini'
+                ? 'Gemini via FastAPI/LangGraph; metadata reads only'
+                : provider === 'fake' ? 'FastAPI with a read-only fake model' : 'Read-only provider confirmed after a successful response'
             }
           >
-            {langGraphClient.isMock ? 'Mock' : 'Live'}
+            {provider === 'gemini' ? 'Gemini · Read-only' : provider === 'fake' ? 'Mock' : 'Read-only'}
           </span>
         </div>
         <div className="ai-chat-header-actions">

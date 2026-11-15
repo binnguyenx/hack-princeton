@@ -14,7 +14,7 @@ export default defineConfig({
   use: { ...devices['Desktop Chrome'], baseURL: built ? 'http://127.0.0.1:18583' : 'http://127.0.0.1:18573', screenshot: 'only-on-failure', channel: process.env.HACK_CHAT_BROWSER_CHANNEL },
   webServer: [
     { command: `"${python}" -B -m skullfix_ai.api --storage-root "${root}/storage" --host 127.0.0.1 --port 18583${built ? ` --frontend-dir "${app}/dist"` : ''}`,
-      cwd: path.resolve(app, '..'), env: { PYTHONPATH: path.resolve(app, '../backend/ai/src') },
+      cwd: path.resolve(app, '..'), env: { PYTHONPATH: path.resolve(app, '../backend/ai/src'), SKULLFIX_AI_CHAT_MODEL: 'fake', GEMINI_API_KEY: '' },
       url: 'http://127.0.0.1:18583/healthz', reuseExistingServer: false },
     ...(!built ? [{ command: 'npm run dev -- --host 127.0.0.1 --port 18573 --strictPort', cwd: app,
       env: { HACK_STORAGE_ROOT: path.join(root, 'storage'), HACK_AI_ORIGIN: 'http://127.0.0.1:18583' },

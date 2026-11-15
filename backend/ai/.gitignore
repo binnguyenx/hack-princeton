@@ -3,3 +3,6 @@ data/
 __pycache__/
 *.pyc
 *.egg-info/
+
+.env.*
+!.env.example

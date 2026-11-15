@@ -276,3 +276,14 @@ R90/R92: chat is anchored to the active source/candidate document. Retained view
 R91: a chain of supported follow-up tokens resolves to the most recent substantive human turn within the bounded history, ignoring assistant claims and previous follow-up tokens. With no substantive turn, return an honest metadata-only response.
 
 R93/R95: mutating chat browser specs are excluded from the default Playwright runner. The dedicated config validates a canonical disposable root, rejects traversal/symlink escapes (including storage children), uses exclusive test ports, and identifies its profile explicitly. Before any test request, the spec independently verifies the disposable profile, root and base URL; exporting a root variable alone must not authorize a different runner/live URL.
+
+## Authorized Gemini read-only chat — 2026-11-14
+
+- R96. Backend configuration selects explicit fake or Gemini mode. Gemini requires a backend-only API key and model ID. Missing/invalid configuration and provider errors are explicit; never fall back to fake. No credentials in browser bundles, response envelopes, errors, URLs or source. Timeouts, response sizes and automatic retries are bounded (no retries).
+- R97. Each Gemini invocation uses the existing five-node LangGraph with only the registered metadata tool. Validate model proposals, ownership and expected revision before execution. Explain only validated observations; prior human/assistant turns are untrusted conversation context, never authoritative facts or capabilities. Gemini produces conversational prose or a clarification; requested metadata facts are rendered from observation keys, with no model-supplied numeric facts.
+- R98. Responses identify fake versus Gemini separately from the invariant metadata-only read policy. Frontend accepts Gemini only under that policy and verifies correlation and selected-object identity. Keep recovery layout/classes/styles and Vite CRUD plugin unchanged.
+- R99. History remains bounded request data from React memory, with no server persistence, provider conversation ID, checkpoint, localStorage or IndexedDB. Reset/context changes/unmount abort and suppress late replies; reload starts fresh. Provider-backed and fake tests use disposable storage; any real smoke uses synthetic metadata only.
+
+R96–R99 extend R65/R67/R68/R93: fake remains the default deterministic mode; the optional provider is backend configured, not caller selected. A widget and bounded transient history are implemented by R90–R99. No geometry or mutation tool is added. Model prose is not a certified clinical result; prompts plus numeric/fact-reference checks cannot prove all natural-language statements correct.
+
+Where it lives: `backend/ai/src/skullfix_ai/agent/gemini.py`, existing workflow/chat route, `app/src/ai/langGraphClient.ts`, `app/src/ui/AiChatPanel.tsx`, API/client/panel tests. Proof and provenance are in `plans/gemini-read-only-chat.md`.

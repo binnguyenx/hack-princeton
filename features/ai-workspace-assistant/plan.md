@@ -20,6 +20,11 @@ Keep the existing app Express API and SQLite store authoritative. Add a read-onl
 
 ## Proof
 
+- R96: plans/gemini-read-only-chat.md; test_gemini_chat.py configuration/transport/failure checks.
+- R97: plans/gemini-read-only-chat.md; test_gemini_chat.py strict tool/grounding/current-pointer checks.
+- R98: plans/gemini-read-only-chat.md; aiChatClient.test.ts and ui/aiChatPanel.test.tsx provider policy/badge checks.
+- R99: plans/gemini-read-only-chat.md; UI reset/remount and disposable dev/built browser checks.
+
 - R90: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
 - R91: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
 - R92: plans/read-only-chat-recovery.md; test_chat_context.py, aiChatClient.test.ts, aiChatContext.test.ts, ui/aiChatPanel.test.tsx and read-only-chat.spec.ts.
@@ -60,3 +65,6 @@ No app runtime source or UI styling changed. The app build regenerated app/publi
 ## Read-only chat follow-up proof
 
 R64,R65,R66,R67,R68,R69: scoped implementation plan [plans/read-only-chat.md](plans/read-only-chat.md); backend HTTP regression test_chat.py, typed client chatClient.test.ts and actual browser chat.e2e.ts. Earlier proof above remains historical app alignment.
+
+## Gemini read-only scope
+The owner's Gemini/session-only-history implementation is tracked in [plans/gemini-read-only-chat.md](plans/gemini-read-only-chat.md), with its own preflight and English implementation prompt. R96–R99 extend the fake transport without authorizing geometry or AI writes.
