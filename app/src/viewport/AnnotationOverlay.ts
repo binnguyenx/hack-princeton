@@ -8,13 +8,16 @@ import {
   openCurveLength,
 } from '../geometry/annotationMeasure'
 import { anglePreviewSegments } from './annotationBehaviors'
+import { planeNormalOf, planeRectSize } from './annotationBehaviors/extentDrag'
+import {
+  annotationColorHex,
+  resolveAnnotationColorKey,
+  type AnnotationColorKey,
+} from '../domain/annotationPalette'
 
-const ACCENT = 0x2f6bff
-const HIGHLIGHT_COLORS: Record<string, number> = {
-  accent: 0x2f6bff,
-  amber: 0xf59e0b,
-  rose: 0xf43f5e,
-  emerald: 0x10b981,
+/** Palette colour for an annotation (meta.color, else the type's default look). */
+function colorOf(ann: Annotation): number {
+  return annotationColorHex(resolveAnnotationColorKey(ann))
 }
 
 /** Visible on ~200mm skulls; 1.5mm spheres read as noise at typical camera distance. */
@@ -22,9 +25,9 @@ const GLYPH_RADIUS_MM = 4.5
 const CONTROL_RADIUS_MM = 3.5
 const centroidCache = new WeakMap<THREE.BufferGeometry, Float32Array>()
 
-function accentMaterial(opacity = 1): THREE.MeshBasicMaterial {
+function glyphMaterial(color: number, opacity = 1): THREE.MeshBasicMaterial {
   return new THREE.MeshBasicMaterial({
-    color: ACCENT,
+    color,
     transparent: opacity < 1,
     opacity,
     depthTest: false,
@@ -32,9 +35,9 @@ function accentMaterial(opacity = 1): THREE.MeshBasicMaterial {
   })
 }
 
-function lineMaterial(dashed = false): THREE.LineBasicMaterial {
+function lineMaterial(color: number, dashed = false): THREE.LineBasicMaterial {
   return new THREE.LineBasicMaterial({
-    color: ACCENT,
+    color,
     transparent: dashed,
     opacity: dashed ? 0.55 : 1,
     depthTest: false,
@@ -51,7 +54,7 @@ export function buildGlyph(
   const radius = primary ? GLYPH_RADIUS_MM : CONTROL_RADIUS_MM
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(radius, 20, 16),
-    accentMaterial(opts?.preview ? 0.5 : 1),
+    glyphMaterial(colorOf(ann), opts?.preview ? 0.5 : 1),
   )
   const p = ann.points[pointIndex] ?? ann.points[0] ?? [0, 0, 0]
   mesh.position.set(p[0], p[1], p[2])
@@ -64,6 +67,7 @@ export function buildGlyph(
 
 function polylineFromPoints(
   pts: Array<[number, number, number]>,
+  color: number,
   dashed = false,
 ): THREE.Line {
   const positions = new Float32Array(pts.length * 3)
@@ -74,14 +78,14 @@ function polylineFromPoints(
   })
   const geom = new THREE.BufferGeometry()
   geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  const line = new THREE.Line(geom, lineMaterial(dashed))
+  const line = new THREE.Line(geom, lineMaterial(color, dashed))
   line.renderOrder = 9
   return line
 }
 
 export function buildLine(ann: Annotation): THREE.Line | null {
   if (ann.points.length < 2) return null
-  const line = polylineFromPoints(ann.points)
+  const line = polylineFromPoints(ann.points, colorOf(ann))
   line.userData.annotationId = ann.id
   line.name = `ann-line-${ann.id}`
   return line
@@ -93,7 +97,7 @@ export function buildCurvePolyline(
 ): THREE.Line | null {
   if (ann.points.length < 2) return null
   const pts = closed ? [...ann.points, ann.points[0]] : ann.points
-  const line = polylineFromPoints(pts)
+  const line = polylineFromPoints(pts, colorOf(ann))
   line.userData.annotationId = ann.id
   line.name = `ann-curve-${ann.id}`
   return line
@@ -102,6 +106,7 @@ export function buildCurvePolyline(
 export function buildPreviewPolyline(
   points: Array<[number, number, number]>,
   closedGhost = false,
+  color: number = annotationColorHex('accent'),
 ): THREE.Line | null {
   if (points.length < 1) return null
   const pts =
@@ -109,7 +114,7 @@ export function buildPreviewPolyline(
       ? [...points, points[0]]
       : points
   if (pts.length < 2) return null
-  const line = polylineFromPoints(pts, true)
+  const line = polylineFromPoints(pts, color, true)
   line.name = 'ann-preview-line'
   line.userData.preview = true
   return line
@@ -177,8 +182,8 @@ export function buildROIBox(ann: Annotation): THREE.Object3D[] {
   const cx = (min[0] + max[0]) / 2
   const cy = (min[1] + max[1]) / 2
   const cz = (min[2] + max[2]) / 2
-  // Amber fill/edges — distinct from blue plane pads so ROI never reads as a plane.
-  const ROI_COLOR = 0xf59e0b
+  // Default amber (palette) keeps ROI distinct from blue plane pads unless recoloured.
+  const ROI_COLOR = colorOf(ann)
   const fill = new THREE.Mesh(
     box,
     new THREE.MeshBasicMaterial({
@@ -209,39 +214,10 @@ export function buildROIBox(ann: Annotation): THREE.Object3D[] {
   return [fill, edges]
 }
 
-/** R47: rectangle covers anatomy AABB extents padded by 10 mm per side. */
-export function planeRectSize(boundingBoxMm?: number[]): {
-  width: number
-  height: number
-} {
-  if (!boundingBoxMm || boundingBoxMm.length < 3) {
-    return { width: 100, height: 100 }
-  }
-  const extents = boundingBoxMm.map((v) => Math.abs(v)).sort((a, b) => b - a)
-  return {
-    width: Math.max(extents[0] + 20, 20),
-    height: Math.max(extents[1] + 20, 20),
-  }
-}
+export { planeRectSize }
 
 function planeNormalVector(ann: Annotation): THREE.Vector3 {
-  const metaN = ann.meta.normal
-  if (
-    Array.isArray(metaN) &&
-    metaN.length >= 3 &&
-    metaN.every((v) => typeof v === 'number' && Number.isFinite(v))
-  ) {
-    const v = new THREE.Vector3(metaN[0], metaN[1], metaN[2])
-    if (v.lengthSq() > 1e-12) return v.normalize()
-  }
-  if (ann.points.length >= 3) {
-    const [a, b, c] = ann.points
-    const ab = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2])
-    const ac = new THREE.Vector3(c[0] - a[0], c[1] - a[1], c[2] - a[2])
-    const n = new THREE.Vector3().crossVectors(ab, ac)
-    if (n.lengthSq() > 1e-12) return n.normalize()
-  }
-  return new THREE.Vector3(0, 0, 1)
+  return planeNormalOf(ann)
 }
 
 export function buildPlane(
@@ -258,7 +234,7 @@ export function buildPlane(
   const plane = new THREE.Mesh(
     geom,
     new THREE.MeshBasicMaterial({
-      color: ACCENT,
+      color: colorOf(ann),
       transparent: true,
       opacity: 0.22,
       side: THREE.DoubleSide,
@@ -277,7 +253,7 @@ export function buildPlane(
   const edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(geom),
     new THREE.LineBasicMaterial({
-      color: ACCENT,
+      color: colorOf(ann),
       depthTest: false,
       depthWrite: false,
     }),
@@ -377,8 +353,7 @@ export function buildHighlightOverlay(
   }
   const geom = sourceGeom.clone()
   geom.setIndex(filtered)
-  const colorKey = String(ann.meta.color ?? 'accent')
-  const color = HIGHLIGHT_COLORS[colorKey] ?? ACCENT
+  const color = colorOf(ann)
   const overlay = new THREE.Mesh(
     geom,
     new THREE.MeshBasicMaterial({
@@ -438,6 +413,8 @@ export function syncAnnotationObjects(
     type: Annotation['type']
     points: Array<[number, number, number]>
     hoverCursor?: [number, number, number] | null
+    /** Colour selected for placement; unset uses the type's default. */
+    color?: AnnotationColorKey | null
   } | null,
   boundingBoxMm?: number[],
   /** When set, line/closed_curve measure labels show only for these ids (hover/select). */
@@ -531,7 +508,7 @@ export function syncAnnotationObjects(
       type: inProgress.type,
       name: 'preview',
       points: previewPoints,
-      meta: {},
+      meta: inProgress.color ? { color: inProgress.color } : {},
       locked: false,
       visible: true,
       createdAt: '',
@@ -557,13 +534,13 @@ export function syncAnnotationObjects(
       )
       for (const seg of segs) {
         if (seg.length >= 2) {
-          const line = buildPreviewPolyline(seg, false)
+          const line = buildPreviewPolyline(seg, false, colorOf(previewAnn))
           if (line) objs.push(line)
         }
       }
     } else {
       const closedGhost = inProgress.type === 'closed_curve'
-      const previewLine = buildPreviewPolyline(previewPoints, closedGhost)
+      const previewLine = buildPreviewPolyline(previewPoints, closedGhost, colorOf(previewAnn))
       if (previewLine) objs.push(previewLine)
     }
     for (const obj of objs) scene.add(obj)

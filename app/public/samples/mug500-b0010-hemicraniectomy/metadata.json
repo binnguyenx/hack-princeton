@@ -1,0 +1,47 @@
+{
+  "sampleId": "mug500-b0010-hemicraniectomy",
+  "source": "MUG500+ craniotomy skulls (Li et al., Data in Brief 2021)",
+  "license": "CC BY 4.0",
+  "sourceArchive": "figshare 10.6084/m9.figshare.9616319 \u2014 \"craniotomy skull.zip\"",
+  "sourceCaseId": "B0010",
+  "defectType": "hemicraniectomy",
+  "defectOrigin": "real surgical craniotomy (not synthetic)",
+  "primaryVolume": "defective_skull.nrrd",
+  "files": {
+    "defective_skull.nrrd": {
+      "sha256": "6c0912460ddce1af9b779826c13edb2d10fe817fa4b640008bc8b5d2f71d5044",
+      "byteSize": 257195
+    },
+    "implant.nrrd": {
+      "sha256": "0354db6f1c24f3ece2483c738974f67739a449bfa00d910324f3038e828e5d20",
+      "byteSize": 76104
+    }
+  },
+  "derivation": {
+    "defective_skull.nrrd": "B0010.nrrd re-encoded int16 -> uint8 binary mask, gzip; header geometry unchanged",
+    "implant.nrrd": "B0010_implant.stl (expert-designed, RAS mm) flipped to LPS and voxelized onto the skull grid"
+  },
+  "spatial": {
+    "units": "mm",
+    "space": "left-posterior-superior",
+    "dimension": 3,
+    "sizes": [
+      512,
+      512,
+      169
+    ],
+    "spacings": [
+      0.4375,
+      0.4375,
+      1.0
+    ],
+    "bboxMm": [
+      224.0,
+      224.0,
+      169.0
+    ],
+    "orientationNote": "left-posterior-superior; space origin preserved from source"
+  },
+  "r3ToleranceMm": 0.001,
+  "r3ToleranceSpacing": 0.001
+}

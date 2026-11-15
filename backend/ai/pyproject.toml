@@ -20,10 +20,16 @@ dependencies = [
   "boto3==1.44.3",
   "numpy==2.5.4",
   "scipy==1.18.1",
+  "deepagents==0.7.38",
+  "langchain-community==0.4.2",
+  "wikipedia==1.4.0",
+  "arxiv==4.1.0",
+  "xmltodict==1.0.4",
+  "reportlab==5.1.0",
 ]
 
 [project.optional-dependencies]
-test = ["httpx==0.28.1", "pytest==9.2.0"]
+test = ["httpx==0.28.1", "pytest==9.2.0", "pypdf==7.1.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

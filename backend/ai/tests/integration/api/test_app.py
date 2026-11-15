@@ -22,7 +22,7 @@ EXPECTED = {
     ('DELETE', '/api/annotations/{annotation_id}'),
     ('POST', '/api/projects/{id}/package'), ('POST', '/api/packages/import'),
     ('GET', '/api/candidates/{id}/revisions/{revision_id}/volume'),
-    ('POST', '/api/ai/chat'), ('POST', '/api/ai/chat/stream'), ('GET', '/api/ai/proposals/{proposal_id}'), ('POST', '/api/ai/proposals/{proposal_id}/discard'), ('POST', '/api/ai/proposals/{proposal_id}/accept'), ('POST', '/api/candidates/{id}/placement'),
+    ('POST', '/api/ai/chat'), ('POST', '/api/ai/chat/stream'), ('GET', '/api/ai/proposals/{proposal_id}'), ('POST', '/api/ai/proposals/{proposal_id}/discard'), ('POST', '/api/ai/proposals/{proposal_id}/accept'), ('POST', '/api/ai/reports/{report_id}/captures'), ('GET', '/api/ai/reports/{report_id}.pdf'), ('GET', '/api/ai/conversations/{conversation_id}/reports'), ('POST', '/api/candidates/{id}/placement'),
     ('POST', '/api/candidates/{id}/measurements'),
     ('GET', '/api/candidates/{id}/revisions/{revision_id}/measurements'),
     ('GET', '/api/projects'), ('POST', '/api/projects'),

@@ -75,7 +75,7 @@ class GeminiChatTest(unittest.TestCase):
                                                     'evaluate_implant_fit_metrics', 'list_candidate_revisions',
                                                     'list_case_objects', 'measure_defect_rim_thickness',
                                                     'measure_implant_rim_fit', 'measure_workspace_volumes',
-                                                    'search_clinical_knowledge'])
+                                                    'search_clinical_knowledge', 'task'])
         tool_result = [m for m in self.model.seen[1] if isinstance(m, ToolMessage)][0]
         self.assertIn(self.payload['object_id'], tool_result.content)
         self.assertEqual(self.repo.read_project_manifest(self.project['id']), before)

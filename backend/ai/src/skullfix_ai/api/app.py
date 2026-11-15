@@ -19,6 +19,7 @@ from .routes.landmarks import create_landmark_router
 from .routes.annotations import create_annotation_router
 from .routes.packages import create_package_router
 from .routes.reconstructions import create_reconstruction_router
+from .routes.reports import create_reports_router
 
 ALL_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 # Vite dev origins allowed to call the API directly (VITE_LANGGRAPH_API_URL). Never a wildcard.
@@ -45,6 +46,9 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app.state.model_endpoint = model_endpoint
     from skullfix_ai.application.model_reconstruction import RunRegistry, run_in_thread
     app.state.reconstruction_runs = RunRegistry(reconstruction_runner or run_in_thread)
+    # Case reports for the current chat sessions (in memory; never the application database).
+    from skullfix_ai.reports.store import ReportStore
+    app.state.report_store = ReportStore()
 
     @app.middleware('http')
     async def current_json_parser(request: Request, call_next):
@@ -73,6 +77,7 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
 
     app.include_router(create_application_router())
     app.include_router(create_chat_router())
+    app.include_router(create_reports_router())
     app.include_router(create_placement_router())
     app.include_router(create_package_router())
     app.include_router(create_landmark_router())

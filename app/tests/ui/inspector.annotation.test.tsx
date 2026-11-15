@@ -420,4 +420,43 @@ describe('Inspector Annotations section', () => {
     fireEvent.click(screen.getByText('ROI'))
     expect(screen.getByText(/3\.00\s*×\s*4\.00\s*×\s*5\.00\s*mm/)).toBeTruthy()
   })
+  function colorRow(over: Partial<Annotation>): Annotation {
+    return {
+      id: 'ann-c', revisionId: 'rev-1', type: 'plane', name: 'Cut plane',
+      points: [[0, 0, 0]], meta: { normal: [0, 0, 1] }, locked: false, visible: true,
+      createdAt: '2026-01-01T00:00:00Z', ...over,
+    }
+  }
+
+  it('annotation-color-system S3: any annotation row can be recoloured with the five palette swatches', () => {
+    const onAnnotationAction = vi.fn()
+    render(
+      <Inspector state={makeState(true)} activeTool="select" onRestoreRevision={() => {}}
+        annotations={[colorRow({})]} isCandidateActive onAnnotationAction={onAnnotationAction} />,
+    )
+    fireEvent.click(screen.getByTestId('ann-row-ann-c').querySelector('.annotation-row__header')!)
+    for (const key of ['accent', 'amber', 'emerald', 'rose', 'slate']) {
+      expect(screen.getByRole('button', { name: `Color ${key}` })).toBeTruthy()
+    }
+    expect(screen.getByRole('button', { name: 'Color accent' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Color slate' }))
+    expect(onAnnotationAction).toHaveBeenCalledWith({
+      type: 'updateMeta', id: 'ann-c', meta: { normal: [0, 0, 1], color: 'slate' },
+    })
+  })
+
+  it('annotation-color-system S4: a locked annotation cannot be recoloured', () => {
+    const onAnnotationAction = vi.fn()
+    render(
+      <Inspector state={makeState(true)} activeTool="select" onRestoreRevision={() => {}}
+        annotations={[colorRow({ type: 'roi', name: 'Box', locked: true, points: [[0, 0, 0], [1, 1, 1]], meta: {} })]}
+        isCandidateActive onAnnotationAction={onAnnotationAction} />,
+    )
+    fireEvent.click(screen.getByTestId('ann-row-ann-c').querySelector('.annotation-row__header')!)
+    const amber = screen.getByRole('button', { name: 'Color amber' })
+    expect(amber.getAttribute('aria-pressed')).toBe('true')
+    expect((amber as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Color rose' }))
+    expect(onAnnotationAction).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'updateMeta' }))
+  })
 })

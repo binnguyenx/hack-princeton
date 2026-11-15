@@ -320,3 +320,46 @@ describe('cross-reference workbench hierarchy', () => {
     expect(screen.getByText('Protected source anatomy')).toBeTruthy()
   })
 })
+
+describe('placement colour (annotation-color-system R4)', () => {
+  it.each(['line', 'plane', 'roi', 'highlight'] as const)(
+    'shows the five palette swatches while placing a %s and reports the pick',
+    (type) => {
+      const onPlacementColorChange = vi.fn()
+      render(
+        <CanvasWorkspace
+          {...baseProps}
+          activeMode="place"
+          isCandidateActive
+          hasDisplayMesh
+          activeAnnotationType={type}
+          onAnnotationTypeChange={() => {}}
+          placementColor={null}
+          onPlacementColorChange={onPlacementColorChange}
+        />,
+      )
+      const group = screen.getByRole('group', { name: 'Placement color' })
+      expect(group.querySelectorAll('button')).toHaveLength(5)
+      const expectedDefault = type === 'roi' ? 'amber' : 'accent'
+      expect(screen.getByRole('button', { name: `Color ${expectedDefault}` }).getAttribute('aria-pressed')).toBe('true')
+      fireEvent.click(screen.getByRole('button', { name: 'Color emerald' }))
+      expect(onPlacementColorChange).toHaveBeenCalledWith('emerald')
+    },
+  )
+
+  it('shows the session colour once one was picked', () => {
+    render(
+      <CanvasWorkspace
+        {...baseProps}
+        activeMode="place"
+        isCandidateActive
+        activeAnnotationType="roi"
+        onAnnotationTypeChange={() => {}}
+        placementColor="slate"
+        onPlacementColorChange={() => {}}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Color slate' }).getAttribute('aria-pressed')).toBe('true')
+  })
+})
+

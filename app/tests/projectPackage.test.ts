@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  addAnnotation,
   createCandidate,
   openDocument,
   readState,
@@ -96,5 +97,33 @@ describe('R11 R12 project package', () => {
     if (!still.ok || !still.value) throw new Error('no state')
     expect(still.value.project.id).toBe(prior.value.project.id)
     void EditorStore
+  })
+
+  it('annotation-color-system S5: annotation colours survive save and reopen', async () => {
+    const ctx = await openDemo()
+    const c = await createCandidate(ctx, 'sample-000')
+    if (!c.ok) throw new Error(c.error)
+    const st = readState(ctx)
+    if (!st.ok || !st.value) throw new Error('no state')
+    const revisionId = st.value.candidates.find((x) => x.objectId === c.value.candidateId)!.currentRevisionId
+    expect(openDocument(ctx, { kind: 'candidate', id: c.value.candidateId }).ok).toBe(true)
+    const colours = { line: 'emerald', plane: 'slate', roi: 'rose' } as const
+    for (const [type, color] of Object.entries(colours)) {
+      const r = addAnnotation(ctx, {
+        type: type as 'line' | 'plane' | 'roi', name: type, revisionId,
+        points: type === 'plane' ? [[0, 0, 0]] : [[0, 0, 0], [1, 1, 1]],
+        meta: type === 'plane' ? { color, method: 'point-normal', normal: [0, 0, 1] } : { color },
+      })
+      if (!r.ok) throw new Error(`${type}: ${r.error}`)
+    }
+    const tmp = await mkdtemp(path.join(os.tmpdir(), 'proj-color-'))
+    expect((await saveProject(ctx, tmp)).ok).toBe(true)
+    const ctx2 = freshCtx()
+    expect((await openProject(ctx2, tmp)).ok).toBe(true)
+    const after = readState(ctx2)
+    if (!after.ok || !after.value) throw new Error('no state')
+    const byName = Object.fromEntries(after.value.annotations.map((a) => [a.name, a.meta.color]))
+    expect(byName).toEqual(colours)
+    await rm(tmp, { recursive: true, force: true })
   })
 })

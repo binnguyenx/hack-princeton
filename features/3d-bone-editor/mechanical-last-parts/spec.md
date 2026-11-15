@@ -1,6 +1,6 @@
 # Spec: Mechanical last parts — annotation, measurement, and spatial markup
 
-Intent: [intent.md](intent.md) · Status: accepted · Last updated: 2026-11-14 (Close on `integrate/canvas-mechanical`)
+Intent: [intent.md](intent.md) · Status: accepted (R88–R95, S22–S27, D12 accepted via /tdd implement 2026-11-15) · Last updated: 2026-11-15
 
 ## Summary
 
@@ -147,6 +147,22 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 - R76. Measurement values in the panel and viewport are always consistent. If a control point is moved in the viewport, the panel value updates before the next animation frame.
 - R77. When `restoreRevision` is called (from either the Inspector revision history or keyboard shortcut), the annotation panel immediately reflects the annotations owned by the newly active revision ID. Because annotations are part of the project manifest and `App.tsx` calls `loadProject` after every restore, this happens automatically — no separate annotation fetch is needed.
 
+### Direct manipulation of planes and ROIs (2026-11-15 amendment, draft)
+
+These refine R50 and R56. The causes they address are suspected from code reading and not individually confirmed by the owner (see the intent amendment).
+
+- R88. A dragged handle follows the cursor from any camera angle. While dragging, the handle's on-screen position stays within 3 px of the pointer (unless clamped by a minimum size). Drag deltas are computed from the pointer ray against the handle's constraint (an axis, plane or sphere through the annotation), never from raw screen x/y.
+- R89. A selected unlocked plane shows three handle kinds:
+  - **Move:** at the origin, drags the origin along the plane's normal.
+  - **Tilt:** two knobs on the rotate ring rotate the normal about the origin so the dragged knob follows the cursor. This allows any orientation, not only spin about the superior axis.
+  - **Size:** at the edge, changes the plane's half-size (pad) so the edge follows the cursor within the plane.
+- R90. A selected unlocked ROI shows six face knobs and one centre move handle. Dragging a face knob moves only that face along its axis; the opposite face stays fixed, and an edge never shrinks below 2 mm. Dragging the centre handle translates the whole box without resizing it.
+- R91. Releasing the pointer commits exactly one annotation update through the existing uncommitted-stack/API path. Escape during a drag, or a `pointercancel`, restores the pre-drag geometry and commits nothing.
+- R92. During a drag, plane area, ROI volume, panel values and any plane-driven slice update live, at most once per animation frame.
+- R93. A drag is not interrupted by re-renders caused by its own live updates (including bounding-box changes). Ending it always restores camera navigation.
+- R94. Handles render on top of anatomy at a constant on-screen size (±10% across zoom levels). Hovering a handle shows a hover state and the cursor that matches its action (move, rotate, resize).
+- R95. Locked annotations, non-primary buttons and Ctrl/Meta-clicks never start a manipulation (canvas-interaction-contracts R2, R6 unchanged).
+
 ---
 
 ## Success criteria
@@ -177,6 +193,15 @@ UI hierarchy, component ownership, visual tokens, and all journey-level behavior
 - S19. Given a candidate document with no display mesh loaded, the Surface Highlight button in `ContextStrip` is disabled with a visible reason label.
 - S20. Given all nine annotation types each placed once on the same revision, the annotation panel lists all nine rows; each shows the correct type icon, measurement, and primary action.
 - S21. Given a highlight overlay stored with valid triangle indices, if `AnnotationOverlay` detects any index is out of range for the current mesh, it renders a warning label in the panel row and skips rendering that overlay silently.
+
+### Direct manipulation (2026-11-15 amendment, draft)
+
+- S22. Given a plane viewed from an oblique camera, when its tilt knob is dragged, then the normal changes so the knob stays within 3 px of the pointer, and the new normal has a non-zero component off the superior axis.
+- S23. Given an ROI, when its +X face knob is dragged by 10 mm along X, then `max.x` increases by 10 ± 0.1 mm, `min` is unchanged, and the displayed volume equals the new edge product within 0.1 mm³.
+- S24. Given an ROI 5 mm wide in X, when its +X face is dragged 10 mm toward −X, then the width clamps at 2 mm.
+- S25. Given any plane/ROI drag, when Escape is pressed or `pointercancel` fires, then the geometry equals the pre-drag geometry and no update is committed. When the pointer is released normally, exactly one update is committed.
+- S26. Given a plane driving a slice in the dock, when its move handle is dragged, then the slice updates during the drag.
+- S27. Given a locked plane, when its handle is dragged, then nothing changes and the camera navigates.
 
 ---
 
@@ -320,7 +345,8 @@ Pure functions, no side effects, fully testable without a DOM:
 | Placement UX | `app/src/ui/CanvasWorkspace.tsx` — activeAnnotationType prop, ContextStrip type selector, in-progress placement local state |
 | Annotation panel | `app/src/ui/Inspector.tsx`, `app/src/ui/AnnotationList.tsx`, `app/src/ui/annotationActions.ts`, `app/src/ui/annotationActionMenu.tsx` |
 | Viewport overlay | `app/src/viewport/AnnotationOverlay.ts` (builders + `syncAnnotationObjects`) |
-| Behavior classes | `app/src/viewport/annotationBehaviors/` — registry, Selectable emphasis, PointSet hints/angle preview, OrientedExtent gizmo math |
+| Behavior classes | `app/src/viewport/annotationBehaviors/` — registry, Selectable emphasis, PointSet hints/angle preview, OrientedExtent list-row math |
+| Plane/ROI direct manipulation (R88–R95) | `app/src/viewport/annotationBehaviors/extentDrag.ts` (ray-constraint solvers, handle layout), `extentDragSession.ts` (live/commit/cancel), wiring in `app/src/viewport/Viewport.tsx`, Escape in `app/src/App.tsx`; tests `app/tests/extentDrag.test.ts`, `app/tests/extentDragSession.test.ts` |
 | Canvas gestures | `app/src/viewport/canvasGestures.ts` |
 | Draft placement math | `app/src/geometry/annotationPlacement.ts` |
 | Measurement math | `app/src/geometry/annotationMeasure.ts` |
@@ -352,6 +378,8 @@ Pure functions, no side effects, fully testable without a DOM:
 - D10. `AnnotationOverlay` is mounted inside `Viewport` with the Three.js scene ref passed through. This keeps all Three.js object lifecycle in one place and avoids a second canvas or scene.
 
 - D11. Place uses a shared gesture classifier and never auto-writes on point-count alone. Slice dock stays mounted during Place (R81).
+
+- D12. Plane/ROI handle drags are solved from the pointer ray against the handle's constraint (axis, plane or sphere through the annotation), not from screen-space deltas. Why: screen deltas make the handle drift away from the cursor depending on camera angle, which is the main suspected cause of flaky manipulation. Alternatives: tune the screen-delta gains (still camera-dependent), adopt three.js `TransformControls` (its own interaction model conflicts with the shared pointer-owner resolver).
 
 ---
 

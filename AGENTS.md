@@ -85,7 +85,7 @@ Run every deterministic backend suite from the repo root:
 PYTHONDONTWRITEBYTECODE=1 python3 -B backend/ai/tests/run_checks.py
 ```
 
-A healthy run reports `Ran 157 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, live API (including foreground-volume measurement), and legacy regressions. No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
+A healthy run reports `Ran 234 tests` and `OK`. It includes storage, artifact, schema, fixture, operation-service, mock-adapter, live API (including foreground-volume measurement), deep-agent chat, research and case-report suites, and legacy regressions. The offline agent eval is separate: `python3 -m pytest backend/ai/tests/eval_harness` (healthy: 18/18 golden cases). No AWS/network/HTTP service is required. See `docs/ai/setup.md` for guarantees and recovery limits.
 
 From the repo root, run storage and artifact tests:
 
@@ -116,7 +116,7 @@ A healthy run prints `Ran 1 test` and `OK`. What that test does and does not pro
 cd app && npm install && npm test && npm run build
 ```
 
-Healthy: Vitest reports all tests passed; `npm run build` completes. Live app: `cd app && npm run dev` (opens one editor; demo case loads automatically). Sample inspection: `data/README.md`.
+Healthy: Vitest reports all tests passed; `npm run build` completes. App tests need Node ≥ 22.22 (jsdom 31); under Node 20 every jsdom suite fails with "Failed to start forks worker". Live app: `cd app && npm run dev` (opens one editor; demo case loads automatically). Sample inspection: `data/README.md`.
 
 Validate the synthetic demo fixtures:
 
