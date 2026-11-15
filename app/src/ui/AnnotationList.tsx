@@ -18,6 +18,8 @@ import {
 } from '../viewport/annotationBehaviors'
 import type { AnnotationAction } from './annotationActions'
 import { AnnotationRowMoreMenu } from './annotationActionMenu'
+import { AnnotationColorSwatches } from './AnnotationColorSwatches'
+import { resolveAnnotationColorKey } from '../domain/annotationPalette'
 
 type Props = {
   annotations: Annotation[]
@@ -216,6 +218,20 @@ function AnnotationRow({
               }}
             />
           </label>
+          <div className="annotation-field annotation-color-row">
+            <span>Color</span>
+            <AnnotationColorSwatches
+              value={resolveAnnotationColorKey(ann)}
+              disabled={ann.locked}
+              onChange={(color) =>
+                onAnnotationAction({
+                  type: 'updateMeta',
+                  id: ann.id,
+                  meta: { ...ann.meta, color },
+                })
+              }
+            />
+          </div>
           {(ann.type === 'landmark' || ann.type === 'text_note') &&
           ann.points[0] ? (
             <div className="annotation-field">
@@ -299,35 +315,6 @@ function AnnotationRow({
                 />
                 <span>{Number(ann.meta.brushRadiusMm ?? 10)} mm</span>
               </label>
-              <div className="annotation-field annotation-color-row">
-                <span>Color</span>
-                {(
-                  [
-                    ['accent', '#2F6BFF'],
-                    ['amber', '#F59E0B'],
-                    ['rose', '#F43F5E'],
-                    ['emerald', '#10B981'],
-                  ] as const
-                ).map(([key, hex]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`annotation-color-swatch ${
-                      (ann.meta.color ?? 'accent') === key ? 'is-active' : ''
-                    }`}
-                    aria-label={`Color ${key}`}
-                    aria-pressed={(ann.meta.color ?? 'accent') === key}
-                    style={{ background: hex }}
-                    onClick={() =>
-                      onAnnotationAction({
-                        type: 'updateMeta',
-                        id: ann.id,
-                        meta: { ...ann.meta, color: key },
-                      })
-                    }
-                  />
-                ))}
-              </div>
             </>
           ) : null}
           {stale ? (

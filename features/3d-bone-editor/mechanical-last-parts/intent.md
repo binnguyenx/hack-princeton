@@ -148,3 +148,10 @@ The experience should feel like 3D Slicer's Markups panel combined with the comp
 ## Amendments
 
 <!-- Append-only after acceptance -->
+
+- 2026-11-15 (Minh Triet Nguyen; owner said "spec it" on 2026-11-15; suspected causes not individually confirmed): **Fix flaky interaction and manipulation of annotation objects, especially area tools (planes, ROIs).** Manipulating placed objects feels unreliable for the demo and the case report screenshots. Suspected causes, from reading `app/src/viewport/Viewport.tsx` and `annotationBehaviors/orientedExtent.ts`, to be confirmed:
+  - Plane rotation only spins around the world superior axis using horizontal mouse motion, whatever the camera angle. A plane can't be tilted.
+  - Plane size and ROI size follow raw vertical/horizontal screen motion, not the handle being dragged. ROI face knobs scale the whole box uniformly instead of moving that face, which contradicts R56/S17.
+  - Planes and ROIs can't be moved after placement (no translate handle).
+  - A cancelled drag (`pointercancel`) commits the edit instead of reverting it, and there's no Escape-to-cancel.
+  Desired outcome: dragging a handle moves the part under the cursor predictably from any camera angle; planes can be moved and tilted; ROI faces resize independently; cancel reverts. Persistence, commit and revision logic stay unchanged. Colour for annotations is a separate feature: `features/annotation-color-system/`.

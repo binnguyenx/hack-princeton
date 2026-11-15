@@ -7,7 +7,7 @@
 export type ChatMode = 'gemini-read-only' | 'bedrock-read-only'
 const CHAT_MODES: readonly string[] = ['gemini-read-only', 'bedrock-read-only']
 // Optional direct FastAPI origin (CORS); default is same-origin through the Vite /api proxy.
-const API_BASE = ((import.meta.env.VITE_LANGGRAPH_API_URL as string | undefined) ?? '').trim().replace(/\/+$/, '')
+export const API_BASE = ((import.meta.env.VITE_LANGGRAPH_API_URL as string | undefined) ?? '').trim().replace(/\/+$/, '')
 export const CHAT_ENDPOINT = `${API_BASE}/api/ai/chat`
 
 export type ReadOnlyChatRequest = {
@@ -98,8 +98,13 @@ export type ViewportOverlay = {
   focus_ijk: [number, number, number] | null
   points: Array<{ ijk: [number, number, number]; value_mm: number; severity: OverlaySeverity }>
 }
-export type ThinkingKind = 'step' | 'reasoning'
-export type ThinkingItem = { id: string; kind: ThinkingKind; text: string }
+export type ThinkingKind = 'step' | 'reasoning' | 'subagent'
+export type SubagentPhase = 'spawned' | 'step' | 'returned' | 'failed'
+const SUBAGENT_PHASES: readonly string[] = ['spawned', 'step', 'returned', 'failed']
+/** Thinking trace line; subagent lines (ai-deep-agent-research R17) name the subagent and its phase. */
+export type ThinkingItem =
+  | { id: string; kind: 'step' | 'reasoning'; text: string }
+  | { id: string; kind: 'subagent'; subagent: string; phase: SubagentPhase; text: string }
 
 export interface ChatMessage {
   id: string
@@ -117,11 +122,29 @@ export interface ChatMessage {
   overlay?: ViewportOverlay
 }
 export type ChatTurn = { role: 'human' | 'assistant'; content: string }
+
+/** A case report plan waiting for browser captures (ai-case-report R6). */
+export type ReportShot =
+  | { id: string; kind: 'view'; section: 'hero' | 'anatomy' | 'repair'; preset: string; objects: string[]; title: string }
+  | { id: string; kind: 'annotated_view'; section: 'annotated'; preset: string; objects: string[]; title: string;
+      callouts: Array<{ annotation_id: string; label: string }> }
+  | { id: string; kind: 'slices'; section: 'slices'; centre: 'defect' | 'volume' | { annotation_id: string }; title: string }
+export type ReportJob = { reportId: string; conversationId: string; title: string; shots: ReportShot[] }
+
+function reportJob(value: unknown, conversationId: string): ReportJob | null {
+  if (!record(value) || typeof value.report_id !== 'string' || value.conversation_id !== conversationId
+    || typeof value.title !== 'string' || !Array.isArray(value.shots)) return null
+  const shots = value.shots.filter((shot): shot is ReportShot => record(shot) && typeof shot.id === 'string'
+    && (shot.kind === 'view' || shot.kind === 'annotated_view' || shot.kind === 'slices'))
+  if (shots.length !== value.shots.length || shots.length === 0) return null
+  return { reportId: value.report_id, conversationId, title: value.title, shots }
+}
 export type StreamEvent =
   | { event: 'metadata'; data: { run_id: string; mode: ChatMode } }
   | { event: 'thinking'; data: ThinkingItem }
   | { event: 'proposal'; data: StagedProposal }
   | { event: 'overlay'; data: ViewportOverlay }
+  | { event: 'report'; data: ReportJob }
   | { event: 'messages'; data: Array<{ id: string; content: string; type: string }> }
   | { event: 'end'; data: Record<string, never> }
 
@@ -130,8 +153,14 @@ const PROPOSAL_ENDPOINT = (id: string) => `${API_BASE}/api/ai/proposals/${encode
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isThinking(value: Record<string, unknown>): value is Record<string, unknown> & ThinkingItem {
-  return typeof value.id === 'string' && typeof value.text === 'string' && (value.kind === 'step' || value.kind === 'reasoning')
+function thinkingItem(value: Record<string, unknown>): ThinkingItem | null {
+  if (typeof value.id !== 'string' || typeof value.text !== 'string') return null
+  if (value.kind === 'step' || value.kind === 'reasoning') return { id: value.id, kind: value.kind, text: value.text }
+  if (value.kind === 'subagent' && typeof value.subagent === 'string' && value.subagent
+    && typeof value.phase === 'string' && SUBAGENT_PHASES.includes(value.phase)) {
+    return { id: value.id, kind: 'subagent', subagent: value.subagent, phase: value.phase as SubagentPhase, text: value.text }
+  }
+  return null
 }
 
 /** Validate the final envelope against the request; returns the explanation text. */
@@ -232,13 +261,16 @@ export const streamingChatClient = {
         mode = line.mode as ChatMode
         yield { event: 'metadata', data: { run_id: requestId, mode } }
       } else if (line.type === 'thinking') {
-        if (mode && isThinking(line)) yield { event: 'thinking', data: { id: line.id, kind: line.kind, text: line.text } }
+        const item = mode ? thinkingItem(line) : null
+        if (item) yield { event: 'thinking', data: item }
       } else if (line.type === 'result') {
         const explanation = validatedExplanation(line, requestId, conversationId, context)
         const proposal = stagedProposal(line.staged_proposal, context)
         if (proposal) yield { event: 'proposal', data: proposal }
         const overlay = viewportOverlay(line.viewport_overlay, context)
         if (overlay) yield { event: 'overlay', data: overlay }
+        const report = reportJob(line.report_job, conversationId)
+        if (report) yield { event: 'report', data: report }
         yield { event: 'messages', data: [{ id: requestId, content: explanation, type: 'AIMessageChunk' }] }
         yield { event: 'end', data: {} }
         return

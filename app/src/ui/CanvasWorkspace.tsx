@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
+import type { ShotRenderer } from '../report/captureShots'
+import { AnnotationColorSwatches } from './AnnotationColorSwatches'
+import {
+  defaultAnnotationColorKey,
+  type AnnotationColorKey,
+} from '../domain/annotationPalette'
 import {
   Contrast,
   MapPin,
@@ -63,6 +69,8 @@ type Props = {
   onWorkspaceChanged?: () => void
   activeOverlayId?: string | null
   onOverlayChange?: (overlay: ViewportOverlay | null) => void
+  /** Case report captures (ai-case-report R7), passed through to the chat panel. */
+  reportRenderer?: ShotRenderer
   isCandidateActive?: boolean
   activeAnnotationType?: AnnotationType
   onAnnotationTypeChange?: (type: AnnotationType) => void
@@ -85,23 +93,12 @@ type Props = {
   hasDisplayMesh?: boolean
   brushRadiusMm?: number
   onBrushRadiusChange?: (radiusMm: number) => void
-  highlightColor?: 'accent' | 'amber' | 'rose' | 'emerald'
-  onHighlightColorChange?: (
-    color: 'accent' | 'amber' | 'rose' | 'emerald',
-  ) => void
+  /** Session placement colour; null = the active type's default (annotation-color-system R4). */
+  placementColor?: AnnotationColorKey | null
+  onPlacementColorChange?: (color: AnnotationColorKey) => void
 }
 
 export type PlanePlacementMethod = 'point-normal' | 'three-point'
-
-const HIGHLIGHT_COLORS: Array<{
-  id: 'accent' | 'amber' | 'rose' | 'emerald'
-  hex: string
-}> = [
-  { id: 'accent', hex: '#2F6BFF' },
-  { id: 'amber', hex: '#F59E0B' },
-  { id: 'rose', hex: '#F43F5E' },
-  { id: 'emerald', hex: '#10B981' },
-]
 
 const MODES = [
   { id: 'view' as const, label: 'View', icon: MousePointer2, hint: CANVAS_HINTS.modeView },
@@ -154,6 +151,7 @@ export function CanvasWorkspace({
   onWorkspaceChanged,
   activeOverlayId,
   onOverlayChange,
+  reportRenderer,
   isCandidateActive = false,
   activeAnnotationType = 'text_note',
   onAnnotationTypeChange,
@@ -165,8 +163,8 @@ export function CanvasWorkspace({
   hasDisplayMesh = false,
   brushRadiusMm = 10,
   onBrushRadiusChange,
-  highlightColor = 'accent',
-  onHighlightColorChange,
+  placementColor = null,
+  onPlacementColorChange,
   placeRequireDblClick = false,
   stackDirty = false,
 }: Props) {
@@ -336,6 +334,13 @@ export function CanvasWorkspace({
                   )
                 })}
               </div>
+              {activeAnnotationType ? (
+                <AnnotationColorSwatches
+                  label="Placement color"
+                  value={placementColor ?? defaultAnnotationColorKey(activeAnnotationType)}
+                  onChange={(color) => onPlacementColorChange?.(color)}
+                />
+              ) : null}
               {activeAnnotationType === 'highlight' ? (
                 <div
                   className="canvas-highlight-controls"
@@ -356,25 +361,6 @@ export function CanvasWorkspace({
                     />
                     <span>{brushRadiusMm} mm</span>
                   </label>
-                  <div
-                    className="canvas-highlight-swatches"
-                    role="group"
-                    aria-label="Highlight color"
-                  >
-                    {HIGHLIGHT_COLORS.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className={`annotation-color-swatch ${
-                          highlightColor === c.id ? 'is-active' : ''
-                        }`}
-                        aria-label={`Color ${c.id}`}
-                        aria-pressed={highlightColor === c.id}
-                        style={{ background: c.hex }}
-                        onClick={() => onHighlightColorChange?.(c.id)}
-                      />
-                    ))}
-                  </div>
                 </div>
               ) : null}
               {activeAnnotationType === 'plane' ? (
@@ -537,6 +523,7 @@ export function CanvasWorkspace({
               onWorkspaceChanged={onWorkspaceChanged}
               activeOverlayId={activeOverlayId}
               onOverlayChange={onOverlayChange}
+              reportRenderer={reportRenderer}
             />
           </aside>
         ) : (

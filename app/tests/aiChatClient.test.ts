@@ -92,6 +92,53 @@ it('yields thinking events in order before the validated answer', async () => {
   expect(events[1].data).toEqual({ id: 'reasoning-1', kind: 'reasoning', text: 'Need the evidence summary.' })
 })
 
+it('ai-deep-agent-research R17: passes subagent lines through with their subagent and phase, dropping malformed ones', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+    const request = JSON.parse(options.body)
+    return ndjsonResponse({ request_id: request.request_id, conversation_id: request.conversation_id,
+      mode: 'gemini-read-only', outcome: { status: 'completed', explanation: 'Answer.',
+        context: { ...context, selected_object_id: 'source', revision_id: null }, observation: { scope: 'application-read' } } },
+    [{ id: 'subagent-t1', kind: 'subagent', subagent: 'research', phase: 'spawned', text: 'Spawned research subagent: PEEK' },
+     { id: 'subagent-t1-s1', kind: 'subagent', subagent: 'research', phase: 'step', text: 'Searching PubMed for “PEEK”…' },
+     { id: 'bad-phase', kind: 'subagent', subagent: 'research', phase: 'exploded', text: 'x' },
+     { id: 'no-name', kind: 'subagent', phase: 'step', text: 'x' },
+     { id: 'subagent-t1-done', kind: 'subagent', subagent: 'research', phase: 'returned', text: 'Research subagent returned 2 sources: …' }])
+  }))
+  const thinking = []
+  for await (const event of langGraphClient.streamResponse('session', [], 'PEEK?', context)) {
+    if (event.event === 'thinking') thinking.push(event.data)
+  }
+  expect(thinking).toEqual([
+    { id: 'subagent-t1', kind: 'subagent', subagent: 'research', phase: 'spawned', text: 'Spawned research subagent: PEEK' },
+    { id: 'subagent-t1-s1', kind: 'subagent', subagent: 'research', phase: 'step', text: 'Searching PubMed for “PEEK”…' },
+    { id: 'subagent-t1-done', kind: 'subagent', subagent: 'research', phase: 'returned', text: 'Research subagent returned 2 sources: …' },
+  ])
+})
+
+it('ai-case-report R6: yields a report event for a report_job in this conversation only', async () => {
+  const shots = [{ id: 'shot-01', kind: 'view', section: 'hero', preset: 'left', objects: ['source'], title: '' },
+    { id: 'shot-02', kind: 'slices', section: 'slices', centre: 'defect', title: '' }]
+  for (const sameConversation of [true, false]) {
+    vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+      const request = JSON.parse(options.body)
+      return ndjsonResponse({ request_id: request.request_id, conversation_id: request.conversation_id,
+        mode: 'gemini-read-only', outcome: { status: 'completed', explanation: 'Preparing your report.',
+          context: { ...context, selected_object_id: 'source', revision_id: null }, observation: { scope: 'application-read' } },
+        report_job: { report_id: 'rep-1', conversation_id: sameConversation ? request.conversation_id : 'other', status: 'needs-captures',
+          title: 'Defect review', shots } })
+    }))
+    const events = []
+    for await (const event of langGraphClient.streamResponse('session', [], 'Report please', context)) events.push(event)
+    const report = events.find(event => event.event === 'report')
+    if (sameConversation) {
+      expect(report?.data).toEqual({ reportId: 'rep-1', conversationId: 'session', title: 'Defect review', shots })
+      expect(events.map(event => event.event).indexOf('report')).toBeLessThan(events.map(event => event.event).indexOf('messages'))
+    } else {
+      expect(report).toBeUndefined()
+    }
+  }
+})
+
 it('rejects a stream that ends without a result line', async () => {
   vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
     const request = JSON.parse(options.body)

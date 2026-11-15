@@ -10,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 from skullfix_ai.agent.context import GraphRequest, RepositoryManifestReader
 from skullfix_ai.agent.gemini_graph import ChatModelUnavailable
 from skullfix_ai.agent.preflight import run_preflight
+from skullfix_ai.agent.report_subagent import ReportSink
 from skullfix_ai.agent.staging import ProposalSink, StagingError
 from skullfix_ai.tools.geometry_tools import GeometryWorkspace
 from skullfix_ai.integrations.workspace import AppWorkspaceAdapter, WorkspaceError
@@ -59,7 +60,7 @@ class _OnceReader:
         return self.manifest
 
 
-def _agent_events(repository, agent, payload, store=None):
+def _agent_events(repository, agent, payload, store=None, report_store=None):
     """Yield thinking events, then ``{'type': 'outcome', 'outcome': ...}`` (same outcome as the JSON route)."""
     reader = _OnceReader(RepositoryManifestReader(repository))
     steps = ['load_context']
@@ -85,9 +86,11 @@ def _agent_events(repository, agent, payload, store=None):
     yield {'type': 'thinking', 'id': 'step-preflight', 'kind': 'step', 'text': _preflight_label(capabilities)}
     sink = ProposalSink(store, context, payload.conversation_id) if store is not None else None
     geometry = GeometryWorkspace(repository, context, manifest, capabilities)
+    reports = (ReportSink(report_store, repository, context, manifest, payload.conversation_id, payload.history,
+                          payload.message) if report_store is not None else None)
     final = None
     try:
-        for event in _turn_events(agent, payload, context, manifest, capabilities, sink, geometry):
+        for event in _turn_events(agent, payload, context, manifest, capabilities, sink, geometry, reports):
             if event['type'] == 'final':
                 final = event
             else:
@@ -105,7 +108,8 @@ def _agent_events(repository, agent, payload, store=None):
                     'steps': [*steps, 'agent', *(f'tool:{name}' for name in final['tools'])],
                     'capabilities': capabilities.model_dump(mode='json'),
                     'staged_proposal': final.get('staged_proposal'),
-                    'viewport_overlay': final.get('viewport_overlay')})
+                    'viewport_overlay': final.get('viewport_overlay'),
+                    'report_job': final.get('report_job')})
 
 
 CHECK_PHRASES = {'voxel_volume': 'volume calculation', 'rim_thickness': 'rim thickness measurement',
@@ -124,12 +128,13 @@ def _preflight_label(capabilities):
     return text
 
 
-def _turn_events(agent, payload, context, manifest, capabilities=None, sink=None, geometry=None):
+def _turn_events(agent, payload, context, manifest, capabilities=None, sink=None, geometry=None, reports=None):
     """Agent events; agents without ``stream_turn`` (e.g. test stubs) yield only their final reply."""
     arguments = dict(conversation_id=payload.conversation_id, message=payload.message,
                      history=payload.history, context=context, manifest=manifest)
     if hasattr(agent, 'stream_turn'):
-        yield from agent.stream_turn(**arguments, capabilities=capabilities, sink=sink, geometry=geometry)
+        extra = {'reports': reports} if reports is not None else {}
+        yield from agent.stream_turn(**arguments, capabilities=capabilities, sink=sink, geometry=geometry, **extra)
         return
     text, tools = agent.reply(**arguments)
     yield {'type': 'final', 'text': text, 'tools': tools}
@@ -139,8 +144,9 @@ def _outcome(outcome):
     return {'type': 'outcome', 'outcome': outcome}
 
 
-def _agent_read(repository, agent, payload, store=None):
-    return next(event['outcome'] for event in _agent_events(repository, agent, payload, store) if event['type'] == 'outcome')
+def _agent_read(repository, agent, payload, store=None, report_store=None):
+    return next(event['outcome'] for event in _agent_events(repository, agent, payload, store, report_store)
+                if event['type'] == 'outcome')
 
 
 LIMITATIONS = ['LLM + read-only workspace tools; no geometry execution or AI writes.',
@@ -151,16 +157,18 @@ def _envelope(agent, payload, outcome):
     outcome = dict(outcome)
     proposal = outcome.pop('staged_proposal', None)
     overlay = outcome.pop('viewport_overlay', None)
+    report_job = outcome.pop('report_job', None)
     return {'mode': agent.mode, 'request_id': payload.request_id, 'conversation_id': payload.conversation_id,
-            'outcome': outcome, 'limitations': LIMITATIONS, 'staged_proposal': proposal, 'viewport_overlay': overlay}
+            'outcome': outcome, 'limitations': LIMITATIONS, 'staged_proposal': proposal, 'viewport_overlay': overlay,
+            'report_job': report_job}
 
 
-def _ndjson_stream(repository, agent, payload, store=None):
+def _ndjson_stream(repository, agent, payload, store=None, report_store=None):
     """metadata line, thinking lines, then one result line carrying the JSON route's envelope."""
     line = lambda value: (json.dumps(value, ensure_ascii=False) + '\n').encode('utf-8')
     yield line({'type': 'metadata', 'mode': agent.mode, 'request_id': payload.request_id,
                 'conversation_id': payload.conversation_id})
-    for event in _agent_events(repository, agent, payload, store):
+    for event in _agent_events(repository, agent, payload, store, report_store):
         if event['type'] == 'outcome':
             yield line({'type': 'result', **_envelope(agent, payload, event['outcome'])})
         else:
@@ -198,7 +206,8 @@ def create_chat_router():
         if isinstance(parsed, JSONResponse):
             return parsed
         payload, agent = parsed
-        outcome = await run_in_threadpool(_agent_read, request.app.state.repository, agent, payload, _store(request))
+        outcome = await run_in_threadpool(_agent_read, request.app.state.repository, agent, payload, _store(request),
+                                          _report_store(request))
         return _envelope(agent, payload, outcome)
 
     @router.post('/chat/stream')
@@ -208,7 +217,8 @@ def create_chat_router():
             return parsed
         payload, agent = parsed
         # Sync generator: Starlette iterates it in a worker thread, flushing each line.
-        return StreamingResponse(_ndjson_stream(request.app.state.repository, agent, payload, _store(request)),
+        return StreamingResponse(_ndjson_stream(request.app.state.repository, agent, payload, _store(request),
+                                                _report_store(request)),
                                  media_type='application/x-ndjson',
                                  headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
@@ -261,6 +271,10 @@ class ProposalConfirmation(BaseModel):
 
 def _store(request):
     return getattr(request.app.state, 'proposal_store', None)
+
+
+def _report_store(request):
+    return getattr(request.app.state, 'report_store', None)
 
 
 def _proposal_is_current(repository, proposal):

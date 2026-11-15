@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReportCaptureApi } from './viewport/Viewport'
+import type { ShotRenderer } from './report/captureShots'
+import { renderSlicePanel, resolveSliceCentre } from './report/slicePanel'
+import type { AnnotationColorKey } from './domain/annotationPalette'
 import { apiClient } from './api/client'
 import type { Object3D } from 'three'
 import { installDebugBridge, updateCanvasRuntime } from './debug/bridge'
@@ -148,13 +152,45 @@ export default function App() {
   const [planeMethod, setPlaneMethod] =
     useState<PlanePlacementMethod>('point-normal')
   const [brushRadiusMm, setBrushRadiusMm] = useState(10)
-  const [highlightColor, setHighlightColor] = useState<
-    'accent' | 'amber' | 'rose' | 'emerald'
-  >('accent')
+  // annotation-color-system R4: null until the user picks; then applies to every new placement this session.
+  const [placementColor, setPlacementColor] = useState<AnnotationColorKey | null>(null)
+  const highlightColor: AnnotationColorKey = placementColor ?? 'accent'
   const [staleHighlightIds, setStaleHighlightIds] = useState<Set<string>>(
     () => new Set(),
   )
   const placementApiRef = useRef<PlacementApi | null>(null)
+  // mechanical-last-parts R91: Escape cancels an in-progress plane/ROI drag before anything else.
+  const manipulationApiRef = useRef<{ cancel: () => boolean } | null>(null)
+  // ai-case-report R7: offscreen 3D captures + slice panels for the chat's report jobs.
+  const reportCaptureApiRef = useRef<ReportCaptureApi | null>(null)
+  const reportInputsRef = useRef<{
+    sliceVolume: { voxels: Uint8Array; sizes: VolumeSizes } | null
+    spatial: SpatialMeta | null
+    annotations: Annotation[]
+    windowCenter: number
+    windowWidth: number
+  }>({ sliceVolume: null, spatial: null, annotations: [], windowCenter: 127.5, windowWidth: 255 })
+  const reportRenderer = useMemo<ShotRenderer>(() => ({
+    captureView: async (shot) => {
+      const api = reportCaptureApiRef.current
+      if (!api) throw new Error('Open the 3D view to capture report images')
+      return api.captureView(shot)
+    },
+    captureSlices: async (shot) => {
+      const inputs = reportInputsRef.current
+      if (!inputs.sliceVolume || !inputs.spatial) throw new Error('Slices are not loaded for this document')
+      const sizes = inputs.sliceVolume.sizes
+      const spacings = inputs.spatial.spacings
+      return renderSlicePanel({
+        voxels: inputs.sliceVolume.voxels,
+        sizes,
+        spacings: [spacings[0] ?? 1, spacings[1] ?? 1, spacings[2] ?? 1],
+        centreIjk: resolveSliceCentre(shot.centre, inputs.annotations, inputs.spatial, sizes),
+        windowCenter: inputs.windowCenter,
+        windowWidth: inputs.windowWidth,
+      })
+    },
+  }), [])
   const annotationStackRef = useRef(createAnnotationStack())
   const activeLineStackIdRef = useRef<string | null>(null)
   const highlightStackIdRef = useRef<string | null>(null)
@@ -702,6 +738,7 @@ export default function App() {
       runCommand('object.applyDraft')
     },
     onEscape: () => {
+      if (manipulationApiRef.current?.cancel()) return
       if (canvasMode === 'place') {
         const draft = placementApiRef.current?.getDraft() ?? {
           points: [] as RasPoint[],
@@ -1235,7 +1272,10 @@ export default function App() {
       type: args.type,
       name: defaultAnnotationName(args.type),
       points: args.points,
-      meta: args.meta,
+      meta:
+        placementColor && args.meta.color === undefined
+          ? { ...args.meta, color: placementColor }
+          : args.meta,
       revisionId: args.revisionId,
     }
     if (args.type === 'line' && activeLineStackIdRef.current) {
@@ -1687,6 +1727,16 @@ export default function App() {
   const volumeAvailable = Boolean(activeSample?.sourceAnatomy.volumeId)
   const activeSliceVolume =
     sliceVolume?.documentId === activeDocument?.id ? sliceVolume : null
+  const reportSpatial = activeSample?.sourceAnatomy.spatial ?? null
+  useEffect(() => {
+    reportInputsRef.current = {
+      sliceVolume: activeSliceVolume,
+      spatial: reportSpatial,
+      annotations: activeRevisionAnnotations,
+      windowCenter,
+      windowWidth,
+    }
+  })
   const crosshairRas: Vec3 = activeSample
     ? ijkToRas(activeSample.sourceAnatomy.spatial, crosshairIjk)
     : [0, 0, 0]
@@ -1881,6 +1931,7 @@ export default function App() {
                   onWorkspaceChanged={() => { if (activeProjectId) void loadProject(activeProjectId) }}
                   activeOverlayId={aiOverlay?.overlay_id ?? null}
                   onOverlayChange={setAiOverlay}
+                  reportRenderer={reportRenderer}
                   projection={projection}
                   voxels={activeSliceVolume?.voxels}
                   volumeSizes={activeSliceVolume?.sizes}
@@ -1903,8 +1954,8 @@ export default function App() {
                   hasDisplayMesh={Boolean(mesh)}
                   brushRadiusMm={brushRadiusMm}
                   onBrushRadiusChange={setBrushRadiusMm}
-                  highlightColor={highlightColor}
-                  onHighlightColorChange={(color) => {
+                  placementColor={placementColor}
+                  onPlacementColorChange={(color) => {
                     // Color change starts a new brush; keep prior stack entries.
                     highlightStackIdRef.current = null
                     const draft = placementApiRef.current?.getDraft()
@@ -1918,7 +1969,7 @@ export default function App() {
                         },
                       })
                     }
-                    setHighlightColor(color)
+                    setPlacementColor(color)
                   }}
                   onCrosshairChange={setCrosshairIjk}
                   onWindowChange={(center, width) => {
@@ -2081,6 +2132,8 @@ export default function App() {
                     selectedAnnotationId={selectedAnnotationId}
                     onSelectAnnotation={setSelectedAnnotationId}
                     onAnnotationAction={handleAnnotationAction}
+                    manipulationApiRef={manipulationApiRef}
+                    reportCaptureApiRef={reportCaptureApiRef}
                     onExtentEdit={(id, edit, commit) => {
                       if (isStackAnnotationId(id)) {
                         mutateStackEntry(id, {
@@ -2137,6 +2190,7 @@ export default function App() {
                         ? {
                             type: activeAnnotationType,
                             points: draftPreviewPoints,
+                            color: placementColor,
                           }
                         : null
                     }

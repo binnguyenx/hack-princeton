@@ -152,7 +152,7 @@ class StagedProposalTest(HarnessGateBase):
     def test_default_agent_binds_no_proposal_tools(self):
         self.model.responses.append(AIMessage('Hi.'))
         self.client().post('/api/ai/chat', json=self.payload())
-        self.assertEqual(len(self.model.bound), 10)  # 7 read-only + 3 read-only geometry measurements
+        self.assertEqual(len(self.model.bound), 11)  # 7 read-only + 3 read-only geometry measurements + task (subagents)
         self.assertFalse(any('suggest' in name or 'stage' in name for name in self.model.bound))
 
     def test_staging_writes_nothing_and_accept_requires_human_confirmation(self):
