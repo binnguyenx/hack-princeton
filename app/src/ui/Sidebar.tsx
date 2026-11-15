@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Badge, Box, Flex, IconButton, Separator, Text, TextField } from '@radix-ui/themes'
+import { Box, IconButton, Text, TextField } from '@radix-ui/themes'
 import {
   Folder,
   Layers,
@@ -8,8 +8,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Activity,
-  Code2,
 } from 'lucide-react'
 import type { ProjectSummary } from '../domain/types'
 
@@ -22,6 +20,7 @@ export type SidebarProps = {
   projects: ProjectSummary[]
   onOpenProject: (id: string) => void
   onNewProject: () => void
+  /** Accepted for App compatibility; the sidebar no longer shows a save-status footer. */
   isDirty?: boolean
 }
 
@@ -32,7 +31,6 @@ export function Sidebar({
   projects,
   onOpenProject,
   onNewProject,
-  isDirty,
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -167,25 +165,6 @@ export function Sidebar({
         </ul>
       </div>
 
-      <Separator size="4" />
-      <div className="sidebar-footer">
-        {!collapsed ? (
-          <Flex direction="column" gap="2">
-            <Flex align="center" gap="2">
-              <Activity size={12} />
-              {isDirty ? (
-                <Badge variant="soft" color="amber">Unsaved changes</Badge>
-              ) : (
-                <Badge variant="soft" color="green">Session synced</Badge>
-              )}
-            </Flex>
-            <Flex align="center" gap="2" className="sidebar-system-row--muted">
-              <Code2 size={12} />
-              <Text size="1" color="gray">Debug bridge active</Text>
-            </Flex>
-          </Flex>
-        ) : null}
-      </div>
     </aside>
   )
 }

@@ -1,7 +1,7 @@
 /**
  * AiChatPanel — Total column chat panel for the canvas workspace.
  *
- * Uses the same read-only FastAPI chat route as the application.
+ * Integrates with LangGraph agent via langGraphClient.
  * Conforms to project design conventions (DESIGN.md):
  *  - Elevated white island, hairline border
  *  - Blue accent for strong action (Send button)
@@ -13,18 +13,23 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Bot,
   ChevronRight,
+  Eye,
   RotateCcw,
   Send,
   Sparkles,
 } from 'lucide-react'
-import { chatClient, type ChatMode, type ReadOnlyChatRequest } from '../api/chat'
+import {
+  streamingChatClient as langGraphClient,
+  type ChatMessage,
+  type ChatMode,
+  type ChatRequestContext,
+  type ChatTurn,
+  type StagedProposal,
+  type ThinkingItem,
+  type ViewportOverlay,
+} from '../api/chat'
 
-type ChatMessage = {
-  id: string
-  role: 'human' | 'ai'
-  content: string
-}
-
+/** Selection identity from the workspace (camelCase, as App builds it). */
 export type ChatContext = {
   projectId: string
   caseId: string
@@ -32,90 +37,123 @@ export type ChatContext = {
   revisionId?: string
 }
 
+function toRequestContext(context?: ChatContext | null): ChatRequestContext | null {
+  if (!context) return null
+  return { project_id: context.projectId, case_id: context.caseId, object_id: context.objectId,
+    expected_revision_id: context.revisionId ?? null }
+}
+
+function chatContextKey(context: ChatRequestContext | null): string {
+  return context ? JSON.stringify([context.project_id, context.case_id, context.object_id, context.expected_revision_id]) : ''
+}
+
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   contextLabel?: string
-  chatContext?: ChatContext
+  chatContext?: ChatContext | null
+  /** Called after a human-accepted proposal commits, so the workspace reloads. */
+  onWorkspaceChanged?: () => void
+  /** Id of the AI overlay currently drawn in the viewport (null = none). */
+  activeOverlayId?: string | null
+  /** Show (overlay) or hide (null) an AI finding in the 3D viewport. */
+  onOverlayChange?: (overlay: ViewportOverlay | null) => void
 }
 
-const QUICK_PROMPTS = [
-  'Describe the selected object',
-  'Show the current revision',
-  'What metadata is available?',
-]
+const PROVIDER_LABELS: Record<string, string> = { 'gemini-read-only': 'Gemini', 'bedrock-read-only': 'Bedrock' }
 
-export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+type SessionProps = Omit<Props, 'chatContext'> & { chatContext: ChatRequestContext | null }
+
+export function AiChatPanel(props: Props) {
+  const chatContext = toRequestContext(props.chatContext)
+  // A new selection or revision starts a fresh conversation (and drops stale proposals/overlays).
+  return <ChatSession key={chatContextKey(chatContext)} {...props} chatContext={chatContext} />
+}
+
+function ChatSession({ open, onOpenChange, contextLabel, chatContext, onWorkspaceChanged, activeOverlayId, onOverlayChange }: SessionProps) {
+  const [messages, setMessages] = useState<(ChatMessage & { failed?: boolean })[]>([])
   const [input, setInput] = useState('')
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const [isSending, setIsSending] = useState(false)
+  const [threadId, setThreadId] = useState<string | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Provider is known once the backend answers; the badge starts neutral.
   const [mode, setMode] = useState<ChatMode | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  // Conversation ids correlate stateless requests; FastAPI does not persist history.
-  useEffect(() => {
-    if (open && !conversationId) setConversationId(uid())
-  }, [open, conversationId])
+  const flight = useRef(0)
+  const busy = useRef(false)
+  const controller = useRef<AbortController | null>(null)
 
-  // Scroll to the newest completed request.
   useEffect(() => {
-    if (!scrollRef.current) return
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages, isSending])
+    if (!open || threadId) return
+    let cancelled = false
+    langGraphClient.createThread().then(id => {
+      if (cancelled) return
+      setThreadId(id)
+      setMessages([{ id: 'welcome', role: 'ai',
+        content: "Hello! I'm your cranial reconstruction assistant. I can inspect the selected object's metadata, case objects and revision history with read-only tools. Geometry measurements, reconstruction and AI writes are unavailable.",
+        createdAt: new Date().toISOString() }])
+    }).catch(error => { if (!cancelled) setError(String(error)) })
+    return () => { cancelled = true }
+  }, [open, threadId])
 
-  // Focus textarea when opened
+  useEffect(() => () => { flight.current += 1; controller.current?.abort() }, [])
+  useEffect(() => { scrollRef.current?.scrollTo?.({ top: scrollRef.current.scrollHeight }) }, [messages])
   useEffect(() => {
-    if (open) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 150)
-      return () => clearTimeout(timer)
-    }
+    if (!open) return
+    const timer = setTimeout(() => inputRef.current?.focus(), 150)
+    return () => clearTimeout(timer)
   }, [open])
 
-  const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
-
-  const handleSendText = useCallback(
-    async (textToSend: string) => {
-      const text = textToSend.trim()
-      if (!text || isSending || !conversationId || !chatContext) return
-      setInput('')
-      setError(null)
-
-      const humanMsg: ChatMessage = {
-        id: uid(),
-        role: 'human',
-        content: text,
-      }
-
-      const aiMsgId = uid()
-      setMessages((prev) => [...prev, humanMsg])
-      setIsSending(true)
-
-      try {
-        const request: ReadOnlyChatRequest = {
-          request_id: uid(),
-          conversation_id: conversationId,
-          project_id: chatContext.projectId,
-          case_id: chatContext.caseId,
-          object_id: chatContext.objectId,
-          expected_revision_id: chatContext.revisionId,
-          message: text,
+  const handleSendText = useCallback(async (textToSend: string) => {
+    const text = textToSend.trim()
+    if (!text || text.length > 4000 || busy.current || !threadId || !chatContext) return
+    busy.current = true
+    const token = ++flight.current
+    const abort = new AbortController()
+    controller.current = abort
+    const humanId = crypto.randomUUID(), aiId = crypto.randomUUID()
+    const startedAt = Date.now()
+    setInput(''); setError(null); setIsStreaming(true)
+    setMessages(previous => [...previous,
+      { id: humanId, role: 'human', content: text, createdAt: new Date().toISOString() },
+      { id: aiId, role: 'ai', content: '', streaming: true, createdAt: new Date().toISOString() }])
+    const history: ChatTurn[] = messages.filter(message => message.id !== 'welcome' && !message.failed && !message.streaming)
+      .map(message => ({ role: message.role === 'human' ? 'human' : 'assistant', content: message.content }))
+    try {
+      for await (const event of langGraphClient.streamResponse(threadId, history, text, chatContext, abort.signal)) {
+        if (token !== flight.current || abort.signal.aborted) return
+        if (event.event === 'metadata') setMode(event.data.mode)
+        if (event.event === 'thinking') {
+          const item = event.data
+          setMessages(previous => previous.map(message => message.id === aiId
+            ? { ...message, thinking: upsertThinking(message.thinking, item) } : message))
         }
-        const response = await chatClient.send(request)
-        setMode(response.mode)
-        const content = [response.outcome.explanation, ...response.limitations.map((item) => `• ${item}`)]
-          .filter(Boolean)
-          .join('\n\n')
-        setMessages((prev) => [...prev, { id: aiMsgId, role: 'ai', content }])
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error communicating with agent')
-      } finally {
-        setIsSending(false)
+        if (event.event === 'overlay') {
+          const overlay = event.data
+          setMessages(previous => previous.map(message => message.id === aiId ? { ...message, overlay } : message))
+        }
+        if (event.event === 'proposal') {
+          const proposal = event.data
+          setMessages(previous => previous.map(message => message.id === aiId ? { ...message, proposal } : message))
+        }
+        if (event.event === 'messages') {
+          const content = event.data.at(-1)?.content
+          if (content) setMessages(previous => previous.map(message => message.id === aiId
+            ? { ...message, content, streaming: true, thoughtMs: Date.now() - startedAt } : message))
+        }
+        if (event.event === 'end') setMessages(previous => previous.map(message => message.id === aiId ? { ...message, streaming: false } : message))
       }
-    },
-    [isSending, conversationId, chatContext],
-  )
+    } catch (error) {
+      if (token !== flight.current || abort.signal.aborted) return
+      setError(error instanceof Error ? error.message : 'Read-only chat unavailable.')
+      setMessages(previous => previous.map(message => message.id === aiId
+        ? { ...message, content: '[Failed to receive agent response]', failed: true, streaming: false }
+        : message.id === humanId ? { ...message, failed: true } : message))
+    } finally {
+      if (token === flight.current) { busy.current = false; setIsStreaming(false); controller.current = null }
+    }
+  }, [threadId, chatContext, messages])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -125,8 +163,13 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
   }
 
   const handleReset = () => {
+    flight.current += 1
+    controller.current?.abort()
+    controller.current = null
+    busy.current = false
+    setIsStreaming(false)
     setMessages([])
-    setConversationId(null)
+    setThreadId(null)
     setError(null)
     setInput('')
   }
@@ -139,10 +182,10 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
           <Bot size={16} className="ai-chat-icon" />
           <span>AI Assistant</span>
           <span
-            className="ai-chat-badge"
-            title={mode === 'gemini-read-only' ? 'FastAPI LangGraph agent (Gemini) with read-only tools' : 'Read-only FastAPI chat'}
+            className="ai-chat-badge ai-chat-badge--live"
+            title={`Connected to FastAPI LangGraph agent (${PROVIDER_LABELS[mode ?? ''] ?? 'provider set by the server'}, read-only tools)`}
           >
-            {mode === 'gemini-read-only' ? 'Gemini · read-only' : 'Read-only'}
+            {PROVIDER_LABELS[mode ?? ''] ?? 'AI'}
           </span>
         </div>
         <div className="ai-chat-header-actions">
@@ -185,12 +228,30 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
               </div>
             )}
             <div className="ai-chat-bubble">
-              <MessageBody content={msg.content} />
+              {msg.role === 'ai' && (
+                <ThinkingTrace items={msg.thinking ?? []} live={!!msg.streaming && !msg.content} thoughtMs={msg.thoughtMs} />
+              )}
+              {msg.content && <MessageBody content={msg.content} />}
+              {msg.overlay && !msg.streaming && (
+                <button
+                  type="button"
+                  className="ai-chat-overlay-btn"
+                  aria-pressed={activeOverlayId === msg.overlay.overlay_id}
+                  onClick={() => onOverlayChange?.(activeOverlayId === msg.overlay!.overlay_id ? null : msg.overlay!)}
+                >
+                  <Eye size={12} aria-hidden />
+                  {activeOverlayId === msg.overlay.overlay_id ? 'Hide overlay' : 'Show in viewport'}
+                </button>
+              )}
+              {msg.proposal && !msg.streaming && (
+                <ProposalCard proposal={msg.proposal} chatContext={chatContext} onWorkspaceChanged={onWorkspaceChanged} />
+              )}
+              {msg.streaming && msg.content && <span className="ai-chat-cursor" aria-hidden>▌</span>}
             </div>
           </div>
         ))}
 
-        {messages.length === 0 && !conversationId && (
+        {messages.length === 0 && !threadId && (
           <div className="ai-chat-status-msg">
             <Bot size={22} />
             <span>Initializing agent session…</span>
@@ -204,21 +265,7 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
         )}
       </div>
 
-      {/* Quick suggestion prompt chips */}
-      <div className="ai-chat-chips" aria-label="Suggested prompts">
-        {QUICK_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            className="ai-chat-chip"
-            disabled={isSending || !conversationId || !chatContext}
-            onClick={() => void handleSendText(prompt)}
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
-
+      {!chatContext && <div className="ai-chat-status-msg" role="status">Open a source or candidate to provide chat context.</div>}
       {/* Input controls */}
       <div className="ai-chat-input-box">
         <textarea
@@ -229,14 +276,15 @@ export function AiChatPanel({ open, onOpenChange, contextLabel, chatContext }: P
           onKeyDown={handleKeyDown}
           placeholder="Ask about defect anatomy, metrics, candidate constraints…"
           rows={2}
-          disabled={isSending || !conversationId || !chatContext}
+          maxLength={4000}
+          disabled={isStreaming || !threadId || !chatContext}
           aria-label="Message for AI assistant"
         />
         <button
           type="button"
           className="ai-chat-send-btn"
           aria-label="Send message to AI assistant"
-          disabled={!input.trim() || isSending || !conversationId || !chatContext}
+          disabled={!input.trim() || isStreaming || !threadId || !chatContext}
           onClick={() => void handleSendText(input)}
         >
           <Send size={14} />
@@ -280,5 +328,121 @@ function MessageBody({ content }: { content: string }) {
         )
       })}
     </div>
+  )
+}
+
+/** Replace an item with the same id (a step's result supersedes its "…" label), else append. */
+function upsertThinking(items: ThinkingItem[] | undefined, item: ThinkingItem): ThinkingItem[] {
+  const list = items ?? []
+  return list.some(existing => existing.id === item.id)
+    ? list.map(existing => existing.id === item.id ? item : existing)
+    : [...list, item]
+}
+
+function formatThoughtDuration(ms?: number): string {
+  if (ms === undefined) return 'Thought process'
+  const seconds = Math.round(ms / 1000)
+  return seconds < 1 ? 'Thought for <1s' : `Thought for ${seconds}s`
+}
+
+/** Live "Thinking…" trace while waiting; collapses to an expandable summary once answered. */
+function ThinkingTrace({ items, live, thoughtMs }: { items: ThinkingItem[]; live: boolean; thoughtMs?: number }) {
+  const list = items.length > 0 && (
+    <ul className="ai-chat-thinking-list">
+      {items.map(item => (
+        <li key={item.id} className={`ai-chat-thinking-item ai-chat-thinking-item--${item.kind}`}>{item.text}</li>
+      ))}
+    </ul>
+  )
+  if (live) {
+    return (
+      <div className="ai-chat-thinking ai-chat-thinking--live" role="status" aria-live="polite">
+        <div className="ai-chat-thinking-label">
+          <span className="ai-chat-thinking-dot" aria-hidden />
+          Thinking…
+        </div>
+        {list}
+      </div>
+    )
+  }
+  if (!items.length) return null
+  const steps = items.filter(item => item.kind === 'step').length
+  return (
+    <details className="ai-chat-thinking">
+      <summary className="ai-chat-thinking-label">
+        <ChevronRight size={12} className="ai-chat-thinking-chevron" aria-hidden />
+        {formatThoughtDuration(thoughtMs)}
+        {steps > 0 && ` · ${steps} ${steps === 1 ? 'step' : 'steps'}`}
+      </summary>
+      {list}
+    </details>
+  )
+}
+
+type ProposalUiState = 'pending' | 'accepting' | 'accepted' | 'discarding' | 'discarded'
+
+/** True only while the selection is exactly the proposal's candidate at its base revision. */
+function proposalMatches(proposal: StagedProposal, context?: ChatRequestContext | null): boolean {
+  return !!context && context.project_id === proposal.project_id && context.case_id === proposal.case_id
+    && context.object_id === proposal.candidate_id && context.expected_revision_id === proposal.base_revision_id
+}
+
+/** Review card for an AI-staged change. Nothing is written until the user clicks Accept. */
+function ProposalCard({ proposal, chatContext, onWorkspaceChanged }: {
+  proposal: StagedProposal; chatContext?: ChatRequestContext | null; onWorkspaceChanged?: () => void
+}) {
+  const [state, setState] = useState<ProposalUiState>('pending')
+  const [error, setError] = useState<string | null>(null)
+  const settled = state === 'accepted' || state === 'discarded'
+  // Stale protection: hide an unresolved proposal once the object or revision changes.
+  if (!settled && !proposalMatches(proposal, chatContext)) return null
+  const busy = state === 'accepting' || state === 'discarding'
+
+  const accept = async () => {
+    setState('accepting'); setError(null)
+    try {
+      await langGraphClient.acceptProposal(proposal)
+      setState('accepted')
+      onWorkspaceChanged?.()
+    } catch (failure) {
+      setState('pending')
+      setError(failure instanceof Error ? failure.message : 'Proposal could not be applied.')
+    }
+  }
+  const discard = async () => {
+    setState('discarding'); setError(null)
+    try {
+      await langGraphClient.discardProposal(proposal)
+    } catch {
+      // Discard is local-first; an unreachable server cannot apply it either.
+    }
+    setState('discarded')
+  }
+
+  return (
+    <section className={`ai-chat-proposal ai-chat-proposal--${state}`} aria-label="Proposed change">
+      <div className="ai-chat-proposal-head">
+        <span className="ai-chat-proposal-title">Proposed change</span>
+        <span className="ai-chat-proposal-tag">
+          {state === 'accepted' ? 'Applied' : state === 'discarded' ? 'Discarded' : 'Review required'}
+        </span>
+      </div>
+      <p className="ai-chat-proposal-summary">{proposal.summary}</p>
+      <p className="ai-chat-proposal-meta">
+        Candidate pose · based on revision {proposal.base_revision_id.slice(0, 8)}
+      </p>
+      {error && <p className="ai-chat-proposal-error" role="alert">{error}</p>}
+      {!settled && (
+        <div className="ai-chat-proposal-actions">
+          <button type="button" className="ai-chat-proposal-btn ai-chat-proposal-btn--primary"
+            disabled={busy} onClick={() => void accept()}>
+            {state === 'accepting' ? 'Applying…' : 'Accept proposal'}
+          </button>
+          <button type="button" className="ai-chat-proposal-btn" disabled={busy} onClick={() => void discard()}>
+            Discard
+          </button>
+        </div>
+      )}
+    </section>
   )
 }
