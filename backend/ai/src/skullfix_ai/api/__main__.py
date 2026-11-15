@@ -32,31 +32,25 @@ def main():
     parser.add_argument('--frontend-dir', type=Path)
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8000)
-    has_key = bool(os.environ.get('GOOGLE_API_KEY') or os.environ.get('GEMINI_API_KEY'))
-    parser.add_argument('--chat-provider', choices=['gemini'],
-                        default=os.environ.get('SKULLFIX_CHAT_PROVIDER') or 'gemini',
-                        help='Chat model (Gemini only; requires GOOGLE_API_KEY or GEMINI_API_KEY)')
+    parser.add_argument('--chat-provider', choices=['bedrock', 'gemini'],
+                        default=os.environ.get('SKULLFIX_CHAT_PROVIDER') or 'bedrock',
+                        help='Chat model provider: bedrock (AWS credentials + region; SKULLFIX_BEDROCK_MODEL) or gemini (GOOGLE_API_KEY)')
     parser.add_argument('--cors-origins', default=os.environ.get('HACK_CORS_ORIGINS'),
                         help='Comma-separated browser origins (default: localhost/127.0.0.1 on 5173 and 5174)')
     args = parser.parse_args()
     if not args.storage_root:
         parser.error('--storage-root or an explicit HACK_STORAGE_ROOT is required')
-    if args.chat_provider != 'gemini':
-        parser.error(
-            f"chat provider {args.chat_provider!r} is not supported; "
-            "set SKULLFIX_CHAT_PROVIDER=gemini (or unset it)"
-        )
-    if not has_key:
-        parser.error(
-            'Gemini chat requires GOOGLE_API_KEY or GEMINI_API_KEY '
-            '(set in backend/ai/.env, repo-root .env, or the environment)'
-        )
-    from skullfix_ai.agent.gemini_graph import GeminiChatAgent
-    chat_agent = GeminiChatAgent()
+    from skullfix_ai.agent.gemini_graph import PROVIDERS, bedrock_model_id
+    ready, reason = PROVIDERS[args.chat_provider][2]()
+    if not ready:
+        parser.error(f'{args.chat_provider} chat is not ready: {reason} (see backend/ai/.env)')
+    from skullfix_ai.agent.gemini_graph import chat_agent_for
+    chat_agent = chat_agent_for(args.chat_provider)
     options = {}
     if args.cors_origins is not None:
         options['cors_origins'] = tuple(origin.strip() for origin in args.cors_origins.split(',') if origin.strip())
-    print('Chat provider: gemini', flush=True)
+    model = bedrock_model_id() if args.chat_provider == 'bedrock' else os.environ.get('SKULLFIX_GEMINI_MODEL')
+    print(f'Chat provider: {args.chat_provider} ({model or "default model"})', flush=True)
     import uvicorn
     uvicorn.run(create_app(Path(args.storage_root), frontend_dir=args.frontend_dir, chat_agent=chat_agent, **options),
                 host=args.host, port=args.port)

@@ -36,6 +36,9 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app.state.settings = settings
     # GeminiChatAgent required for /api/ai/chat; None → HTTP 503 (no fake-model fallback).
     app.state.chat_agent = chat_agent
+    # Isolated pending proposals (human write-gate); never the application database.
+    from skullfix_ai.agent.staging import ProposalStore
+    app.state.proposal_store = ProposalStore()
 
     @app.middleware('http')
     async def current_json_parser(request: Request, call_next):
