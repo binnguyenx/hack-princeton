@@ -2,6 +2,8 @@ import { sha256Hex } from '../domain/hash'
 import { newId } from '../domain/id'
 import {
   IDENTITY_POSE,
+  type Annotation,
+  type AnnotationType,
   type CameraState,
   type DocumentKind,
   type EditorState,
@@ -9,6 +11,7 @@ import {
   type Mat4,
   type OpResult,
   type ProjectSummary,
+  type RasPoint,
 } from '../domain/types'
 import { EditorStore, emptyViewState } from '../state/store'
 import type { ProjectRegistry } from './projectRegistry'
@@ -242,6 +245,7 @@ export function createProject(
     samples: [],
     candidates: [],
     revisions: [],
+    annotations: [],
     view: emptyViewState(),
     volumes: new Map(),
     dirty: false,
@@ -349,6 +353,14 @@ export function setActiveDocument(
   return ok()
 }
 
+/** Mark workspace clean after Save succeeds (or acknowledges already-persisted state). */
+export function clearDirty(ctx: OpsContext): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  ctx.store.update((st) => ({ ...st, dirty: false }))
+  return ok()
+}
+
 /** Test helper: seeded project with a default case (legacy fixtures). */
 export function seedEmptyProject(ctx: OpsContext): void {
   const projectId = 'proj-new'
@@ -359,10 +371,232 @@ export function seedEmptyProject(ctx: OpsContext): void {
     samples: [],
     candidates: [],
     revisions: [],
+    annotations: [],
     view: emptyViewState(),
     volumes: new Map(),
     dirty: false,
     openDocuments: [],
     activeDocumentId: null,
   })
+}
+
+function pointsAreFinite(points: RasPoint[]): boolean {
+  return points.every(
+    (p) =>
+      Array.isArray(p) &&
+      p.length === 3 &&
+      p.every((n) => typeof n === 'number' && Number.isFinite(n)),
+  )
+}
+
+function validatePointCount(
+  type: AnnotationType,
+  points: RasPoint[],
+  meta: Record<string, unknown>,
+): string | null {
+  const n = points.length
+  switch (type) {
+    case 'landmark':
+    case 'text_note':
+    case 'highlight':
+      return n === 1 ? null : `${type} requires exactly 1 control point`
+    case 'line':
+    case 'roi':
+      return n === 2 ? null : `${type} requires exactly 2 control points`
+    case 'angle':
+      return n === 3 ? null : 'angle requires exactly 3 control points'
+    case 'closed_curve':
+      return n >= 3 ? null : 'closed_curve requires at least 3 control points'
+    case 'open_curve':
+      return n >= 2 ? null : 'open_curve requires at least 2 control points'
+    case 'plane': {
+      const method = meta.method
+      if (method !== 'point-normal' && method !== 'three-point') {
+        return 'Plane method must be point-normal or three-point'
+      }
+      if (method === 'three-point' && n < 3) {
+        return 'Three-point plane requires at least 3 control points'
+      }
+      if (method === 'point-normal' && n < 1) {
+        return 'Point-normal plane requires at least 1 control point'
+      }
+      return null
+    }
+    default:
+      return null
+  }
+}
+
+function roiMetaFromPoints(
+  points: RasPoint[],
+  meta: Record<string, unknown>,
+): Record<string, unknown> {
+  if (meta.min != null && meta.max != null) return { ...meta }
+  const [a, b] = points
+  const min: RasPoint = [
+    Math.min(a[0], b[0]),
+    Math.min(a[1], b[1]),
+    Math.min(a[2], b[2]),
+  ]
+  const max: RasPoint = [
+    Math.max(a[0], b[0]),
+    Math.max(a[1], b[1]),
+    Math.max(a[2], b[2]),
+  ]
+  return { ...meta, min, max }
+}
+
+export function addAnnotation(
+  ctx: OpsContext,
+  args: {
+    type: AnnotationType
+    name: string
+    points: RasPoint[]
+    meta: Record<string, unknown>
+    revisionId: string
+  },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  if (s.samples.some((x) => x.id === s.activeDocumentId)) {
+    return fail('Cannot annotate source anatomy; requires active candidate')
+  }
+  const rev = s.revisions.find((r) => r.id === args.revisionId)
+  if (!rev) return fail('Revision not found')
+  if (!s.candidates.some((c) => c.objectId === rev.candidateId)) {
+    return fail('Revision does not belong to a candidate')
+  }
+  if (!pointsAreFinite(args.points)) {
+    return fail('Annotation points must contain finite coordinates')
+  }
+  const pointErr = validatePointCount(args.type, args.points, args.meta)
+  if (pointErr) return fail(pointErr)
+  const meta =
+    args.type === 'roi' ? roiMetaFromPoints(args.points, args.meta) : { ...args.meta }
+  const annotation: Annotation = {
+    id: newId('ann'),
+    revisionId: args.revisionId,
+    type: args.type,
+    name: args.name,
+    points: args.points.map((p) => [p[0], p[1], p[2]] as RasPoint),
+    meta,
+    locked: false,
+    visible: true,
+    createdAt: new Date().toISOString(),
+  }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: [...st.annotations, annotation],
+  }))
+  return okVal(annotation)
+}
+
+export function renameAnnotation(
+  ctx: OpsContext,
+  args: { id: string; name: string },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const existing = s.annotations.find((a) => a.id === args.id)
+  if (!existing) return fail(`Unknown annotation: ${args.id}`)
+  const updated: Annotation = { ...existing, name: args.name }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.map((a) => (a.id === args.id ? updated : a)),
+  }))
+  return okVal(updated)
+}
+
+export function setAnnotationVisible(
+  ctx: OpsContext,
+  args: { id: string; visible: boolean },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const existing = s.annotations.find((a) => a.id === args.id)
+  if (!existing) return fail(`Unknown annotation: ${args.id}`)
+  const updated: Annotation = { ...existing, visible: args.visible }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.map((a) => (a.id === args.id ? updated : a)),
+  }))
+  return okVal(updated)
+}
+
+export function setAnnotationLocked(
+  ctx: OpsContext,
+  args: { id: string; locked: boolean },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const existing = s.annotations.find((a) => a.id === args.id)
+  if (!existing) return fail(`Unknown annotation: ${args.id}`)
+  const updated: Annotation = { ...existing, locked: args.locked }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.map((a) => (a.id === args.id ? updated : a)),
+  }))
+  return okVal(updated)
+}
+
+export function updateAnnotationPoints(
+  ctx: OpsContext,
+  args: { id: string; points: RasPoint[] },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const existing = s.annotations.find((a) => a.id === args.id)
+  if (!existing) return fail(`Unknown annotation: ${args.id}`)
+  if (!pointsAreFinite(args.points)) {
+    return fail('Annotation points must contain finite coordinates')
+  }
+  const updated: Annotation = {
+    ...existing,
+    points: args.points.map((p) => [p[0], p[1], p[2]] as RasPoint),
+  }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.map((a) => (a.id === args.id ? updated : a)),
+  }))
+  return okVal(updated)
+}
+
+export function updateAnnotationMeta(
+  ctx: OpsContext,
+  args: { id: string; meta: Record<string, unknown> },
+): OpResult<Annotation> {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  const existing = s.annotations.find((a) => a.id === args.id)
+  if (!existing) return fail(`Unknown annotation: ${args.id}`)
+  const updated: Annotation = {
+    ...existing,
+    meta: { ...existing.meta, ...args.meta },
+  }
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.map((a) => (a.id === args.id ? updated : a)),
+  }))
+  return okVal(updated)
+}
+
+export function deleteAnnotation(
+  ctx: OpsContext,
+  args: { id: string },
+): OpResult {
+  const s = ctx.store.getState()
+  if (!s) return fail('No project open')
+  if (!s.annotations.some((a) => a.id === args.id)) return ok()
+  ctx.store.update((st) => ({
+    ...st,
+    dirty: true,
+    annotations: st.annotations.filter((a) => a.id !== args.id),
+  }))
+  return ok()
 }

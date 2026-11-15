@@ -1,5 +1,5 @@
 import type { ProjectManifest } from '../io/projectPackage'
-import type { SpatialMeta } from '../domain/types'
+import type { Annotation, AnnotationType, RasPoint, SpatialMeta } from '../domain/types'
 // Thin typed fetch wrapper for /api/... endpoints
 const BASE = '/api'
 
@@ -43,6 +43,18 @@ export const apiClient = {
 
   async getProjectManifest(id: string): Promise<ProjectManifest> {
     return request<ProjectManifest>(`/projects/${encodeURIComponent(id)}`)
+  },
+
+  async searchProjectSamples(
+    projectId: string,
+    q = '',
+  ): Promise<{
+    samples: Array<{ id: string; displayName: string; caseId: string; caseName: string }>
+  }> {
+    const query = new URLSearchParams()
+    if (q) query.set('q', q)
+    const suffix = query.toString() ? `?${query.toString()}` : ''
+    return request(`/projects/${encodeURIComponent(projectId)}/samples${suffix}`)
   },
 
   // Cases
@@ -123,6 +135,55 @@ export const apiClient = {
     return request<void>(`/candidates/${encodeURIComponent(candidateId)}/restore`, {
       method: 'POST',
       body: JSON.stringify({ revisionId }),
+    })
+  },
+
+  async listAnnotations(revisionId: string): Promise<Annotation[]> {
+    return request<Annotation[]>(
+      `/revisions/${encodeURIComponent(revisionId)}/annotations`,
+    )
+  },
+
+  async createAnnotation(
+    revisionId: string,
+    fields: {
+      type: AnnotationType
+      name: string
+      points: RasPoint[]
+      meta?: Record<string, unknown>
+      locked?: boolean
+      visible?: boolean
+      createdAt?: string
+    },
+  ): Promise<Annotation> {
+    return request<Annotation>(
+      `/revisions/${encodeURIComponent(revisionId)}/annotations`,
+      {
+        method: 'POST',
+        body: JSON.stringify(fields),
+      },
+    )
+  },
+
+  async updateAnnotation(
+    id: string,
+    partial: {
+      name?: string
+      points?: RasPoint[]
+      meta?: Record<string, unknown>
+      locked?: boolean
+      visible?: boolean
+    },
+  ): Promise<Annotation> {
+    return request<Annotation>(`/annotations/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(partial),
+    })
+  },
+
+  async deleteAnnotation(id: string): Promise<void> {
+    return request<void>(`/annotations/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     })
   },
 }
