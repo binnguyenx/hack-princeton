@@ -1,5 +1,7 @@
 # FastAPI recovery completion
 
+> Historical recovery record. Node/Express cleanup and FastAPI-backed chat panel integration are recorded in `features/express-to-fastapi/`; do not use the Node/Vite statements below as current runtime guidance.
+
 ## Intent
 Restore the backend composition already referenced by main without changing any frontend file. The soft monochrome frontend recovery branch remains authoritative for UI. Keep Vite's local API plugin until parity and an explicit later cutover. This repair restores existing documented behavior; it does not accept the whole migration or AI specification.
 
@@ -46,7 +48,7 @@ Use port 8000 only when free; the smoke script uses an OS-assigned port and clea
 ## Compatibility and remaining work
 The chat route required by the existing router-inventory contract was absent alongside the settings/JSON/CLI modules. Restoring it also required the existing graph's missing typed tool registry and metadata tool; these are justified backend composition dependencies, not new AI capabilities. The registry exposes only `workspace.describe_selection` to HTTP chat. Chat request IDs are correlation IDs here: there is no mutation execution, replay guarantee, checkpoint history or SSE contract in this recovery endpoint.
 
-The restored shell's `AiChatPanel` uses `app/src/ai/langGraphClient.ts` (mock by default, optional LangGraph Server protocol). It does **not** call `/api/ai/chat`. This backend proof therefore does not claim UI chat integration or full Vite-to-FastAPI parity. Keep the plugin until an explicit subsequent compatibility/browser gate and cutover.
+At the time of this recovery record, the shell had not yet been wired to `/api/ai/chat`. That gap is now closed by the FastAPI-only runtime consolidation; the panel uses the same-origin read-only chat contract and no Vite API plugin remains.
 
 The recovery frontend was promoted through PR #28. Rebase onto that main completed without replaying old UI changes. Controls remain deferred to a separate additive UI change, preserving the studio, grid, slices and Assistant column. The previous six review findings remain pending in the preserved original workspace's repair plan; this scoped boot repair does not claim them resolved.
 

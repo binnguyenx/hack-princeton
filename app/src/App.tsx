@@ -958,6 +958,16 @@ export default function App() {
   const activeCandidate = activeDocument?.kind === 'candidate'
     ? state?.candidates.find((candidate) => candidate.objectId === activeDocument.id)
     : undefined
+  const chatObjectId = selectionObjectId ?? activeCandidate?.objectId ?? activeSample?.sourceAnatomy.objectId
+  const chatRevisionId = activeCandidate?.currentRevisionId
+  const chatContext = activeProjectId && activeSample && chatObjectId
+    ? {
+        projectId: activeProjectId,
+        caseId: activeSample.caseId,
+        objectId: chatObjectId,
+        revisionId: chatRevisionId,
+      }
+    : undefined
   const activeDocumentName =
     activeCandidate?.displayName ?? activeSample?.displayName ?? 'No active anatomy'
   const volumeAvailable = Boolean(activeSample?.sourceAnatomy.volumeId)
@@ -1156,6 +1166,7 @@ export default function App() {
                   activeMode={canvasMode}
                   volumeAvailable={volumeAvailable}
                   selectedObjectId={selectionObjectId ?? activeCandidate?.objectId ?? null}
+                  chatContext={chatContext}
                   projection={projection}
                   voxels={activeSliceVolume?.voxels}
                   volumeSizes={activeSliceVolume?.sizes}

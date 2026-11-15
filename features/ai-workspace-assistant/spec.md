@@ -98,7 +98,7 @@ The owner authorized R50–R57 and S35–S42 for the storage fixes, synchronous 
 - R65. Each call builds the existing LangGraph with FakeToolModel and only workspace.describe_selection registered. The message is recorded only in transient invocation state; it does not select an operation. No provider, sandbox binding, filesystem-selected root or mutation callable is exposed.
 - R66. Context comes from an application-repository read-only SQLite snapshot, without schema initialization, INSERT, storage-directory creation, conversation persistence or artifact writes. Restored current pointers, ownership, spatial metadata, raw hashes and poses are preserved.
 - R67. Valid requests return JSON with echoed request/conversation ids, mode fake-read-only, explicit limitations and the actual GraphOutcome. Domain failures (stale, cross-case, missing selection, unavailable context) remain typed graph outcomes; invalid payloads are422, wrong content type415, unexpected server errors500 with a generic error. Existing malformed JSON/parser-size errors keep compatibility behavior.
-- R68. A typed TypeScript client posts same-origin /api/ai/chat, accepts AbortSignal, exposes domain outcomes and rejects HTTP/network/invalid-response errors. It has no hidden writes or automatic retries. A chat widget, history persistence, SSE, Bedrock, generated geometry and AI live writes are out of scope.
+- R68. A typed TypeScript client posts same-origin /api/ai/chat, accepts AbortSignal, exposes domain outcomes and rejects HTTP/network/invalid-response errors. It has no hidden writes or automatic retries. The AI panel is a one-request-at-a-time view over this client: it submits the active workspace context, shows outcome and limitations, and does not simulate streaming. History persistence, SSE, Bedrock, generated geometry and AI live writes are out of scope.
 - R69. Disposable HTTP and actual browser checks prove the client/backend path through Vite dev proxy and built FastAPI, including stale revisions and unchanged manifest/volume bytes. Browser verification does not claim an interactive chat widget exists.
 
 ## Accepted foreground-volume measurement contract (T1C) and live mechanical binding (T2)
@@ -171,6 +171,7 @@ The owner accepted the following for `measure.candidate` method `candidate.foreg
 - S48. Given a restored candidate, a chat call returns that revision and metadata through all five graph steps while stored data remains unchanged.
 - S49. Invalid fields, stale/cross-case selection or a request asking for writes cannot expose a mutation capability or initialize storage.
 - S50. A same-origin browser call receives fake-read-only responses in development and built serving, with unchanged source bytes and revision pointer.
+- S59. Given an active app selection, when the user submits a panel message, then the panel sends the typed same-origin FastAPI request and renders the returned read-only outcome and limitations. It never contacts an independently configured LangGraph server or shows locally generated clinical content.
 
 - S51. Given a verified mm candidate revision with 12 foreground voxels and 1×1×1 mm spacing (or 2×3×4 mm spacing), when foreground-volume runs under an available live binding, then the stored result is 12 mm³ (or 288 mm³) with method id `candidate.foreground-volume.label-voxel.v1` and cites that revision.
 - S52. Given equivalent raw and gzip encodings of the same grid, or an all-background volume, when the operation completes, then raw/gzip values match and all-background yields a valid completed zero.
@@ -198,7 +199,7 @@ The first real integration milestone is S1 / S51–S58 after the agreed foregrou
 - Live app integration contract: `docs/ai/app-integration.md`
 - Live workspace adapter: `backend/ai/src/skullfix_ai/integrations/workspace/`
 - App manifest schemas: `backend/ai/src/skullfix_ai/schemas/workspace.py`
-- Cross-language HTTP proof: `app/tests/aiWorkspaceContract.test.ts`
+- FastAPI HTTP and workspace proof: `backend/ai/tests/integration/api/test_app.py`, `backend/ai/tests/integration/workspace/test_app_workspace.py`
 - Live foreground-volume measurement: `backend/ai/src/skullfix_ai/application/foreground_volume.py`, additive tables/methods on `backend/ai/src/skullfix_ai/application/sqlite.py`, routes `backend/ai/src/skullfix_ai/api/routes/measurements.py` (`POST /api/candidates/{id}/measurements`, `GET …/revisions/{revision_id}/measurements`). Proof: `backend/ai/tests/integration/api/test_measurements.py`. Scoped plan: `features/ai-workspace-assistant/plans/t2-foreground-volume.md`.
 
 - Backend: `backend/ai/src/skullfix_ai/`
@@ -206,7 +207,7 @@ The first real integration milestone is S1 / S51–S58 after the agreed foregrou
 - Feature docs: `features/ai-workspace-assistant/`
 - Tests: `backend/ai/tests/unit/`, `backend/ai/tests/integration/`, `backend/ai/tests/live/`. Ownership of the subpaths is in `.agents/assignments/ai/README.md`. Agents 01–03 own their component tests. Agent 04 owns cross-component workflows, live checks, and evaluation. The main agent owns shared fixtures and root test configuration.
 - Evaluation: `backend/ai/evaluation/`
-- Frontend: the read-only chat client seam app/src/api/chat.ts is scoped here; the chat widget remains deferred and canvas/manual construction is owned by its canvas feature spec.
+- Frontend: the read-only chat client seam under `app/src/api/` and `app/src/ui/AiChatPanel.tsx` are scoped here; canvas/manual construction remains owned by its canvas feature spec.
 
 ## Decisions
 
