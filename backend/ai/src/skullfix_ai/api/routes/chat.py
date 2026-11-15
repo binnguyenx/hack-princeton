@@ -252,8 +252,12 @@ def create_chat_router():
         except ValidationError:
             return JSONResponse({'error': 'Invalid proposal confirmation', 'code': 'invalid-confirmation'}, status_code=422)
         try:
-            proposal = await run_in_threadpool(_store(request).accept, proposal_id, request.app.state.repository,
-                                               **confirmation.model_dump())
+            from skullfix_ai.application.model_reconstruction import ModelReconstructionService
+            state = request.app.state
+            fix_service = (ModelReconstructionService(state.repository, state.model_endpoint, state.reconstruction_runs)
+                           if state.model_endpoint is not None else None)
+            proposal = await run_in_threadpool(_store(request).accept, proposal_id, state.repository,
+                                               fix_service=fix_service, **confirmation.model_dump())
         except StagingError as error:
             return JSONResponse({'error': str(error), 'code': error.code}, status_code=error.status)
         return {'proposal': proposal.public()}
@@ -265,8 +269,9 @@ class ProposalConfirmation(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     project_id: str = Field(min_length=1, max_length=256)
     case_id: str = Field(min_length=1, max_length=256)
-    candidate_id: str = Field(min_length=1, max_length=256)
-    base_revision_id: str = Field(min_length=1, max_length=256)
+    # None only for a model_fix generate proposal, which is bound to the skull until accepted.
+    candidate_id: str | None = Field(min_length=1, max_length=256)
+    base_revision_id: str | None = Field(min_length=1, max_length=256)
 
 
 def _store(request):
@@ -278,6 +283,12 @@ def _report_store(request):
 
 
 def _proposal_is_current(repository, proposal):
+    if proposal.candidate_id is None:  # model_fix generate: the skull must still exist in its case
+        try:
+            manifest = repository.read_project_manifest(proposal.project_id)
+            return any(s['id'] == proposal.sample_id and s['caseId'] == proposal.case_id for s in manifest['samples'])
+        except Exception:
+            return False
     try:
         AppWorkspaceAdapter(RepositoryManifestReader(repository)).load_context(
             proposal.project_id, proposal.candidate_id, case_id=proposal.case_id,

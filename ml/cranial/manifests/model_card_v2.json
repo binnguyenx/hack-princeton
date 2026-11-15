@@ -1,0 +1,12 @@
+{
+  "freeze": "freeze_v2.json",
+  "model": {
+    "name": "cranial-unet-v2",
+    "architecture": "MONAI 3D U-Net, channels 16-32-64-128-256, instance norm",
+    "parameters": 4800000,
+    "input": "binary defective-skull mask resampled to 2 mm isotropic, 128^3"
+  },
+  "training_data": "SkullBreak parietotemporal, synthetic defects: 91 training subjects, 23 validation subjects (split_v2.csv)",
+  "eval_dir": "../reports/eval_v2",
+  "limitation": "Trained on synthetic parietotemporal defects. Other defect types and real patient scans have no measured accuracy. Not a clinical design."
+}

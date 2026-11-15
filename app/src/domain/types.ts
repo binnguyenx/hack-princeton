@@ -50,6 +50,8 @@ export type CandidateRevision = {
   volumeId: string
   pose: Mat4
   volumeHash: string
+  /** Server-recorded operation that produced this revision (e.g. `reconstruct.model`). */
+  provenance?: { operation?: string } & Record<string, unknown>
 }
 
 export type Candidate = {

@@ -18,6 +18,7 @@ from skullfix_ai.application.voxel_operations import BinaryVoxelAdapter
 from .routes.landmarks import create_landmark_router
 from .routes.annotations import create_annotation_router
 from .routes.packages import create_package_router
+from .routes.reconstructions import create_reconstruction_router
 from .routes.reports import create_reports_router
 
 ALL_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
@@ -27,7 +28,8 @@ DEFAULT_CORS_ORIGINS = ('http://127.0.0.1:5174', 'http://localhost:5174',
 
 
 def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = None, repository=None,
-               chat_agent=None, cors_origins=DEFAULT_CORS_ORIGINS) -> FastAPI:
+               chat_agent=None, cors_origins=DEFAULT_CORS_ORIGINS, model_endpoint=None,
+               reconstruction_runner=None) -> FastAPI:
     settings = ApplicationSettings(Path(storage_root), Path(frontend_dir) if frontend_dir is not None else None)
     if repository is None:
         from skullfix_ai.application import ApplicationRepository
@@ -40,6 +42,10 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     # Isolated pending proposals (human write-gate); never the application database.
     from skullfix_ai.agent.staging import ProposalStore
     app.state.proposal_store = ProposalStore()
+    # Cranial model endpoint (SageMaker async in production, fake in tests); None → model-endpoint-unconfigured.
+    app.state.model_endpoint = model_endpoint
+    from skullfix_ai.application.model_reconstruction import RunRegistry, run_in_thread
+    app.state.reconstruction_runs = RunRegistry(reconstruction_runner or run_in_thread)
     # Case reports for the current chat sessions (in memory; never the application database).
     from skullfix_ai.reports.store import ReportStore
     app.state.report_store = ReportStore()
@@ -79,6 +85,7 @@ def create_app(storage_root: Path | str, *, frontend_dir: Path | str | None = No
     app.include_router(create_measurement_router())
     app.state.voxel_adapter = BinaryVoxelAdapter()
     app.include_router(create_voxel_router())
+    app.include_router(create_reconstruction_router())
 
     if cors_origins:
         app.add_middleware(CORSMiddleware, allow_origins=list(cors_origins), allow_credentials=False,

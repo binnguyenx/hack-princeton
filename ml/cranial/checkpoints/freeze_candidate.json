@@ -1,0 +1,26 @@
+{
+  "checkpoint": "/opt/ml/checkpoints/best.pt",
+  "checkpoint_hash": "sha256:f6b59dfb6140e6d29cc9329cbb80aa18b5aba9d3c4692a99d9da000f65923260",
+  "threshold": 0.5,
+  "preprocessing": {
+    "target_spacing": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "target_shape": [
+      128,
+      128,
+      128
+    ],
+    "convert_to_ras": false
+  },
+  "postprocessing": {
+    "exclude_source_bone": true,
+    "reject_empty": true
+  },
+  "git_commit": "",
+  "best_val_dice": 0.8398358640463456,
+  "frozen": false,
+  "note": "Review val results before setting frozen=True and running evaluate.py on test split"
+}

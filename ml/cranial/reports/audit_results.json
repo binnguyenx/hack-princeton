@@ -1,0 +1,5635 @@
+{
+  "total": 134,
+  "passed": 134,
+  "failed": 0,
+  "results": [
+    {
+      "subject_id": "train_000",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45674,
+        "implant_voxels": 2084,
+        "implant_volume_mm3": 16672.0,
+        "defect_density": 0.02177906036376953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_001",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 43675,
+        "implant_voxels": 3117,
+        "implant_volume_mm3": 24936.0,
+        "defect_density": 0.020825862884521484,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_002",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 44744,
+        "implant_voxels": 5249,
+        "implant_volume_mm3": 41992.0,
+        "defect_density": 0.021335601806640625,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_003",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50414,
+        "implant_voxels": 5274,
+        "implant_volume_mm3": 42192.0,
+        "defect_density": 0.024039268493652344,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_004",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 46584,
+        "implant_voxels": 5481,
+        "implant_volume_mm3": 43848.0,
+        "defect_density": 0.022212982177734375,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_005",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 65655,
+        "implant_voxels": 5843,
+        "implant_volume_mm3": 46744.0,
+        "defect_density": 0.03130674362182617,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_006",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51663,
+        "implant_voxels": 4785,
+        "implant_volume_mm3": 38280.0,
+        "defect_density": 0.024634838104248047,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_007",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 67229,
+        "implant_voxels": 7613,
+        "implant_volume_mm3": 60904.0,
+        "defect_density": 0.03205728530883789,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_008",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53250,
+        "implant_voxels": 3101,
+        "implant_volume_mm3": 24808.0,
+        "defect_density": 0.025391578674316406,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_009",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 62435,
+        "implant_voxels": 7559,
+        "implant_volume_mm3": 60472.0,
+        "defect_density": 0.02977132797241211,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_010",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48859,
+        "implant_voxels": 2852,
+        "implant_volume_mm3": 22816.0,
+        "defect_density": 0.023297786712646484,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_011",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 41894,
+        "implant_voxels": 3704,
+        "implant_volume_mm3": 29632.0,
+        "defect_density": 0.01997661590576172,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_012",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51069,
+        "implant_voxels": 3760,
+        "implant_volume_mm3": 30080.0,
+        "defect_density": 0.02435159683227539,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_013",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 54494,
+        "implant_voxels": 2487,
+        "implant_volume_mm3": 19896.0,
+        "defect_density": 0.025984764099121094,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_014",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53247,
+        "implant_voxels": 4840,
+        "implant_volume_mm3": 38720.0,
+        "defect_density": 0.025390148162841797,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_015",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 66781,
+        "implant_voxels": 6040,
+        "implant_volume_mm3": 48320.0,
+        "defect_density": 0.03184366226196289,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_016",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51699,
+        "implant_voxels": 1638,
+        "implant_volume_mm3": 13104.0,
+        "defect_density": 0.02465200424194336,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_017",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45228,
+        "implant_voxels": 7596,
+        "implant_volume_mm3": 60768.0,
+        "defect_density": 0.021566390991210938,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_018",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51553,
+        "implant_voxels": 6199,
+        "implant_volume_mm3": 49592.0,
+        "defect_density": 0.024582386016845703,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_019",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47355,
+        "implant_voxels": 2452,
+        "implant_volume_mm3": 19616.0,
+        "defect_density": 0.022580623626708984,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_020",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 44768,
+        "implant_voxels": 5738,
+        "implant_volume_mm3": 45904.0,
+        "defect_density": 0.0213470458984375,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_021",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 42769,
+        "implant_voxels": 3610,
+        "implant_volume_mm3": 28880.0,
+        "defect_density": 0.020393848419189453,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_022",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 33239,
+        "implant_voxels": 2919,
+        "implant_volume_mm3": 23352.0,
+        "defect_density": 0.015849590301513672,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_023",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 63803,
+        "implant_voxels": 3630,
+        "implant_volume_mm3": 29040.0,
+        "defect_density": 0.030423641204833984,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_024",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 31273,
+        "implant_voxels": 4327,
+        "implant_volume_mm3": 34616.0,
+        "defect_density": 0.014912128448486328,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_025",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 35548,
+        "implant_voxels": 1848,
+        "implant_volume_mm3": 14784.0,
+        "defect_density": 0.016950607299804688,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_026",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 43035,
+        "implant_voxels": 3197,
+        "implant_volume_mm3": 25576.0,
+        "defect_density": 0.020520687103271484,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_027",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 52775,
+        "implant_voxels": 3962,
+        "implant_volume_mm3": 31696.0,
+        "defect_density": 0.025165081024169922,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_028",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50711,
+        "implant_voxels": 3021,
+        "implant_volume_mm3": 24168.0,
+        "defect_density": 0.024180889129638672,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_029",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 52674,
+        "implant_voxels": 5244,
+        "implant_volume_mm3": 41952.0,
+        "defect_density": 0.025116920471191406,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_030",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51617,
+        "implant_voxels": 2985,
+        "implant_volume_mm3": 23880.0,
+        "defect_density": 0.024612903594970703,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_031",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53979,
+        "implant_voxels": 3426,
+        "implant_volume_mm3": 27408.0,
+        "defect_density": 0.025739192962646484,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_032",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55508,
+        "implant_voxels": 2986,
+        "implant_volume_mm3": 23888.0,
+        "defect_density": 0.026468276977539062,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_033",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53329,
+        "implant_voxels": 3734,
+        "implant_volume_mm3": 29872.0,
+        "defect_density": 0.025429248809814453,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_034",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 46882,
+        "implant_voxels": 4829,
+        "implant_volume_mm3": 38632.0,
+        "defect_density": 0.022355079650878906,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_035",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45877,
+        "implant_voxels": 7140,
+        "implant_volume_mm3": 57120.0,
+        "defect_density": 0.021875858306884766,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_036",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 57087,
+        "implant_voxels": 6138,
+        "implant_volume_mm3": 49104.0,
+        "defect_density": 0.027221202850341797,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_037",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 46666,
+        "implant_voxels": 2963,
+        "implant_volume_mm3": 23704.0,
+        "defect_density": 0.02225208282470703,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_038",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 61491,
+        "implant_voxels": 2131,
+        "implant_volume_mm3": 17048.0,
+        "defect_density": 0.02932119369506836,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_039",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55997,
+        "implant_voxels": 4665,
+        "implant_volume_mm3": 37320.0,
+        "defect_density": 0.02670145034790039,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_040",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51238,
+        "implant_voxels": 3845,
+        "implant_volume_mm3": 30760.0,
+        "defect_density": 0.02443218231201172,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_041",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53900,
+        "implant_voxels": 3759,
+        "implant_volume_mm3": 30072.0,
+        "defect_density": 0.025701522827148438,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_042",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56527,
+        "implant_voxels": 3336,
+        "implant_volume_mm3": 26688.0,
+        "defect_density": 0.026954174041748047,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_043",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 57810,
+        "implant_voxels": 2792,
+        "implant_volume_mm3": 22336.0,
+        "defect_density": 0.027565956115722656,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_044",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55261,
+        "implant_voxels": 5600,
+        "implant_volume_mm3": 44800.0,
+        "defect_density": 0.02635049819946289,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_045",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 71262,
+        "implant_voxels": 3588,
+        "implant_volume_mm3": 28704.0,
+        "defect_density": 0.033980369567871094,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_046",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50417,
+        "implant_voxels": 2041,
+        "implant_volume_mm3": 16328.0,
+        "defect_density": 0.024040699005126953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_047",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 40467,
+        "implant_voxels": 2346,
+        "implant_volume_mm3": 18768.0,
+        "defect_density": 0.01929616928100586,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_048",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 58923,
+        "implant_voxels": 2578,
+        "implant_volume_mm3": 20624.0,
+        "defect_density": 0.028096675872802734,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_049",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 67811,
+        "implant_voxels": 4343,
+        "implant_volume_mm3": 34744.0,
+        "defect_density": 0.03233480453491211,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_050",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56148,
+        "implant_voxels": 5715,
+        "implant_volume_mm3": 45720.0,
+        "defect_density": 0.026773452758789062,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_051",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 59238,
+        "implant_voxels": 3033,
+        "implant_volume_mm3": 24264.0,
+        "defect_density": 0.02824687957763672,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_052",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45077,
+        "implant_voxels": 3522,
+        "implant_volume_mm3": 28176.0,
+        "defect_density": 0.021494388580322266,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_053",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56502,
+        "implant_voxels": 3550,
+        "implant_volume_mm3": 28400.0,
+        "defect_density": 0.02694225311279297,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_054",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 61236,
+        "implant_voxels": 9133,
+        "implant_volume_mm3": 73064.0,
+        "defect_density": 0.029199600219726562,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_055",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 58095,
+        "implant_voxels": 3675,
+        "implant_volume_mm3": 29400.0,
+        "defect_density": 0.027701854705810547,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_056",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53699,
+        "implant_voxels": 3208,
+        "implant_volume_mm3": 25664.0,
+        "defect_density": 0.02560567855834961,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_057",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 49976,
+        "implant_voxels": 4517,
+        "implant_volume_mm3": 36136.0,
+        "defect_density": 0.023830413818359375,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_058",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53297,
+        "implant_voxels": 3694,
+        "implant_volume_mm3": 29552.0,
+        "defect_density": 0.025413990020751953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_059",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47629,
+        "implant_voxels": 8693,
+        "implant_volume_mm3": 69544.0,
+        "defect_density": 0.02271127700805664,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_060",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 58370,
+        "implant_voxels": 7575,
+        "implant_volume_mm3": 60600.0,
+        "defect_density": 0.027832984924316406,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_061",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47936,
+        "implant_voxels": 6447,
+        "implant_volume_mm3": 51576.0,
+        "defect_density": 0.022857666015625,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_062",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 54057,
+        "implant_voxels": 5588,
+        "implant_volume_mm3": 44704.0,
+        "defect_density": 0.025776386260986328,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_063",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 54318,
+        "implant_voxels": 4860,
+        "implant_volume_mm3": 38880.0,
+        "defect_density": 0.025900840759277344,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_064",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47738,
+        "implant_voxels": 2763,
+        "implant_volume_mm3": 22104.0,
+        "defect_density": 0.02276325225830078,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_065",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53700,
+        "implant_voxels": 3584,
+        "implant_volume_mm3": 28672.0,
+        "defect_density": 0.025606155395507812,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_066",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 39564,
+        "implant_voxels": 6531,
+        "implant_volume_mm3": 52248.0,
+        "defect_density": 0.018865585327148438,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_067",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48109,
+        "implant_voxels": 4455,
+        "implant_volume_mm3": 35640.0,
+        "defect_density": 0.02294015884399414,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_068",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53504,
+        "implant_voxels": 3061,
+        "implant_volume_mm3": 24488.0,
+        "defect_density": 0.0255126953125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_069",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51839,
+        "implant_voxels": 3743,
+        "implant_volume_mm3": 29944.0,
+        "defect_density": 0.024718761444091797,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_070",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51293,
+        "implant_voxels": 2875,
+        "implant_volume_mm3": 23000.0,
+        "defect_density": 0.02445840835571289,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_071",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48561,
+        "implant_voxels": 8012,
+        "implant_volume_mm3": 64096.0,
+        "defect_density": 0.023155689239501953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_072",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45472,
+        "implant_voxels": 4615,
+        "implant_volume_mm3": 36920.0,
+        "defect_density": 0.0216827392578125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_073",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 52775,
+        "implant_voxels": 4100,
+        "implant_volume_mm3": 32800.0,
+        "defect_density": 0.025165081024169922,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_074",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 60537,
+        "implant_voxels": 6661,
+        "implant_volume_mm3": 53288.0,
+        "defect_density": 0.028866291046142578,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_075",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56696,
+        "implant_voxels": 7045,
+        "implant_volume_mm3": 56360.0,
+        "defect_density": 0.027034759521484375,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_076",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 43021,
+        "implant_voxels": 7095,
+        "implant_volume_mm3": 56760.0,
+        "defect_density": 0.02051401138305664,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_077",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55839,
+        "implant_voxels": 4205,
+        "implant_volume_mm3": 33640.0,
+        "defect_density": 0.026626110076904297,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_078",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 42218,
+        "implant_voxels": 3197,
+        "implant_volume_mm3": 25576.0,
+        "defect_density": 0.02013111114501953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_079",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55062,
+        "implant_voxels": 6774,
+        "implant_volume_mm3": 54192.0,
+        "defect_density": 0.02625560760498047,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_080",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50883,
+        "implant_voxels": 7842,
+        "implant_volume_mm3": 62736.0,
+        "defect_density": 0.02426290512084961,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_081",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 46843,
+        "implant_voxels": 5002,
+        "implant_volume_mm3": 40016.0,
+        "defect_density": 0.022336483001708984,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_082",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 59944,
+        "implant_voxels": 3523,
+        "implant_volume_mm3": 28184.0,
+        "defect_density": 0.028583526611328125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_083",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 60562,
+        "implant_voxels": 3704,
+        "implant_volume_mm3": 29632.0,
+        "defect_density": 0.028878211975097656,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_084",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50680,
+        "implant_voxels": 5447,
+        "implant_volume_mm3": 43576.0,
+        "defect_density": 0.024166107177734375,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_085",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 44746,
+        "implant_voxels": 2405,
+        "implant_volume_mm3": 19240.0,
+        "defect_density": 0.02133655548095703,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_086",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 60912,
+        "implant_voxels": 7853,
+        "implant_volume_mm3": 62824.0,
+        "defect_density": 0.02904510498046875,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_087",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 61512,
+        "implant_voxels": 7445,
+        "implant_volume_mm3": 59560.0,
+        "defect_density": 0.029331207275390625,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_088",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 49916,
+        "implant_voxels": 4005,
+        "implant_volume_mm3": 32040.0,
+        "defect_density": 0.023801803588867188,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_089",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 59181,
+        "implant_voxels": 5488,
+        "implant_volume_mm3": 43904.0,
+        "defect_density": 0.02821969985961914,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_090",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 62482,
+        "implant_voxels": 5379,
+        "implant_volume_mm3": 43032.0,
+        "defect_density": 0.029793739318847656,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_091",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48208,
+        "implant_voxels": 2919,
+        "implant_volume_mm3": 23352.0,
+        "defect_density": 0.02298736572265625,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_092",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 63312,
+        "implant_voxels": 6499,
+        "implant_volume_mm3": 51992.0,
+        "defect_density": 0.03018951416015625,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_093",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 45451,
+        "implant_voxels": 2289,
+        "implant_volume_mm3": 18312.0,
+        "defect_density": 0.021672725677490234,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_094",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53761,
+        "implant_voxels": 3689,
+        "implant_volume_mm3": 29512.0,
+        "defect_density": 0.025635242462158203,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_095",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 33857,
+        "implant_voxels": 2160,
+        "implant_volume_mm3": 17280.0,
+        "defect_density": 0.016144275665283203,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_096",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55961,
+        "implant_voxels": 3665,
+        "implant_volume_mm3": 29320.0,
+        "defect_density": 0.026684284210205078,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_097",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55430,
+        "implant_voxels": 3077,
+        "implant_volume_mm3": 24616.0,
+        "defect_density": 0.02643108367919922,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_098",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 50776,
+        "implant_voxels": 4071,
+        "implant_volume_mm3": 32568.0,
+        "defect_density": 0.024211883544921875,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_099",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48195,
+        "implant_voxels": 2265,
+        "implant_volume_mm3": 18120.0,
+        "defect_density": 0.02298116683959961,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_100",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 39039,
+        "implant_voxels": 3555,
+        "implant_volume_mm3": 28440.0,
+        "defect_density": 0.018615245819091797,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_101",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 44614,
+        "implant_voxels": 5575,
+        "implant_volume_mm3": 44600.0,
+        "defect_density": 0.02127361297607422,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_102",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47755,
+        "implant_voxels": 7606,
+        "implant_volume_mm3": 60848.0,
+        "defect_density": 0.022771358489990234,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_103",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 40839,
+        "implant_voxels": 6523,
+        "implant_volume_mm3": 52184.0,
+        "defect_density": 0.019473552703857422,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_104",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56674,
+        "implant_voxels": 5392,
+        "implant_volume_mm3": 43136.0,
+        "defect_density": 0.027024269104003906,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_105",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 57434,
+        "implant_voxels": 2718,
+        "implant_volume_mm3": 21744.0,
+        "defect_density": 0.02738666534423828,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_106",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 69951,
+        "implant_voxels": 6419,
+        "implant_volume_mm3": 51352.0,
+        "defect_density": 0.0333552360534668,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_107",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47741,
+        "implant_voxels": 3931,
+        "implant_volume_mm3": 31448.0,
+        "defect_density": 0.02276468276977539,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_108",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 51013,
+        "implant_voxels": 3830,
+        "implant_volume_mm3": 30640.0,
+        "defect_density": 0.024324893951416016,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_109",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 67231,
+        "implant_voxels": 6637,
+        "implant_volume_mm3": 53096.0,
+        "defect_density": 0.0320582389831543,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_110",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 58920,
+        "implant_voxels": 4784,
+        "implant_volume_mm3": 38272.0,
+        "defect_density": 0.028095245361328125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_111",
+      "defect_category": "parietotemporal",
+      "partition": "val",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55196,
+        "implant_voxels": 5960,
+        "implant_volume_mm3": 47680.0,
+        "defect_density": 0.026319503784179688,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_112",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 53717,
+        "implant_voxels": 4381,
+        "implant_volume_mm3": 35048.0,
+        "defect_density": 0.025614261627197266,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "train_113",
+      "defect_category": "parietotemporal",
+      "partition": "train",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 64249,
+        "implant_voxels": 6130,
+        "implant_volume_mm3": 49040.0,
+        "defect_density": 0.030636310577392578,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_000",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 69736,
+        "implant_voxels": 3889,
+        "implant_volume_mm3": 31112.0,
+        "defect_density": 0.033252716064453125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_001",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 56342,
+        "implant_voxels": 5012,
+        "implant_volume_mm3": 40096.0,
+        "defect_density": 0.02686595916748047,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_002",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 58152,
+        "implant_voxels": 1952,
+        "implant_volume_mm3": 15616.0,
+        "defect_density": 0.027729034423828125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_003",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 63175,
+        "implant_voxels": 7806,
+        "implant_volume_mm3": 62448.0,
+        "defect_density": 0.030124187469482422,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_004",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 54357,
+        "implant_voxels": 6377,
+        "implant_volume_mm3": 51016.0,
+        "defect_density": 0.025919437408447266,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_005",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 44407,
+        "implant_voxels": 2664,
+        "implant_volume_mm3": 21312.0,
+        "defect_density": 0.021174907684326172,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_006",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 48937,
+        "implant_voxels": 4691,
+        "implant_volume_mm3": 37528.0,
+        "defect_density": 0.023334980010986328,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_007",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 43580,
+        "implant_voxels": 6590,
+        "implant_volume_mm3": 52720.0,
+        "defect_density": 0.020780563354492188,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_008",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 49239,
+        "implant_voxels": 5769,
+        "implant_volume_mm3": 46152.0,
+        "defect_density": 0.023478984832763672,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_009",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55916,
+        "implant_voxels": 3044,
+        "implant_volume_mm3": 24352.0,
+        "defect_density": 0.026662826538085938,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_010",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 55968,
+        "implant_voxels": 5275,
+        "implant_volume_mm3": 42200.0,
+        "defect_density": 0.0266876220703125,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_011",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 49053,
+        "implant_voxels": 4530,
+        "implant_volume_mm3": 36240.0,
+        "defect_density": 0.02339029312133789,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_012",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 62009,
+        "implant_voxels": 4566,
+        "implant_volume_mm3": 36528.0,
+        "defect_density": 0.029568195343017578,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_013",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 49665,
+        "implant_voxels": 5318,
+        "implant_volume_mm3": 42544.0,
+        "defect_density": 0.023682117462158203,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_014",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 64206,
+        "implant_voxels": 3153,
+        "implant_volume_mm3": 25224.0,
+        "defect_density": 0.030615806579589844,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_015",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 41052,
+        "implant_voxels": 5524,
+        "implant_volume_mm3": 44192.0,
+        "defect_density": 0.019575119018554688,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_016",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 54827,
+        "implant_voxels": 3213,
+        "implant_volume_mm3": 25704.0,
+        "defect_density": 0.026143550872802734,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_017",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47025,
+        "implant_voxels": 3004,
+        "implant_volume_mm3": 24032.0,
+        "defect_density": 0.022423267364501953,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_018",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 47702,
+        "implant_voxels": 2312,
+        "implant_volume_mm3": 18496.0,
+        "defect_density": 0.02274608612060547,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "subject_id": "eval_019",
+      "defect_category": "parietotemporal",
+      "partition": "test",
+      "status": "PASS",
+      "error": "",
+      "checks": {
+        "files_exist": true,
+        "meta_readable": true,
+        "shape_spacing": true,
+        "binary_values": true,
+        "implant_nonempty": true,
+        "physical_consistency": true,
+        "overlap_voxels": 0
+      },
+      "stats": {
+        "defect_voxels": 59195,
+        "implant_voxels": 5564,
+        "implant_volume_mm3": 44512.0,
+        "defect_density": 0.028226375579833984,
+        "orig_shape": [
+          512,
+          512,
+          512
+        ],
+        "orig_spacing": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "final_shape": [
+          128,
+          128,
+          128
+        ],
+        "processed_spacing": [
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    }
+  ]
+}

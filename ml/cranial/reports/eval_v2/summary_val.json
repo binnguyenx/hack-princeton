@@ -1,0 +1,26 @@
+{
+  "split": "val",
+  "total_cases": 23,
+  "n_failures": 0,
+  "mean_implant_dice": 0.8346238269882863,
+  "median_hd95_mm": 2.039607805437114,
+  "mean_mirror_dice": 0.3258007761048158,
+  "median_mirror_hd95_mm": 111.51132677841703,
+  "provisional_targets": {
+    "mean_dice_target": ">= 0.80",
+    "mean_dice_achieved": 0.8346238269882863,
+    "mean_dice_met": true,
+    "median_hd95_target": "<= 5.0 mm",
+    "median_hd95_achieved": 2.039607805437114,
+    "median_hd95_met": true,
+    "all_targets_met": true
+  },
+  "by_category": {
+    "model_dice": {
+      "parietotemporal": 0.8346238269882863
+    },
+    "model_hd95_mm": {
+      "parietotemporal": 2.3081249678955653
+    }
+  }
+}

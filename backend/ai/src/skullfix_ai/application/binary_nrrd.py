@@ -27,7 +27,8 @@ class BinaryGrid:
         return self.header + (gzip.compress(voxels, compresslevel=6, mtime=0) if self.encoding in ('gzip', 'gz') else voxels)
 
 
-def decode_binary_nrrd(data):
+def decode_binary_nrrd(data, binary=True):
+    """Decode a 3D uint8 NRRD; binary=False accepts any uint8 values (model probability volumes)."""
     if len(data) > MAX_GRID_BYTES:
         raise VoxelError('Compressed volume exceeds 256 MiB')
     match = re.search(br'\r?\n\r?\n', data[:65536])
@@ -62,7 +63,7 @@ def decode_binary_nrrd(data):
             voxels = payload
         else:
             raise VoxelError('Only raw/gzip NRRD is supported')
-        if len(voxels) != count or max(voxels, default=0) > 1:
+        if len(voxels) != count or (binary and max(voxels, default=0) > 1):
             raise VoxelError('Voxel tools require exact 0/1 binary source voxels')
         return BinaryGrid(header, encoding, sizes, voxels, fields)
     except VoxelError:

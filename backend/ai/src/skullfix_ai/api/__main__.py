@@ -45,14 +45,22 @@ def main():
     if not ready:
         parser.error(f'{args.chat_provider} chat is not ready: {reason} (see backend/ai/.env)')
     from skullfix_ai.agent.gemini_graph import chat_agent_for
-    chat_agent = chat_agent_for(args.chat_provider)
+    from skullfix_ai.integrations.geometry.sagemaker_endpoint import endpoint_from_env
+    model_endpoint = endpoint_from_env()
+    # The agent may stage predicted-fix proposals only when the cranial model endpoint is configured.
+    from skullfix_ai.tools.fix_tools import propose_predicted_fix_factory
+    chat_agent = chat_agent_for(args.chat_provider,
+                                proposal_tool_factories=[propose_predicted_fix_factory] if model_endpoint else [])
     options = {}
     if args.cors_origins is not None:
         options['cors_origins'] = tuple(origin.strip() for origin in args.cors_origins.split(',') if origin.strip())
     model = bedrock_model_id() if args.chat_provider == 'bedrock' else os.environ.get('SKULLFIX_GEMINI_MODEL')
     print(f'Chat provider: {args.chat_provider} ({model or "default model"})', flush=True)
+    print('Cranial model endpoint: ' + (model_endpoint.endpoint_name if model_endpoint
+                                         else 'not configured (CRANIAL_ENDPOINT_NAME, CRANIAL_INFERENCE_BUCKET)'), flush=True)
     import uvicorn
-    uvicorn.run(create_app(Path(args.storage_root), frontend_dir=args.frontend_dir, chat_agent=chat_agent, **options),
+    uvicorn.run(create_app(Path(args.storage_root), frontend_dir=args.frontend_dir, chat_agent=chat_agent,
+                           model_endpoint=model_endpoint, **options),
                 host=args.host, port=args.port)
 
 

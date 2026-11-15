@@ -84,7 +84,33 @@ def provenance_records(db):
     return {row['revision_id']: json.loads(row['provenance_json']) for row in db.execute('SELECT * FROM revision_operations')}
 
 
+MODEL_PROVENANCE_KEYS = {'operation', 'model', 'checkpointHash', 'freezeRunId', 'threshold', 'thresholdIsDefault',
+                         'region', 'inputRevisionId', 'sourceVolumeHash', 'implantVoxels', 'inferenceSeconds', 'totalSeconds'}
+
+
+def _validate_model_provenance(point, revision, revisions, candidates, samples):
+    if set(point) != MODEL_PROVENANCE_KEYS:
+        raise VoxelError('Invalid model provenance')
+    previous = revisions.get(point['inputRevisionId']) if isinstance(point['inputRevisionId'], str) else None
+    sample = samples[candidates[revision['candidateId']]['sampleId']]
+    numbers = (point['threshold'], point['inferenceSeconds'], point['totalSeconds'])
+    if (not previous or previous['candidateId'] != revision['candidateId'] or previous['order'] >= revision['order']
+            or point['sourceVolumeHash'] != sample['sourceAnatomy']['volumeHash']
+            or type(point['implantVoxels']) is not int or point['implantVoxels'] <= 0
+            or any(type(n) not in (int, float) or not math.isfinite(n) or n < 0 for n in numbers)
+            or not 0.1 <= point['threshold'] <= 0.9 or type(point['thresholdIsDefault']) is not bool
+            or not all(isinstance(point[k], str) and point[k] for k in ('model', 'checkpointHash', 'freezeRunId'))):
+        raise VoxelError('Invalid model provenance ownership/values')
+    region = point['region']
+    if region is not None:
+        command = VoxelCommand.model_validate({'project_id': 'package', 'case_id': 'package', 'expected_revision_id': previous['id'],
+                                               'operation': 'voxel.box', 'bounds': region, 'mode': 'fill'})
+        validate_bounds(command, sample['sourceAnatomy']['spatial']['sizes'])
+
+
 def validate_provenance(point, revision, revisions, candidates, samples):
+    if isinstance(point, dict) and point.get('operation') == 'reconstruct.model':
+        return _validate_model_provenance(point, revision, revisions, candidates, samples)
     required = {'operation', 'parameters', 'inputRevisionId', 'sourceVolumeHash', 'changedVoxels'}
     if not isinstance(point, dict) or set(point) != required:
         raise VoxelError('Invalid revision provenance')

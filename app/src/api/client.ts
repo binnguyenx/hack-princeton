@@ -7,24 +7,116 @@ export type ApiProject = { id: string; name: string; updatedAt: string; caseCoun
 export type ApiCase = { id: string; name: string; projectId: string }
 export type ApiSample = { sampleId: string; spatiallyVerified: boolean }
 
+/** Predicted bone fix (cranial-reconstruction-candidate). */
+export type FixRunResult = { candidateId: string; revisionId: string; implantVoxels: number }
+export type FixRunState = {
+  runId: string
+  status: 'running' | 'succeeded' | 'failed'
+  stage: string
+  elapsedS: number
+  result?: FixRunResult
+  error?: { code: string; message: string }
+}
+export type FixMetric = {
+  key: string
+  label: string
+  value: number | string | number[] | null
+  unit: string
+  method: string
+  status: 'ok' | 'not-available'
+  reason?: string
+}
+export type HeldOutScores = {
+  cases: number
+  failures: number
+  meanDice: number
+  medianHd95Mm: number
+  meanDice95Ci?: [number, number]
+}
+export type FixReport = {
+  candidateId: string
+  revisionId: string
+  fix: { label: string; metrics: FixMetric[] }
+  mlRecord: {
+    model: { name: string; architecture: string; parameters: number; input: string }
+    trainingData: string
+    heldOut: { test: HeldOutScores; validation: HeldOutScores; note: string }
+    checkpointHash: string
+    runId: string
+    threshold: number
+    thresholdIsDefault: boolean
+    region: number[][] | null
+    inferenceSeconds: number
+    totalSeconds: number
+    limitation: string
+  }
+}
+export type FixScope = { project_id: string; case_id: string }
+
+/** Error carrying the backend's machine-readable code (e.g. model-endpoint-unconfigured). */
+export class ApiCodeError extends Error {
+  readonly code: string | null
+  readonly status: number
+  constructor(message: string, code: string | null, status: number) {
+    super(message)
+    this.code = code
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers ?? {})
   if (!(init?.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
-  const res = await fetch(`${BASE}${path}`, {
-    headers,
-    ...init,
-  })
+  const res = await fetch(`${BASE}${path}`, { ...init, headers })
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
-    throw new Error(`API ${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`)
+    let body: { code?: unknown; error?: unknown } = {}
+    try { body = JSON.parse(text) } catch { /* plain-text error */ }
+    const code = typeof body.code === 'string' ? body.code : null
+    // Coded backend errors carry a human-readable message; show that instead of the raw response.
+    const message = code && typeof body.error === 'string'
+      ? body.error
+      : `API ${init?.method ?? 'GET'} ${path} → ${res.status}: ${text}`
+    throw new ApiCodeError(message, code, res.status)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
 export const apiClient = {
+  // Predicted fix (cranial-reconstruction-candidate)
+  async startFix(sampleId: string, scope: FixScope): Promise<{ runId: string }> {
+    return request(`/samples/${encodeURIComponent(sampleId)}/reconstructions`, {
+      method: 'POST', body: JSON.stringify(scope),
+    })
+  },
+
+  async getFixRun(runId: string): Promise<FixRunState> {
+    return request(`/reconstructions/${encodeURIComponent(runId)}`)
+  },
+
+  async adjustFix(
+    candidateId: string,
+    body: FixScope & { expected_revision_id: string; threshold?: number; region?: number[][] },
+  ): Promise<FixRunResult & { threshold: number; thresholdIsDefault: boolean }> {
+    return request(`/candidates/${encodeURIComponent(candidateId)}/fix-adjustment`, {
+      method: 'POST', body: JSON.stringify(body),
+    })
+  },
+
+  async getFixReport(candidateId: string, scope: FixScope): Promise<FixReport> {
+    const query = new URLSearchParams(scope).toString()
+    return request(`/candidates/${encodeURIComponent(candidateId)}/fix-report?${query}`)
+  },
+
+  async fetchRevisionVolume(candidateId: string, revisionId: string): Promise<Uint8Array> {
+    const res = await fetch(`${BASE}/candidates/${encodeURIComponent(candidateId)}/revisions/${encodeURIComponent(revisionId)}/volume`)
+    if (!res.ok) throw new Error(`Revision volume unavailable (${res.status})`)
+    return new Uint8Array(await res.arrayBuffer())
+  },
+
   // Projects
   async listProjects(): Promise<ApiProject[]> {
     return request<ApiProject[]>('/projects')

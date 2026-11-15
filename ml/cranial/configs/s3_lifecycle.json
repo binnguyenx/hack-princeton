@@ -1,0 +1,28 @@
+{
+  "Rules": [
+    {
+      "ID": "keep-raw-forever",
+      "Filter": { "Prefix": "cranial/raw/" },
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 365 }
+    },
+    {
+      "ID": "keep-processed-forever",
+      "Filter": { "Prefix": "cranial/processed/" },
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 365 }
+    },
+    {
+      "ID": "keep-manifests-forever",
+      "Filter": { "Prefix": "cranial/manifests/" },
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 9999 }
+    },
+    {
+      "ID": "expire-incomplete-uploads",
+      "Filter": { "Prefix": "cranial/" },
+      "Status": "Enabled",
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+    }
+  ]
+}
